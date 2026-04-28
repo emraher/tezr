@@ -1,0 +1,44 @@
+# R project files
+^.*\.Rproj$
+^\.Rproj\.user$
+
+# Package-development metadata
+^\.github$
+^\.lintr$
+^codecov\.yml$
+^cran-comments\.md$
+^CONTRIBUTING\.md$
+^LICENSE\.md$
+^CITATION\.cff$
+
+# Development-only scripts and data
+^data-raw$
+^scripts$
+^profiling$
+
+# Generated documentation and caches
+^_pkgdown\.yml$
+^docs$
+^pkgdown$
+^README\.Rmd$
+^README_cache$
+^README_files$
+^cache$
+^figure$
+^vignettes/.*_cache$
+
+# Manuscript and presentation material
+^paper$
+^presentation$
+^slides$
+^coarse-output$
+
+# Local assistant state
+^AGENTS\.md$
+^\.claude$
+^\.gemini-clipboard$
+^\.positai$
+
+# Miscellaneous local artifacts
+^todo\.md$
+^texput\.log$

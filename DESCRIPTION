@@ -1,0 +1,39 @@
+Package: tezr
+Title: Access the Turkiye's National Thesis Center Database
+Version: 0.1.0
+Authors@R:
+    person("Emrah", "Er", , "eer@eremrah.com", role = c("aut", "cre"))
+Description: Access the Turkiye's National Thesis Center (Ulusal Tez Merkezi)
+    database at <https://tez.yok.gov.tr>. Search, retrieve, and analyze
+    dissertation metadata from Turkish universities. Supports basic and
+    advanced search, thesis details retrieval, lookup tables, and aggregate
+    statistics.
+License: MIT + file LICENSE
+URL: https://eremrah.com/tezr, https://github.com/emraher/tezr
+BugReports: https://github.com/emraher/tezr/issues
+Encoding: UTF-8
+Roxygen: list(markdown = TRUE)
+RoxygenNote: 7.3.3
+Depends:
+    R (>= 4.1.0)
+Imports:
+    httr2,
+    rvest,
+    dplyr,
+    tibble,
+    tidyr,
+    purrr,
+    stringr,
+    stringi,
+    cli,
+    rlang
+Suggests:
+    testthat (>= 3.0.0),
+    withr,
+    knitr,
+    rmarkdown,
+    ggplot2
+Config/testthat/edition: 3
+Config/Needs/website: emraher/eerdown
+VignetteBuilder: knitr
+LazyData: true

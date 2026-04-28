@@ -1,0 +1,39 @@
+# R session state
+.RData
+.Rhistory
+.Ruserdata
+
+# RStudio / Posit
+.Rproj.user/
+.positai/
+
+# Package build artifacts
+*.tar.gz
+*.Rcheck/
+
+# Knitr / pkgdown generated files
+*_cache/
+*_files/
+cache/
+figure/
+README_cache/
+README_files/
+inst/doc/
+docs/
+pkgdown/
+
+# Manuscript / presentation artifacts not intended for the public package repo
+paper/
+presentation/
+slides/
+coarse-output/
+texput.log
+
+# AI assistant local state
+.claude/
+.gemini-clipboard/
+.worktrees/
+
+# OS files
+.DS_Store
+Thumbs.db

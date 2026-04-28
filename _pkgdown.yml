@@ -1,0 +1,50 @@
+url: https://eremrah.com/tezr/
+
+home:
+  title: tezr
+  description: Access the Turkiye's National Thesis Center Database
+
+template:
+  package: eerdown
+  bootstrap: 5
+
+authors:
+  Emrah Er:
+    href: https://eremrah.com
+
+reference:
+  - title: Search Functions
+    desc: Search for theses in the database
+    contents:
+      - search_basic
+      - search_advanced
+      - search_detailed
+
+  - title: Detail Functions
+    desc: Retrieve detailed information about theses
+    contents:
+      - detail
+
+  - title: Statistics Functions
+    desc: Get statistics and summaries
+    contents:
+      - stats_subjects
+      - stats_types
+      - stats_universities
+      - stats_years
+
+  - title: Lookup Functions
+    desc: List available options for search filters
+    contents:
+      - list_disciplines
+      - list_divisions
+      - list_institutes
+      - list_subjects
+      - list_universities
+
+  - title: Cache Functions
+    desc: Manage the local cache
+    contents:
+      - cache_clear
+      - cache_config
+      - cache_info

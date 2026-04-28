@@ -1,0 +1,97 @@
+---
+output: github_document
+---
+
+<!-- README.md is generated from README.Rmd. Please edit that file -->
+
+```{r, include = FALSE}
+readme_cache_inputs <- c(
+  "R/search.R",
+  "R/detail.R",
+  "R/parse-results.R",
+  "R/parse-details.R",
+  "R/lookup.R"
+)
+
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>",
+  fig.path = "man/figures/README-",
+  out.width = "100%",
+  eval = TRUE,
+  cache = TRUE,
+  cache.extra = paste(file.info(readme_cache_inputs)$mtime, collapse = "|")
+)
+```
+
+# tezr <img src="man/figures/logo.png" align="right" height="139" alt="" />
+
+<!-- badges: start -->
+[![R-CMD-check](https://github.com/emraher/tezr/actions/workflows/R-CMD-check.yaml/badge.svg)](https://github.com/emraher/tezr/actions/workflows/R-CMD-check.yaml)
+[![Lifecycle: experimental](https://img.shields.io/badge/lifecycle-experimental-orange.svg)](https://lifecycle.r-lib.org/articles/stages.html#experimental)
+<!-- badges: end -->
+
+**tezr** provides functions to query Turkiye's [National Thesis Center](https://tez.yok.gov.tr) (Ulusal Tez Merkezi) and extract metadata.
+
+**Disclaimer**: This package is not affiliated with, endorsed by, or connected to YOK (Yükseköğretim Kurulu / Council of Higher Education) or the National Thesis Center. It is an independent tool for academic research purposes.
+
+## Installation
+
+```{r, eval=FALSE}
+# install.packages("pak")
+pak::pak("emraher/tezr")
+```
+
+## Quick Start
+
+```{r}
+library(tezr)
+```
+
+Search results use `title_original` and `title_translation`. Detail records use `abstract_original` and `abstract_translation`.
+
+### Basic Keyword Search
+
+```{r}
+household <- search_basic(keyword = "hanehalkı")
+
+dplyr::glimpse(household)
+```
+
+### Advanced Search with Filters
+```{r}
+climate_change <- search_advanced(
+  keyword = "iklim değişikliği",
+  year_start = 2015,
+  group = "science"
+)
+```
+
+### Detailed Search with Filters
+```{r}
+phd_theses <- search_detailed(
+  university = "Ankara Üniversitesi",
+  division = "İktisat Ana Bilim Dalı",
+  thesis_type = "phd",
+  year_start = 2020
+)
+```
+
+### Get Thesis Details
+```{r}
+details <- detail(phd_theses$detail_id[1])
+
+details |>
+  tidyr::pivot_longer(
+    cols = everything(),
+    names_to = "colname",
+    values_to = "colvalue"
+  ) |>
+  print(n = 23)
+```
+
+## Learn More
+
+- **[Getting Started](https://emraher.github.io/tezr/articles/getting-started.html)**
+- **[Analysis Examples](https://emraher.github.io/tezr/articles/analysis-examples.html)**
+- **[Function Reference](https://emraher.github.io/tezr/reference/index.html)**
