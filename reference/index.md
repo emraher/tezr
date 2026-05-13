@@ -10,6 +10,8 @@ Search for theses in the database
   : Advanced search of the Turkiye's National Thesis Center
 - [`search_detailed()`](https://eremrah.com/tezr/reference/search_detailed.md)
   : Detailed search of the Turkiye's National Thesis Center
+- [`list_recent_theses()`](https://eremrah.com/tezr/reference/list_recent_theses.md)
+  : List recent theses from YOK Tez
 
 ## Detail Functions
 

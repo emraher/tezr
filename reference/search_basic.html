@@ -9,7 +9,7 @@ and returns matching thesis records."><meta property="og:image" content="https:/
 
     <a class="navbar-brand me-2" href="../index.html">tezr</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.1.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.2.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -69,8 +69,9 @@ and returns matching thesis records.</p>
 
 <dt id="arg-search-field">search_field<a class="anchor" aria-label="anchor" href="#arg-search-field"></a></dt>
 <dd><p>Character. The field to search in. One of "title",
-"author", "supervisor", "subject", "index", "abstract", "all", or "thesis_no".
-Default is "all".</p></dd>
+"author", "supervisor", "subject", "index", "abstract", or "all".
+Default is "all". The legacy <code>"thesis_no"</code> value is not supported by
+YOK's keyword endpoint. Use <code>search_detailed(thesis_no = ...)</code> instead.</p></dd>
 
 
 <dt id="arg-access-type">access_type<a class="anchor" aria-label="anchor" href="#arg-access-type"></a></dt>
@@ -117,9 +118,9 @@ fetch fresh data from the server.</p></dd>
     <p>Basic search returns up to 2000 results per query (YOK server limit). When
 results exceed 2000 and <code>max_search_results &gt; 2000</code>, the search
 delegates to <code><a href="search_advanced.html">search_advanced</a></code> which paginates via
-year-range splitting to retrieve all results. With the default
-<code>max_search_results = 2000</code>, a warning is issued suggesting
-<code>max_search_results = Inf</code>.</p>
+year-range splitting to retrieve more results. Single-year ranges can still
+be capped by the server. With the default <code>max_search_results = 2000</code>,
+a warning is issued suggesting <code>max_search_results = Inf</code>.</p>
     </div>
 
     <div class="section level2">
@@ -134,7 +135,7 @@ year-range splitting to retrieve all results. With the default
 <span class="r-in"><span><span class="co"># Search for open access theses</span></span></span>
 <span class="r-in"><span><span class="va">search_results</span> <span class="op">&lt;-</span> <span class="fu">search_basic</span><span class="op">(</span><span class="st">"tarım"</span>, access_type <span class="op">=</span> <span class="st">"open"</span><span class="op">)</span></span></span>
 <span class="r-in"><span></span></span>
-<span class="r-in"><span><span class="co"># Get all results (auto-delegates to advanced search for pagination)</span></span></span>
+<span class="r-in"><span><span class="co"># Paginate beyond the first server batch when possible</span></span></span>
 <span class="r-in"><span><span class="va">all_results</span> <span class="op">&lt;-</span> <span class="fu">search_basic</span><span class="op">(</span><span class="st">"hanehalkı"</span>, max_search_results <span class="op">=</span> <span class="cn">Inf</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="op">}</span> <span class="co"># }</span></span></span>
 </code></pre></div>

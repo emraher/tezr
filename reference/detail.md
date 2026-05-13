@@ -6,21 +6,29 @@ National Thesis Center using encoded IDs from search results.
 ## Usage
 
 ``` r
-detail(detail_id, progress = TRUE, ...)
+detail(detail_id, progress = TRUE, encrypted_no = NULL, ...)
 ```
 
 ## Arguments
 
 - detail_id:
 
-  Character vector. The encoded thesis ID(s) from the `detail_id` column
-  of search results. Required. Accepts multiple values for batch
-  retrieval.
+  Character vector, detail URL, or search-result data frame. Character
+  values may be encoded IDs from the `detail_id` column or redesigned
+  YOK detail URLs. A data frame returned by a search function can be
+  passed directly. Accepts multiple values or rows for batch retrieval.
 
 - progress:
 
   Logical. Show text progress updates when fetching multiple theses?
   Default is TRUE.
+
+- encrypted_no:
+
+  Character vector. Optional encrypted thesis number from the
+  `encrypted_no` column of redesigned search results. When available,
+  `detail()` includes it in the YOK detail request and uses the JSON
+  detail endpoint to add citation metadata.
 
 - ...:
 
@@ -84,6 +92,10 @@ A tibble with thesis details (one row per thesis). Columns (in order):
 
 - detail_url - URL to the thesis detail page
 
+- citation_apa, citation_ieee, citation_mla, citation_chicago,
+  citation_harvard - Citation strings when YOK's JSON detail endpoint is
+  available
+
 ## Examples
 
 ``` r
@@ -91,13 +103,13 @@ if (FALSE) { # \dontrun{
 # Search for theses
 results <- search_basic("panel veri")
 
-# Get details for a single thesis
-thesis_details <- detail(results$detail_id[1])
+# Get details for a single thesis, including citation metadata when present
+thesis_details <- detail(results[1, ])
 
 # Get details for multiple theses (batch)
-all_details <- detail(detail_id = results$detail_id)
+all_details <- detail(results)
 
 # Without progress updates
-all_details <- detail(detail_id = results$detail_id, progress = FALSE)
+all_details <- detail(results, progress = FALSE)
 } # }
 ```

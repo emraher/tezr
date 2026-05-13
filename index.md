@@ -12,6 +12,7 @@ research purposes.
 ## Installation
 
 ``` r
+
 # install.packages("pak")
 pak::pak("emraher/tezr")
 ```
@@ -19,6 +20,7 @@ pak::pak("emraher/tezr")
 ## Quick Start
 
 ``` r
+
 library(tezr)
 ```
 
@@ -28,102 +30,98 @@ records use `abstract_original` and `abstract_translation`.
 ### Basic Keyword Search
 
 ``` r
+
 household <- search_basic(keyword = "hanehalkı")
 #> ℹ Initializing session...
-#> ℹ Searching for: "hanehalkı"
-#> ✔ Found 1019 results
-#> ✔ Returning 1019 results
+#> ℹ Searching for: hanehalkı
+#> ✔ Found 1040 results
+#> ✔ Returning 1040 results
 
 dplyr::glimpse(household)
-#> Rows: 1,019
-#> Columns: 13
-#> $ thesis_no       <chr> "949991", "981164", "905554", "866224", "792466", "811…
-#> $ title_original   <chr> "Parasal aktarım mekanizmasının hanehalkı bilançoları…
-#> $ title_translation <chr> "REFLECTIONS OF MONETARY TRANSMISSION MECHANISM ON HO…
-#> $ author          <chr> "HALİL TANYILDIZI", "AYŞENUR KARAHASANOĞLU", "TARIK UÇ…
-#> $ university      <chr> "Erzincan Binali Yıldırım Üniversitesi", "Çukurova Üni…
-#> $ year            <int> 2025, 2025, 2024, 2024, 2023, 2023, 2023, 2022, 2022, …
-#> $ thesis_type_tr  <chr> "Doktora", "Yüksek Lisans", "Yüksek Lisans", "Doktora"…
-#> $ thesis_type_en  <chr> "Doctorate", "Master", "Master", "Doctorate", "Doctora…
-#> $ language_tr     <chr> "Türkçe", "Türkçe", "Türkçe", "Türkçe", "Türkçe", "İng…
-#> $ language_en     <chr> "Turkish", "Turkish", "Turkish", "Turkish", "Turkish",…
-#> $ subject_tr      <chr> "İşletme", "Ekonomi", "Ekonometri; İşletme", "Ekonomi;…
-#> $ subject_en      <chr> "Business Administration", "Economics", "Econometrics;…
-#> $ detail_id       <chr> "h_WrLBMhp0j9Ih1Bz6_ssA", "YpbNX80LdVlVM683htrXqQ", "C…
+#> Rows: 1,040
+#> Columns: 15
+#> $ thesis_no         <chr> "1002204", "999418", "1002109", "1001006", "1001935"…
+#> $ title_original    <chr> "Coğrafi bilgi sistemleri aracılığıyla ulaşım modlar…
+#> $ title_translation <chr> "Transportation modes through geographic information…
+#> $ author            <chr> "EMİNE BERFİN ŞAHİN", "GÜNSENİN ALTINKAYNAK", "CANSU…
+#> $ university        <chr> "YILDIZ TEKNİK ÜNİVERSİTESİ", "PAMUKKALE ÜNİVERSİTES…
+#> $ year              <int> 2026, 2026, 2026, 2026, 2026, 2026, 2026, 2026, 2026…
+#> $ thesis_type_tr    <chr> "Yüksek Lisans", "Doktora", "Yüksek Lisans", "Yüksek…
+#> $ thesis_type_en    <chr> "Master", "Doctorate", "Master", "Master", "Master",…
+#> $ language_tr       <chr> "Türkçe", "Türkçe", "İngilizce", "İngilizce", "Türkç…
+#> $ language_en       <chr> "Turkish", "Turkish", "English", "English", "Turkish…
+#> $ subject_tr        <chr> "Jeodezi ve Fotogrametri; Ulaşım; Şehircilik ve Bölg…
+#> $ subject_en        <chr> NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, …
+#> $ detail_id         <chr> "sY_pvMMRcFTFZJBPvsSHDw", "SAPTHPMDjlwDmZOmgUMV4g", …
+#> $ encrypted_no      <chr> "d-_X3r5CRNDVZ_qEp8nuWA", "5iGLCCiXIg_o7q1Za8MQQQ", …
+#> $ detail_url        <chr> "https://tez.yok.gov.tr/UlusalTezMerkezi/tezDetay.js…
 ```
 
 ### Advanced Search with Filters
 
 ``` r
+
 climate_change <- search_advanced(
   keyword = "iklim değişikliği",
   year_start = 2015,
   group = "science"
 )
-#> ℹ Initializing session...
 #> ℹ Performing advanced search...
-#> ✔ Found 2314 results
-#> ! Returning 2000 of 2314 results.Set `max_search_results = Inf` to auto-paginate and retrieve all results.
+#> ✔ Found 204 results
+#> ✔ Returning 204 results
 ```
 
 ### Detailed Search with Filters
 
 ``` r
+
 phd_theses <- search_detailed(
   university = "Ankara Üniversitesi",
   division = "İktisat Ana Bilim Dalı",
   thesis_type = "phd",
   year_start = 2020
 )
-#> ℹ Initializing session...
 #> ℹ Found University ID: "3"
 #> ℹ Found Division ID: "51"
 #> ℹ Performing detailed search...
-#> ✔ Found 20 results
-#> ✔ Returning 20 results
+#> ✔ Found 0 results
+#> ℹ YOK returned no rows with the university filter. Retrying without that filter and matching the returned rows locally...
+#> ℹ Performing detailed search...
+#> ✔ Found 1388 results
+#> ✔ Returning 1388 results
+#> ✔ Returning 20 locally filtered results
 ```
 
 ### Get Thesis Details
 
 ``` r
-details <- detail(phd_theses$detail_id[1])
+
+details <- detail(phd_theses[1, ])
 #> ℹ Fetching thesis details...
 #> ✔ Retrieved details for thesis
 
 details |>
-  tidyr::pivot_longer(
-    cols = everything(),
-    names_to = "colname",
-    values_to = "colvalue"
+  dplyr::select(
+    thesis_no,
+    title_original,
+    author,
+    university,
+    year,
+    dplyr::starts_with("citation_")
   ) |>
-  print(n = 23)
-#> # A tibble: 24 × 2
-#>    colname         colvalue                                                     
-#>    <chr>           <chr>                                                        
-#>  1 thesis_no       634695                                                       
-#>  2 title_original  Çevre vergileri üzerine üç makale                            
-#>  3 title_translation Three papers on environmental taxes                        
-#>  4 author          MUSTAFA EMİR YÜCEL                                           
-#>  5 advisor         PROF. DR. TÜRKMEN GÖKSEL                                     
-#>  6 co_advisor      <NA>                                                         
-#>  7 university      Ankara Üniversitesi                                          
-#>  8 institute       Sosyal Bilimler Enstitüsü                                    
-#>  9 division        İktisat Ana Bilim Dalı                                       
-#> 10 year            2020                                                         
-#> 11 pages           117                                                          
-#> 12 thesis_type_tr  Doktora                                                      
-#> 13 thesis_type_en  Doctorate                                                    
-#> 14 language_tr     Türkçe                                                       
-#> 15 language_en     Turkish                                                      
-#> 16 subject_tr      Ekonomi                                                      
-#> 17 subject_en      Economics                                                    
-#> 18 abstract_original     Bu tez çalışması, çevre vergilerinin ve bu vergilerden elde …
-#> 19 abstract_translation  This thesis, theoretically and empirically analyzed the effe…
-#> 20 keywords_tr     Uluslararası ticaret; Vergiler; Çevre ekonomisi; Çevre kirli…
-#> 21 keywords_en     International trade; Taxes; Environmental economics; Environ…
-#> 22 access_status   open                                                         
-#> 23 pdf_url         https://tez.yok.gov.tr/UlusalTezMerkezi/TezGoster?key=_F5QEp…
-#> # ℹ 1 more row
+  dplyr::glimpse(width = 80)
+#> Rows: 1
+#> Columns: 10
+#> $ thesis_no        <chr> "955043"
+#> $ title_original   <chr> "Dijital ekonomide rekabet olgusu: Nedenleri ve sonuç…
+#> $ author           <chr> "ORÇUN"
+#> $ university       <chr> "ANKARA ÜNİVERSİTESİ"
+#> $ year             <chr> "2025"
+#> $ citation_apa     <chr> "KASAP, O. (2025). <i>Dijital ekonomide rekabet olgus…
+#> $ citation_ieee    <chr> "O. KASAP, \"Dijital ekonomide rekabet olgusu: Nedenl…
+#> $ citation_mla     <chr> "KASAP, ORÇUN. <i>Dijital ekonomide rekabet olgusu: N…
+#> $ citation_chicago <chr> "KASAP, ORÇUN. \"Dijital ekonomide rekabet olgusu: Ne…
+#> $ citation_harvard <chr> "KASAP, O. (2025) <i>Dijital ekonomide rekabet olgusu…
 ```
 
 ## Learn More

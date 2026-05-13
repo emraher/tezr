@@ -27,8 +27,9 @@ search_basic(
 - search_field:
 
   Character. The field to search in. One of "title", "author",
-  "supervisor", "subject", "index", "abstract", "all", or "thesis_no".
-  Default is "all".
+  "supervisor", "subject", "index", "abstract", or "all". Default is
+  "all". The legacy `"thesis_no"` value is not supported by YOK's
+  keyword endpoint. Use `search_detailed(thesis_no = ...)` instead.
 
 - access_type:
 
@@ -89,8 +90,9 @@ Basic search returns up to 2000 results per query (YOK server limit).
 When results exceed 2000 and `max_search_results > 2000`, the search
 delegates to
 [`search_advanced`](https://eremrah.com/tezr/reference/search_advanced.md)
-which paginates via year-range splitting to retrieve all results. With
-the default `max_search_results = 2000`, a warning is issued suggesting
+which paginates via year-range splitting to retrieve more results.
+Single-year ranges can still be capped by the server. With the default
+`max_search_results = 2000`, a warning is issued suggesting
 `max_search_results = Inf`.
 
 ## Examples
@@ -106,7 +108,7 @@ search_results <- search_basic("Nilay Ünsal", search_field = "author", thesis_t
 # Search for open access theses
 search_results <- search_basic("tarım", access_type = "open")
 
-# Get all results (auto-delegates to advanced search for pagination)
+# Paginate beyond the first server batch when possible
 all_results <- search_basic("hanehalkı", max_search_results = Inf)
 } # }
 ```

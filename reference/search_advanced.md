@@ -1,9 +1,9 @@
 # Advanced search of the Turkiye's National Thesis Center
 
 Keyword-based search with common filter options. Similar to basic search
-but adds year filtering, language, group, institution, and status
-filters. Limited to 2000 results per request (server limit). For more
-results or field-specific searches, use
+but adds year filtering, language, university, institute, group, and
+status filters. Limited to 2000 results per request (server limit). For
+more results or field-specific searches, use
 [`search_detailed`](https://eremrah.com/tezr/reference/search_detailed.md).
 
 ## Usage
@@ -59,8 +59,8 @@ search_advanced(
 
 - group:
 
-  Character. Group filter. One of "all", "science" (Fen), "social"
-  (Sosyal), "medical" (Tıp). Default is "all".
+  Character. Group filter. One of "all", "science", "social", or
+  "medical". Default is "all".
 
 - university:
 
@@ -69,8 +69,7 @@ search_advanced(
 
 - university_id:
 
-  Integer. University ID (optional). Use this to skip lookup and match
-  the "Choose" behavior in the web form.
+  Integer. University ID (optional). Use this to skip lookup.
 
 - thesis_type:
 
@@ -81,12 +80,13 @@ search_advanced(
 - institute:
 
   Character. Institute name (optional). If provided without
-  `institute_id`, the ID is looked up automatically.
+  `institute_id`, the ID is looked up automatically. Institute filters
+  require a field-specific `search_field`.
 
 - institute_id:
 
-  Integer. Institute ID (optional). Use this to skip lookup and match
-  the "Choose" behavior in the web form.
+  Integer. Institute ID (optional). Use this to skip lookup. Institute
+  filters require a field-specific `search_field`.
 
 - language:
 
@@ -129,6 +129,10 @@ packages that interface with academic databases, such as
 Boolean logic as a single query string (e.g., `"term1 AND term2"`). The
 YOK portal does not accept free-form Boolean strings; it uses structured
 form fields for each keyword row, making that pattern inapplicable here.
+University and group filters are sent with the keyword endpoint.
+Institute filters are sent through the detailed form for field-specific
+searches because YOK's all-field keyword endpoint ignores institute
+values.
 
 For equivalent results:
 
@@ -153,10 +157,9 @@ climate <- search_advanced(
   year_start = 2015
 )
 
-# Search science theses only
+# Search PhD theses only
 ml <- search_advanced(
   keyword = "makine öğrenmesi",
-  group = "science",
   thesis_type = "phd"
 )
 
@@ -166,14 +169,7 @@ ongoing <- search_advanced(
   status = "in_preparation"
 )
 
-# Filter by university/institute (same fields as web advanced form)
-odtu <- search_advanced(
-  keyword = "yapay zeka",
-  university = "Orta Doğu Teknik Üniversitesi",
-  institute = "Fen Bilimleri Enstitüsü"
-)
-
-# Get all available results (auto-paginate)
+# Paginate a broad query
 all_climate <- search_advanced(
   keyword = "iklim değişikliği",
   max_search_results = Inf

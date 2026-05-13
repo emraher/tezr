@@ -26,7 +26,7 @@
 
     <a class="navbar-brand me-2" href="index.html">tezr</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.1.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.2.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -85,26 +85,28 @@
 <div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">household</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/search_basic.html">search_basic</a></span><span class="op">(</span>keyword <span class="op">=</span> <span class="st">"hanehalkı"</span><span class="op">)</span></span>
 <span><span class="co">#&gt; ℹ Initializing session...</span></span>
-<span><span class="co">#&gt; ℹ Searching for: "hanehalkı"</span></span>
-<span><span class="co">#&gt; ✔ Found 1019 results</span></span>
-<span><span class="co">#&gt; ✔ Returning 1019 results</span></span>
+<span><span class="co">#&gt; ℹ Searching for: hanehalkı</span></span>
+<span><span class="co">#&gt; ✔ Found 1040 results</span></span>
+<span><span class="co">#&gt; ✔ Returning 1040 results</span></span>
 <span></span>
 <span><span class="fu">dplyr</span><span class="fu">::</span><span class="fu"><a href="https://pillar.r-lib.org/reference/glimpse.html" class="external-link">glimpse</a></span><span class="op">(</span><span class="va">household</span><span class="op">)</span></span>
-<span><span class="co">#&gt; Rows: 1,019</span></span>
-<span><span class="co">#&gt; Columns: 13</span></span>
-<span><span class="co">#&gt; $ thesis_no       &lt;chr&gt; "949991", "981164", "905554", "866224", "792466", "811…</span></span>
-<span><span class="co">#&gt; $ title_original   &lt;chr&gt; "Parasal aktarım mekanizmasının hanehalkı bilançoları…</span></span>
-<span><span class="co">#&gt; $ title_translation &lt;chr&gt; "REFLECTIONS OF MONETARY TRANSMISSION MECHANISM ON HO…</span></span>
-<span><span class="co">#&gt; $ author          &lt;chr&gt; "HALİL TANYILDIZI", "AYŞENUR KARAHASANOĞLU", "TARIK UÇ…</span></span>
-<span><span class="co">#&gt; $ university      &lt;chr&gt; "Erzincan Binali Yıldırım Üniversitesi", "Çukurova Üni…</span></span>
-<span><span class="co">#&gt; $ year            &lt;int&gt; 2025, 2025, 2024, 2024, 2023, 2023, 2023, 2022, 2022, …</span></span>
-<span><span class="co">#&gt; $ thesis_type_tr  &lt;chr&gt; "Doktora", "Yüksek Lisans", "Yüksek Lisans", "Doktora"…</span></span>
-<span><span class="co">#&gt; $ thesis_type_en  &lt;chr&gt; "Doctorate", "Master", "Master", "Doctorate", "Doctora…</span></span>
-<span><span class="co">#&gt; $ language_tr     &lt;chr&gt; "Türkçe", "Türkçe", "Türkçe", "Türkçe", "Türkçe", "İng…</span></span>
-<span><span class="co">#&gt; $ language_en     &lt;chr&gt; "Turkish", "Turkish", "Turkish", "Turkish", "Turkish",…</span></span>
-<span><span class="co">#&gt; $ subject_tr      &lt;chr&gt; "İşletme", "Ekonomi", "Ekonometri; İşletme", "Ekonomi;…</span></span>
-<span><span class="co">#&gt; $ subject_en      &lt;chr&gt; "Business Administration", "Economics", "Econometrics;…</span></span>
-<span><span class="co">#&gt; $ detail_id       &lt;chr&gt; "h_WrLBMhp0j9Ih1Bz6_ssA", "YpbNX80LdVlVM683htrXqQ", "C…</span></span></code></pre></div>
+<span><span class="co">#&gt; Rows: 1,040</span></span>
+<span><span class="co">#&gt; Columns: 15</span></span>
+<span><span class="co">#&gt; $ thesis_no         &lt;chr&gt; "1002204", "999418", "1002109", "1001006", "1001935"…</span></span>
+<span><span class="co">#&gt; $ title_original    &lt;chr&gt; "Coğrafi bilgi sistemleri aracılığıyla ulaşım modlar…</span></span>
+<span><span class="co">#&gt; $ title_translation &lt;chr&gt; "Transportation modes through geographic information…</span></span>
+<span><span class="co">#&gt; $ author            &lt;chr&gt; "EMİNE BERFİN ŞAHİN", "GÜNSENİN ALTINKAYNAK", "CANSU…</span></span>
+<span><span class="co">#&gt; $ university        &lt;chr&gt; "YILDIZ TEKNİK ÜNİVERSİTESİ", "PAMUKKALE ÜNİVERSİTES…</span></span>
+<span><span class="co">#&gt; $ year              &lt;int&gt; 2026, 2026, 2026, 2026, 2026, 2026, 2026, 2026, 2026…</span></span>
+<span><span class="co">#&gt; $ thesis_type_tr    &lt;chr&gt; "Yüksek Lisans", "Doktora", "Yüksek Lisans", "Yüksek…</span></span>
+<span><span class="co">#&gt; $ thesis_type_en    &lt;chr&gt; "Master", "Doctorate", "Master", "Master", "Master",…</span></span>
+<span><span class="co">#&gt; $ language_tr       &lt;chr&gt; "Türkçe", "Türkçe", "İngilizce", "İngilizce", "Türkç…</span></span>
+<span><span class="co">#&gt; $ language_en       &lt;chr&gt; "Turkish", "Turkish", "English", "English", "Turkish…</span></span>
+<span><span class="co">#&gt; $ subject_tr        &lt;chr&gt; "Jeodezi ve Fotogrametri; Ulaşım; Şehircilik ve Bölg…</span></span>
+<span><span class="co">#&gt; $ subject_en        &lt;chr&gt; NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, …</span></span>
+<span><span class="co">#&gt; $ detail_id         &lt;chr&gt; "sY_pvMMRcFTFZJBPvsSHDw", "SAPTHPMDjlwDmZOmgUMV4g", …</span></span>
+<span><span class="co">#&gt; $ encrypted_no      &lt;chr&gt; "d-_X3r5CRNDVZ_qEp8nuWA", "5iGLCCiXIg_o7q1Za8MQQQ", …</span></span>
+<span><span class="co">#&gt; $ detail_url        &lt;chr&gt; "https://tez.yok.gov.tr/UlusalTezMerkezi/tezDetay.js…</span></span></code></pre></div>
 </div>
 <div class="section level3">
 <h3 id="advanced-search-with-filters">Advanced Search with Filters<a class="anchor" aria-label="anchor" href="#advanced-search-with-filters"></a>
@@ -115,10 +117,9 @@
 <span>  year_start <span class="op">=</span> <span class="fl">2015</span>,</span>
 <span>  group <span class="op">=</span> <span class="st">"science"</span></span>
 <span><span class="op">)</span></span>
-<span><span class="co">#&gt; ℹ Initializing session...</span></span>
 <span><span class="co">#&gt; ℹ Performing advanced search...</span></span>
-<span><span class="co">#&gt; ✔ Found 2314 results</span></span>
-<span><span class="co">#&gt; ! Returning 2000 of 2314 results.Set `max_search_results = Inf` to auto-paginate and retrieve all results.</span></span></code></pre></div>
+<span><span class="co">#&gt; ✔ Found 204 results</span></span>
+<span><span class="co">#&gt; ✔ Returning 204 results</span></span></code></pre></div>
 </div>
 <div class="section level3">
 <h3 id="detailed-search-with-filters">Detailed Search with Filters<a class="anchor" aria-label="anchor" href="#detailed-search-with-filters"></a>
@@ -130,55 +131,46 @@
 <span>  thesis_type <span class="op">=</span> <span class="st">"phd"</span>,</span>
 <span>  year_start <span class="op">=</span> <span class="fl">2020</span></span>
 <span><span class="op">)</span></span>
-<span><span class="co">#&gt; ℹ Initializing session...</span></span>
 <span><span class="co">#&gt; ℹ Found University ID: "3"</span></span>
 <span><span class="co">#&gt; ℹ Found Division ID: "51"</span></span>
 <span><span class="co">#&gt; ℹ Performing detailed search...</span></span>
-<span><span class="co">#&gt; ✔ Found 20 results</span></span>
-<span><span class="co">#&gt; ✔ Returning 20 results</span></span></code></pre></div>
+<span><span class="co">#&gt; ✔ Found 0 results</span></span>
+<span><span class="co">#&gt; ℹ YOK returned no rows with the university filter. Retrying without that filter and matching the returned rows locally...</span></span>
+<span><span class="co">#&gt; ℹ Performing detailed search...</span></span>
+<span><span class="co">#&gt; ✔ Found 1388 results</span></span>
+<span><span class="co">#&gt; ✔ Returning 1388 results</span></span>
+<span><span class="co">#&gt; ✔ Returning 20 locally filtered results</span></span></code></pre></div>
 </div>
 <div class="section level3">
 <h3 id="get-thesis-details">Get Thesis Details<a class="anchor" aria-label="anchor" href="#get-thesis-details"></a>
 </h3>
 <div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">details</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/detail.html">detail</a></span><span class="op">(</span><span class="va">phd_theses</span><span class="op">$</span><span class="va">detail_id</span><span class="op">[</span><span class="fl">1</span><span class="op">]</span><span class="op">)</span></span>
+<code class="sourceCode R"><span><span class="va">details</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/detail.html">detail</a></span><span class="op">(</span><span class="va">phd_theses</span><span class="op">[</span><span class="fl">1</span>, <span class="op">]</span><span class="op">)</span></span>
 <span><span class="co">#&gt; ℹ Fetching thesis details...</span></span>
 <span><span class="co">#&gt; ✔ Retrieved details for thesis</span></span>
 <span></span>
 <span><span class="va">details</span> <span class="op">|&gt;</span></span>
-<span>  <span class="fu">tidyr</span><span class="fu">::</span><span class="fu"><a href="https://tidyr.tidyverse.org/reference/pivot_longer.html" class="external-link">pivot_longer</a></span><span class="op">(</span></span>
-<span>    cols <span class="op">=</span> <span class="fu">everything</span><span class="op">(</span><span class="op">)</span>,</span>
-<span>    names_to <span class="op">=</span> <span class="st">"colname"</span>,</span>
-<span>    values_to <span class="op">=</span> <span class="st">"colvalue"</span></span>
+<span>  <span class="fu">dplyr</span><span class="fu">::</span><span class="fu"><a href="https://dplyr.tidyverse.org/reference/select.html" class="external-link">select</a></span><span class="op">(</span></span>
+<span>    <span class="va">thesis_no</span>,</span>
+<span>    <span class="va">title_original</span>,</span>
+<span>    <span class="va">author</span>,</span>
+<span>    <span class="va">university</span>,</span>
+<span>    <span class="va">year</span>,</span>
+<span>    <span class="fu">dplyr</span><span class="fu">::</span><span class="fu"><a href="https://tidyselect.r-lib.org/reference/starts_with.html" class="external-link">starts_with</a></span><span class="op">(</span><span class="st">"citation_"</span><span class="op">)</span></span>
 <span>  <span class="op">)</span> <span class="op">|&gt;</span></span>
-<span>  <span class="fu"><a href="https://rdrr.io/r/base/print.html" class="external-link">print</a></span><span class="op">(</span>n <span class="op">=</span> <span class="fl">23</span><span class="op">)</span></span>
-<span><span class="co">#&gt; # A tibble: 24 × 2</span></span>
-<span><span class="co">#&gt;    colname         colvalue                                                     </span></span>
-<span><span class="co">#&gt;    &lt;chr&gt;           &lt;chr&gt;                                                        </span></span>
-<span><span class="co">#&gt;  1 thesis_no       634695                                                       </span></span>
-<span><span class="co">#&gt;  2 title_original  Çevre vergileri üzerine üç makale                            </span></span>
-<span><span class="co">#&gt;  3 title_translation Three papers on environmental taxes                        </span></span>
-<span><span class="co">#&gt;  4 author          MUSTAFA EMİR YÜCEL                                           </span></span>
-<span><span class="co">#&gt;  5 advisor         PROF. DR. TÜRKMEN GÖKSEL                                     </span></span>
-<span><span class="co">#&gt;  6 co_advisor      &lt;NA&gt;                                                         </span></span>
-<span><span class="co">#&gt;  7 university      Ankara Üniversitesi                                          </span></span>
-<span><span class="co">#&gt;  8 institute       Sosyal Bilimler Enstitüsü                                    </span></span>
-<span><span class="co">#&gt;  9 division        İktisat Ana Bilim Dalı                                       </span></span>
-<span><span class="co">#&gt; 10 year            2020                                                         </span></span>
-<span><span class="co">#&gt; 11 pages           117                                                          </span></span>
-<span><span class="co">#&gt; 12 thesis_type_tr  Doktora                                                      </span></span>
-<span><span class="co">#&gt; 13 thesis_type_en  Doctorate                                                    </span></span>
-<span><span class="co">#&gt; 14 language_tr     Türkçe                                                       </span></span>
-<span><span class="co">#&gt; 15 language_en     Turkish                                                      </span></span>
-<span><span class="co">#&gt; 16 subject_tr      Ekonomi                                                      </span></span>
-<span><span class="co">#&gt; 17 subject_en      Economics                                                    </span></span>
-<span><span class="co">#&gt; 18 abstract_original     Bu tez çalışması, çevre vergilerinin ve bu vergilerden elde …</span></span>
-<span><span class="co">#&gt; 19 abstract_translation  This thesis, theoretically and empirically analyzed the effe…</span></span>
-<span><span class="co">#&gt; 20 keywords_tr     Uluslararası ticaret; Vergiler; Çevre ekonomisi; Çevre kirli…</span></span>
-<span><span class="co">#&gt; 21 keywords_en     International trade; Taxes; Environmental economics; Environ…</span></span>
-<span><span class="co">#&gt; 22 access_status   open                                                         </span></span>
-<span><span class="co">#&gt; 23 pdf_url         https://tez.yok.gov.tr/UlusalTezMerkezi/TezGoster?key=_F5QEp…</span></span>
-<span><span class="co">#&gt; # ℹ 1 more row</span></span></code></pre></div>
+<span>  <span class="fu">dplyr</span><span class="fu">::</span><span class="fu"><a href="https://pillar.r-lib.org/reference/glimpse.html" class="external-link">glimpse</a></span><span class="op">(</span>width <span class="op">=</span> <span class="fl">80</span><span class="op">)</span></span>
+<span><span class="co">#&gt; Rows: 1</span></span>
+<span><span class="co">#&gt; Columns: 10</span></span>
+<span><span class="co">#&gt; $ thesis_no        &lt;chr&gt; "955043"</span></span>
+<span><span class="co">#&gt; $ title_original   &lt;chr&gt; "Dijital ekonomide rekabet olgusu: Nedenleri ve sonuç…</span></span>
+<span><span class="co">#&gt; $ author           &lt;chr&gt; "ORÇUN"</span></span>
+<span><span class="co">#&gt; $ university       &lt;chr&gt; "ANKARA ÜNİVERSİTESİ"</span></span>
+<span><span class="co">#&gt; $ year             &lt;chr&gt; "2025"</span></span>
+<span><span class="co">#&gt; $ citation_apa     &lt;chr&gt; "KASAP, O. (2025). &lt;i&gt;Dijital ekonomide rekabet olgus…</span></span>
+<span><span class="co">#&gt; $ citation_ieee    &lt;chr&gt; "O. KASAP, \"Dijital ekonomide rekabet olgusu: Nedenl…</span></span>
+<span><span class="co">#&gt; $ citation_mla     &lt;chr&gt; "KASAP, ORÇUN. &lt;i&gt;Dijital ekonomide rekabet olgusu: N…</span></span>
+<span><span class="co">#&gt; $ citation_chicago &lt;chr&gt; "KASAP, ORÇUN. \"Dijital ekonomide rekabet olgusu: Ne…</span></span>
+<span><span class="co">#&gt; $ citation_harvard &lt;chr&gt; "KASAP, O. (2025) &lt;i&gt;Dijital ekonomide rekabet olgusu…</span></span></code></pre></div>
 </div>
 </div>
 <div class="section level2">

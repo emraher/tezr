@@ -23,7 +23,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">tezr</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.1.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.2.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -72,6 +72,9 @@
 thesis metadata from the NTC. Each example starts with data collection
 and ends with a table or plot. The workflows cover research trends,
 institutional comparisons, and keyword mining.</p>
+<p>Package builds show the code without running live requests. Set
+<code>TEZR_LIVE_DOCS=true</code> before rendering if you want to refresh
+all outputs.</p>
 <p><strong>Prerequisites:</strong> Familiarity with dplyr and ggplot2.
 See the <a href="getting-started.html">Getting Started</a> vignette for
 search function details.</p>
@@ -108,22 +111,7 @@ metadata.</p>
 <span><span class="va">climate</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/search_advanced.html">search_advanced</a></span><span class="op">(</span>keyword <span class="op">=</span> <span class="st">"iklim değişikliği"</span>,</span>
 <span>                           search_field <span class="op">=</span> <span class="st">"all"</span>,</span>
 <span>                           max_search_results <span class="op">=</span> <span class="cn">Inf</span><span class="op">)</span></span>
-<span><span class="fu"><a href="https://pillar.r-lib.org/reference/glimpse.html" class="external-link">glimpse</a></span><span class="op">(</span><span class="va">climate</span><span class="op">)</span></span>
-<span><span class="co">#&gt; Rows: 4,233</span></span>
-<span><span class="co">#&gt; Columns: 13</span></span>
-<span><span class="co">#&gt; $ thesis_no         <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span> "127833"<span style="color: #949494;">, </span>"211146"<span style="color: #949494;">, </span>"160151"<span style="color: #949494;">, </span>"143999"<span style="color: #949494;">, </span>"64…</span></span>
-<span><span class="co">#&gt; $ title_original    <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span> "Küresel ısınma Avrupa Birliği ve Türkyie"<span style="color: #949494;">,</span>…</span></span>
-<span><span class="co">#&gt; $ title_translation <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span> "Global warming European Union and Turkey"<span style="color: #949494;">,</span>…</span></span>
-<span><span class="co">#&gt; $ author            <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span> "FİKRET MAZI"<span style="color: #949494;">, </span>"PINAR BAL"<span style="color: #949494;">, </span>"AYŞE KAYA DÜND…</span></span>
-<span><span class="co">#&gt; $ university        <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span> "ANKARA ÜNİVERSİTESİ"<span style="color: #949494;">, </span>"MARMARA ÜNİVERSİTES…</span></span>
-<span><span class="co">#&gt; $ year              <span style="color: #949494; font-style: italic;">&lt;int&gt;</span> 2003<span style="color: #949494;">, </span>2007<span style="color: #949494;">, </span>2005<span style="color: #949494;">, </span>2004<span style="color: #949494;">, </span>1997<span style="color: #949494;">, </span>2008<span style="color: #949494;">, </span>2008<span style="color: #949494;">, </span>2…</span></span>
-<span><span class="co">#&gt; $ thesis_type_tr    <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span> "Doktora"<span style="color: #949494;">, </span>"Doktora"<span style="color: #949494;">, </span>"Yüksek Lisans"<span style="color: #949494;">, </span>"Yük…</span></span>
-<span><span class="co">#&gt; $ thesis_type_en    <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span> "Doctorate"<span style="color: #949494;">, </span>"Doctorate"<span style="color: #949494;">, </span>"Master"<span style="color: #949494;">, </span>"Master…</span></span>
-<span><span class="co">#&gt; $ language_tr       <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span> "Türkçe"<span style="color: #949494;">, </span>"İngilizce"<span style="color: #949494;">, </span>"Türkçe"<span style="color: #949494;">, </span>"Türkçe"<span style="color: #949494;">, </span>…</span></span>
-<span><span class="co">#&gt; $ language_en       <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span> "Turkish"<span style="color: #949494;">, </span>"English"<span style="color: #949494;">, </span>"Turkish"<span style="color: #949494;">, </span>"Turkish"<span style="color: #949494;">,</span>…</span></span>
-<span><span class="co">#&gt; $ subject_tr        <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span> "Kamu Yönetimi"<span style="color: #949494;">, </span>"Uluslararası İlişkiler"<span style="color: #949494;">, </span>…</span></span>
-<span><span class="co">#&gt; $ subject_en        <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span> "Public Administration"<span style="color: #949494;">, </span>"International Rel…</span></span>
-<span><span class="co">#&gt; $ detail_id         <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span> "0urt544xEr8UdoqaY8b6Hw"<span style="color: #949494;">, </span>"uY6beSruWeTBJHDZ…</span></span></code></pre></div>
+<span><span class="fu"><a href="https://pillar.r-lib.org/reference/glimpse.html" class="external-link">glimpse</a></span><span class="op">(</span><span class="va">climate</span><span class="op">)</span></span></code></pre></div>
 </div>
 <div class="section level3">
 <h3 id="yearly-counts-with-rolling-average">Yearly Counts with Rolling Average<a class="anchor" aria-label="anchor" href="#yearly-counts-with-rolling-average"></a>
@@ -156,7 +144,6 @@ spikes. We can adjust <code>k</code> for a wider or narrower window.</p>
 <span>    caption <span class="op">=</span> <span class="st">"Red line: 10-year moving average"</span></span>
 <span>  <span class="op">)</span> <span class="op">+</span></span>
 <span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/ggtheme.html" class="external-link">theme_minimal</a></span><span class="op">(</span>base_size <span class="op">=</span> <span class="fl">11</span><span class="op">)</span></span></code></pre></div>
-<p><img src="analysis-examples_files/figure-html/unnamed-chunk-3-1.png" class="r-plt" alt="" width="700"></p>
 </div>
 <div class="section level3">
 <h3 id="masters-vs-phd-trends">Master’s vs PhD Trends<a class="anchor" aria-label="anchor" href="#masters-vs-phd-trends"></a>
@@ -180,7 +167,6 @@ two main types for a readable plot.</p>
 <span>    color <span class="op">=</span> <span class="st">"Degree"</span></span>
 <span>  <span class="op">)</span> <span class="op">+</span></span>
 <span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/ggtheme.html" class="external-link">theme_minimal</a></span><span class="op">(</span>base_size <span class="op">=</span> <span class="fl">11</span><span class="op">)</span></span></code></pre></div>
-<p><img src="analysis-examples_files/figure-html/unnamed-chunk-4-1.png" class="r-plt" alt="" width="700"></p>
 </div>
 </div>
 <div class="section level2">
@@ -201,20 +187,7 @@ with any subject from <code><a href="../reference/list_subjects.html">list_subje
 <span>  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/count.html" class="external-link">count</a></span><span class="op">(</span><span class="va">university</span>, sort <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span>
 <span></span>
 <span><span class="va">uni_counts</span> <span class="op">|&gt;</span> </span>
-<span>  <span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="fl">10</span><span class="op">)</span></span>
-<span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 10 × 2</span></span></span>
-<span><span class="co">#&gt;    university                        n</span></span>
-<span><span class="co">#&gt;    <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>                         <span style="color: #949494; font-style: italic;">&lt;int&gt;</span></span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 1</span> MARMARA ÜNİVERSİTESİ            543</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 2</span> İSTANBUL ÜNİVERSİTESİ           272</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 3</span> DOKUZ EYLÜL ÜNİVERSİTESİ        262</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 4</span> GAZİ ÜNİVERSİTESİ               246</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 5</span> ATATÜRK ÜNİVERSİTESİ            121</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 6</span> KARADENİZ TEKNİK ÜNİVERSİTESİ   101</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 7</span> ÇUKUROVA ÜNİVERSİTESİ            94</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 8</span> AKDENİZ ÜNİVERSİTESİ             82</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 9</span> BURSA ULUDAĞ ÜNİVERSİTESİ        79</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">10</span> SÜLEYMAN DEMİREL ÜNİVERSİTESİ    78</span></span></code></pre></div>
+<span>  <span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="fl">10</span><span class="op">)</span></span></code></pre></div>
 </div>
 <div class="section level3">
 <h3 id="top-universities-bar-chart">Top Universities Bar Chart<a class="anchor" aria-label="anchor" href="#top-universities-bar-chart"></a>
@@ -233,7 +206,6 @@ university names easy to read.</p>
 <span>    y <span class="op">=</span> <span class="cn">NULL</span></span>
 <span>  <span class="op">)</span> <span class="op">+</span></span>
 <span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/ggtheme.html" class="external-link">theme_minimal</a></span><span class="op">(</span>base_size <span class="op">=</span> <span class="fl">11</span><span class="op">)</span></span></code></pre></div>
-<p><img src="analysis-examples_files/figure-html/unnamed-chunk-6-1.png" class="r-plt" alt="" width="700"></p>
 </div>
 <div class="section level3">
 <h3 id="university-trends-over-time">University Trends Over Time<a class="anchor" aria-label="anchor" href="#university-trends-over-time"></a>
@@ -261,8 +233,8 @@ university names easy to read.</p>
 <span>  <span class="op">)</span> <span class="op">+</span></span>
 <span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/facet_wrap.html" class="external-link">facet_wrap</a></span><span class="op">(</span><span class="op">~</span><span class="va">university</span>, scales <span class="op">=</span> <span class="st">"free_y"</span><span class="op">)</span> <span class="op">+</span></span>
 <span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/ggtheme.html" class="external-link">theme_minimal</a></span><span class="op">(</span>base_size <span class="op">=</span> <span class="fl">11</span><span class="op">)</span> <span class="op">+</span></span>
-<span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/theme.html" class="external-link">theme</a></span><span class="op">(</span>legend.position <span class="op">=</span> <span class="st">"none"</span><span class="op">)</span></span></code></pre></div>
-<p><img src="analysis-examples_files/figure-html/unnamed-chunk-7-1.png" class="r-plt" alt="" width="700"></p>
+<span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/theme.html" class="external-link">theme</a></span><span class="op">(</span>legend.position <span class="op">=</span> <span class="st">"none"</span><span class="op">)</span></span>
+<span>  </span></code></pre></div>
 </div>
 <div class="section level3">
 <h3 id="phd-to-total-ratio">PhD-to-Total Ratio<a class="anchor" aria-label="anchor" href="#phd-to-total-ratio"></a>
@@ -281,20 +253,7 @@ program.</p>
 <span>  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/mutate.html" class="external-link">mutate</a></span><span class="op">(</span>phd_ratio <span class="op">=</span> <span class="va">Doctorate</span> <span class="op">/</span> <span class="op">(</span><span class="va">Doctorate</span> <span class="op">+</span> <span class="va">Master</span><span class="op">)</span><span class="op">)</span> <span class="op">|&gt;</span> </span>
 <span>  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/arrange.html" class="external-link">arrange</a></span><span class="op">(</span><span class="fu"><a href="https://dplyr.tidyverse.org/reference/desc.html" class="external-link">desc</a></span><span class="op">(</span><span class="va">phd_ratio</span><span class="op">)</span><span class="op">)</span></span>
 <span></span>
-<span><span class="va">degree_comparison</span></span>
-<span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 10 × 4</span></span></span>
-<span><span class="co">#&gt;    university                    Doctorate Master phd_ratio</span></span>
-<span><span class="co">#&gt;    <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>                             <span style="color: #949494; font-style: italic;">&lt;int&gt;</span>  <span style="color: #949494; font-style: italic;">&lt;int&gt;</span>     <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span></span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 1</span> İSTANBUL ÜNİVERSİTESİ               117    155     0.430</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 2</span> ATATÜRK ÜNİVERSİTESİ                 50     71     0.413</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 3</span> AKDENİZ ÜNİVERSİTESİ                 31     51     0.378</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 4</span> BURSA ULUDAĞ ÜNİVERSİTESİ            28     51     0.354</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 5</span> KARADENİZ TEKNİK ÜNİVERSİTESİ        33     68     0.327</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 6</span> GAZİ ÜNİVERSİTESİ                    70    176     0.285</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 7</span> DOKUZ EYLÜL ÜNİVERSİTESİ             65    197     0.248</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 8</span> ÇUKUROVA ÜNİVERSİTESİ                23     71     0.245</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 9</span> MARMARA ÜNİVERSİTESİ                121    422     0.223</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">10</span> SÜLEYMAN DEMİREL ÜNİVERSİTESİ        14     64     0.179</span></span></code></pre></div>
+<span><span class="va">degree_comparison</span></span></code></pre></div>
 </div>
 </div>
 <div class="section level2">
@@ -303,8 +262,8 @@ program.</p>
 <p>You can extract research themes from thesis abstracts and keywords.
 Detail records include <code>keywords_tr</code>,
 <code>keywords_en</code>, <code>abstract_original</code>, and
-<code>abstract_translation</code>. This example fetches details for all
-matching theses, so it is slow.</p>
+<code>abstract_translation</code>. This example fetches details for a
+small sample so the article builds quickly.</p>
 <div class="section level3">
 <h3 id="collecting-detailed-metadata">Collecting Detailed Metadata<a class="anchor" aria-label="anchor" href="#collecting-detailed-metadata"></a>
 </h3>
@@ -315,9 +274,11 @@ matching theses, so it is slow.</p>
 <span></span>
 <span><span class="co"># Fetch full details (abstracts, keywords, advisor, PDF URLs)</span></span>
 <span><span class="va">ml_search_sample</span> <span class="op">&lt;-</span> <span class="va">ml_search</span> <span class="op">|&gt;</span> </span>
-<span>  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/slice.html" class="external-link">slice_sample</a></span><span class="op">(</span>n <span class="op">=</span> <span class="fl">20</span><span class="op">)</span></span>
+<span>  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/slice.html" class="external-link">slice_head</a></span><span class="op">(</span>n <span class="op">=</span> <span class="fl">5</span><span class="op">)</span></span>
 <span></span>
-<span><span class="va">ml_details</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/detail.html">detail</a></span><span class="op">(</span><span class="va">ml_search_sample</span><span class="op">$</span><span class="va">detail_id</span><span class="op">)</span></span></code></pre></div>
+<span><span class="va">ml_details</span> <span class="op">&lt;-</span> <span class="va">ml_search_sample</span><span class="op">$</span><span class="va">detail_id</span> <span class="op">|&gt;</span></span>
+<span>  <span class="fu"><a href="https://rdrr.io/r/base/lapply.html" class="external-link">lapply</a></span><span class="op">(</span><span class="va">detail</span><span class="op">)</span> <span class="op">|&gt;</span></span>
+<span>  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/bind_rows.html" class="external-link">bind_rows</a></span><span class="op">(</span><span class="op">)</span></span></code></pre></div>
 </div>
 <div class="section level3">
 <h3 id="keyword-frequency">Keyword Frequency<a class="anchor" aria-label="anchor" href="#keyword-frequency"></a>
@@ -348,7 +309,6 @@ terms. Let’s split them, trim whitespace, and count.</p>
 <span>    y <span class="op">=</span> <span class="cn">NULL</span></span>
 <span>  <span class="op">)</span> <span class="op">+</span></span>
 <span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/ggtheme.html" class="external-link">theme_minimal</a></span><span class="op">(</span>base_size <span class="op">=</span> <span class="fl">11</span><span class="op">)</span></span></code></pre></div>
-<p><img src="analysis-examples_files/figure-html/unnamed-chunk-10-1.png" class="r-plt" alt="" width="700"></p>
 </div>
 </div>
 <div class="section level2">

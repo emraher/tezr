@@ -5,11 +5,16 @@ thesis metadata from the NTC. Each example starts with data collection
 and ends with a table or plot. The workflows cover research trends,
 institutional comparisons, and keyword mining.
 
+Package builds show the code without running live requests. Set
+`TEZR_LIVE_DOCS=true` before rendering if you want to refresh all
+outputs.
+
 **Prerequisites:** Familiarity with dplyr and ggplot2. See the [Getting
 Started](https://eremrah.com/tezr/articles/getting-started.md) vignette
 for search function details.
 
 ``` r
+
 library(tezr)
 library(dplyr)
 library(ggplot2)
@@ -40,26 +45,12 @@ with the `search_field` parameter set to all. The result is a tibble of
 matching records with year, author, university, and other metadata.
 
 ``` r
+
 # Search for "iklim değişikliği" (climate change) in thesis titles
 climate <- search_advanced(keyword = "iklim değişikliği",
                            search_field = "all",
                            max_search_results = Inf)
 glimpse(climate)
-#> Rows: 4,233
-#> Columns: 13
-#> $ thesis_no         <chr> "127833", "211146", "160151", "143999", "64…
-#> $ title_original    <chr> "Küresel ısınma Avrupa Birliği ve Türkyie",…
-#> $ title_translation <chr> "Global warming European Union and Turkey",…
-#> $ author            <chr> "FİKRET MAZI", "PINAR BAL", "AYŞE KAYA DÜND…
-#> $ university        <chr> "ANKARA ÜNİVERSİTESİ", "MARMARA ÜNİVERSİTES…
-#> $ year              <int> 2003, 2007, 2005, 2004, 1997, 2008, 2008, 2…
-#> $ thesis_type_tr    <chr> "Doktora", "Doktora", "Yüksek Lisans", "Yük…
-#> $ thesis_type_en    <chr> "Doctorate", "Doctorate", "Master", "Master…
-#> $ language_tr       <chr> "Türkçe", "İngilizce", "Türkçe", "Türkçe", …
-#> $ language_en       <chr> "Turkish", "English", "Turkish", "Turkish",…
-#> $ subject_tr        <chr> "Kamu Yönetimi", "Uluslararası İlişkiler", …
-#> $ subject_en        <chr> "Public Administration", "International Rel…
-#> $ detail_id         <chr> "0urt544xEr8UdoqaY8b6Hw", "uY6beSruWeTBJHDZ…
 ```
 
 ### Yearly Counts with Rolling Average
@@ -69,6 +60,7 @@ The rolling average reveals sustained growth versus one-off spikes. We
 can adjust `k` for a wider or narrower window.
 
 ``` r
+
 # Count theses per year
 yearly_counts <- climate |>
   count(year) |>
@@ -95,14 +87,13 @@ yearly_counts |>
   theme_minimal(base_size = 11)
 ```
 
-![](analysis-examples_files/figure-html/unnamed-chunk-3-1.png)
-
 ### Master’s vs PhD Trends
 
 We can split by degree type to see what drives growth. Filter to the two
 main types for a readable plot.
 
 ``` r
+
 # Compare master's and PhD thesis counts over time
 type_trends <- climate |>
   filter(thesis_type_en %in% c("Master", "Doctorate")) |>
@@ -121,8 +112,6 @@ type_trends |>
   theme_minimal(base_size = 11)
 ```
 
-![](analysis-examples_files/figure-html/unnamed-chunk-4-1.png)
-
 ## Example 2: Comparing Universities
 
 Suppose we want to identify which universities produce the most research
@@ -132,6 +121,7 @@ in a given field. You can replace `"Ekonometri"` with any subject from
 ### Collecting University-Level Data
 
 ``` r
+
 # All econometrics theses, counted by university
 econ_theses <- search_detailed(subject = "Ekonometri",
                                max_search_results = Inf)
@@ -141,19 +131,6 @@ uni_counts <- econ_theses |>
 
 uni_counts |> 
   head(10)
-#> # A tibble: 10 × 2
-#>    university                        n
-#>    <chr>                         <int>
-#>  1 MARMARA ÜNİVERSİTESİ            543
-#>  2 İSTANBUL ÜNİVERSİTESİ           272
-#>  3 DOKUZ EYLÜL ÜNİVERSİTESİ        262
-#>  4 GAZİ ÜNİVERSİTESİ               246
-#>  5 ATATÜRK ÜNİVERSİTESİ            121
-#>  6 KARADENİZ TEKNİK ÜNİVERSİTESİ   101
-#>  7 ÇUKUROVA ÜNİVERSİTESİ            94
-#>  8 AKDENİZ ÜNİVERSİTESİ             82
-#>  9 BURSA ULUDAĞ ÜNİVERSİTESİ        79
-#> 10 SÜLEYMAN DEMİREL ÜNİVERSİTESİ    78
 ```
 
 ### Top Universities Bar Chart
@@ -162,6 +139,7 @@ Let’s create a simple bar chart. Horizontal bars make long Turkish
 university names easy to read.
 
 ``` r
+
 uni_counts |> 
   head(10) |> 
   ggplot(aes(x = n, y = reorder(university, n))) +
@@ -175,13 +153,12 @@ uni_counts |>
   theme_minimal(base_size = 11)
 ```
 
-![](analysis-examples_files/figure-html/unnamed-chunk-6-1.png)
-
 ### University Trends Over Time
 
 Let’s compare the top four universities from 2000 onward.
 
 ``` r
+
 top4_unis <- uni_counts$university[1:4]
 
 # Filter to top 4 universities, 2000 onward
@@ -204,9 +181,8 @@ uni_trends |>
   facet_wrap(~university, scales = "free_y") +
   theme_minimal(base_size = 11) +
   theme(legend.position = "none")
+  
 ```
-
-![](analysis-examples_files/figure-html/unnamed-chunk-7-1.png)
 
 ### PhD-to-Total Ratio
 
@@ -214,6 +190,7 @@ Let’s assume a higher PhD ratio suggests a more research-intensive
 program.
 
 ``` r
+
 # Compute PhD share at each top university
 top_unis <- uni_counts$university[1:10]
 
@@ -226,19 +203,6 @@ degree_comparison <- econ_theses |>
   arrange(desc(phd_ratio))
 
 degree_comparison
-#> # A tibble: 10 × 4
-#>    university                    Doctorate Master phd_ratio
-#>    <chr>                             <int>  <int>     <dbl>
-#>  1 İSTANBUL ÜNİVERSİTESİ               117    155     0.430
-#>  2 ATATÜRK ÜNİVERSİTESİ                 50     71     0.413
-#>  3 AKDENİZ ÜNİVERSİTESİ                 31     51     0.378
-#>  4 BURSA ULUDAĞ ÜNİVERSİTESİ            28     51     0.354
-#>  5 KARADENİZ TEKNİK ÜNİVERSİTESİ        33     68     0.327
-#>  6 GAZİ ÜNİVERSİTESİ                    70    176     0.285
-#>  7 DOKUZ EYLÜL ÜNİVERSİTESİ             65    197     0.248
-#>  8 ÇUKUROVA ÜNİVERSİTESİ                23     71     0.245
-#>  9 MARMARA ÜNİVERSİTESİ                121    422     0.223
-#> 10 SÜLEYMAN DEMİREL ÜNİVERSİTESİ        14     64     0.179
 ```
 
 ## Example 3: Keyword and Abstract Analysis
@@ -246,20 +210,23 @@ degree_comparison
 You can extract research themes from thesis abstracts and keywords.
 Detail records include `keywords_tr`, `keywords_en`,
 `abstract_original`, and `abstract_translation`. This example fetches
-details for all matching theses, so it is slow.
+details for a small sample so the article builds quickly.
 
 ### Collecting Detailed Metadata
 
 ``` r
+
 # Search for machine learning theses
 ml_search <- search_basic("makine öğrenmesi",
                           max_search_results = Inf)
 
 # Fetch full details (abstracts, keywords, advisor, PDF URLs)
 ml_search_sample <- ml_search |> 
-  slice_sample(n = 20)
+  slice_head(n = 5)
 
-ml_details <- detail(ml_search_sample$detail_id)
+ml_details <- ml_search_sample$detail_id |>
+  lapply(detail) |>
+  bind_rows()
 ```
 
 ### Keyword Frequency
@@ -268,6 +235,7 @@ The `keywords_tr` field contains semicolon separated terms. Let’s split
 them, trim whitespace, and count.
 
 ``` r
+
 # Parse comma-separated keywords into individual rows
 keywords <- ml_details |>
   filter(!is.na(keywords_tr)) |>
@@ -293,8 +261,6 @@ keyword_freq |>
   theme_minimal(base_size = 11)
 ```
 
-![](analysis-examples_files/figure-html/unnamed-chunk-10-1.png)
-
 ## Tips for Large-Scale Analysis
 
 ### Saving Results Locally
@@ -304,6 +270,7 @@ sessions to skip network calls. RDS preserves column types and CSV is
 useful for sharing.
 
 ``` r
+
 # Save after first fetch
 saveRDS(econ_theses, "econ_theses.rds")
 readr::write_csv(econ_theses, "econ_theses.csv")
@@ -319,6 +286,7 @@ This protects against interruptions — if the process stops, you only
 lose the current batch.
 
 ``` r
+
 batch_size <- 50
 all_results <- search_basic("panel data")
 
