@@ -27,6 +27,27 @@ test_that("detailed search with university filter works", {
   expect_gt(nrow(results), 0)
 })
 
+test_that("detailed search after advanced search uses a fresh server result", {
+  cache_clear("all")
+
+  advanced_results <- search_advanced(
+    keyword = "iklim değişikliği",
+    year_start = 2015,
+    group = "science",
+    ignore_cache = TRUE
+  )
+  expect_gt(nrow(advanced_results), 0)
+
+  detailed_results <- search_detailed(
+    thesis_no = "12345",
+    ignore_cache = TRUE
+  )
+
+  expect_equal(nrow(detailed_results), 1L)
+  expect_equal(detailed_results$thesis_no, "12345")
+  expect_false("12345" %in% advanced_results$thesis_no)
+})
+
 test_that("detail retrieval works for a single thesis", {
   results <- search_basic("ekonometri", search_field = "title")
   skip_if(nrow(results) == 0, "No search results to fetch details for")

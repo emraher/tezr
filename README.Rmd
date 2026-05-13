@@ -7,6 +7,7 @@ output: github_document
 ```{r, include = FALSE}
 readme_cache_inputs <- c(
   "R/search.R",
+  "R/recent.R",
   "R/detail.R",
   "R/parse-results.R",
   "R/parse-details.R",
@@ -79,15 +80,18 @@ phd_theses <- search_detailed(
 
 ### Get Thesis Details
 ```{r}
-details <- detail(phd_theses$detail_id[1])
+details <- detail(phd_theses[1, ])
 
 details |>
-  tidyr::pivot_longer(
-    cols = everything(),
-    names_to = "colname",
-    values_to = "colvalue"
+  dplyr::select(
+    thesis_no,
+    title_original,
+    author,
+    university,
+    year,
+    dplyr::starts_with("citation_")
   ) |>
-  print(n = 23)
+  dplyr::glimpse(width = 80)
 ```
 
 ## Learn More

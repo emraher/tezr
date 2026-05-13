@@ -4,15 +4,21 @@
 \alias{detail}
 \title{Get detailed information about a thesis}
 \usage{
-detail(detail_id, progress = TRUE, ...)
+detail(detail_id, progress = TRUE, encrypted_no = NULL, ...)
 }
 \arguments{
-\item{detail_id}{Character vector. The encoded thesis ID(s) from the
-\code{detail_id} column of search results. Required. Accepts multiple values
-for batch retrieval.}
+\item{detail_id}{Character vector, detail URL, or search-result data frame.
+Character values may be encoded IDs from the \code{detail_id} column or
+redesigned YOK detail URLs. A data frame returned by a search function can
+be passed directly. Accepts multiple values or rows for batch retrieval.}
 
 \item{progress}{Logical. Show text progress updates when fetching multiple
 theses? Default is TRUE.}
+
+\item{encrypted_no}{Character vector. Optional encrypted thesis number from
+the \code{encrypted_no} column of redesigned search results. When available,
+\code{detail()} includes it in the YOK detail request and uses the JSON detail
+endpoint to add citation metadata.}
 
 \item{...}{Reserved for internal use.}
 }
@@ -44,6 +50,9 @@ Columns (in order):
 \item access_status - Access status (open/restricted)
 \item pdf_url - URL to download PDF (if available)
 \item detail_url - URL to the thesis detail page
+\item citation_apa, citation_ieee, citation_mla, citation_chicago,
+citation_harvard - Citation strings when YOK's JSON detail endpoint is
+available
 }
 }
 \description{
@@ -55,13 +64,13 @@ Thesis Center using encoded IDs from search results.
 # Search for theses
 results <- search_basic("panel veri")
 
-# Get details for a single thesis
-thesis_details <- detail(results$detail_id[1])
+# Get details for a single thesis, including citation metadata when present
+thesis_details <- detail(results[1, ])
 
 # Get details for multiple theses (batch)
-all_details <- detail(detail_id = results$detail_id)
+all_details <- detail(results)
 
 # Without progress updates
-all_details <- detail(detail_id = results$detail_id, progress = FALSE)
+all_details <- detail(results, progress = FALSE)
 }
 }

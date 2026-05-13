@@ -2,6 +2,8 @@
 
 test_that("search_basic validates query input", {
   expect_error(search_basic(""), "non-empty")
+  expect_error(search_basic("   "), "non-empty")
+  expect_error(search_basic(NA_character_), "non-empty")
   expect_error(search_basic(123), "single non-empty character string")
   expect_error(search_basic(c("a", "b")), "single non-empty character string")
 })
@@ -10,6 +12,28 @@ test_that("search_basic validates enum parameters", {
   expect_error(search_basic("test", search_field = "invalid"), "must be one of")
   expect_error(search_basic("test", thesis_type = "invalid"), "must be one of")
   expect_error(search_basic("test", access_type = "invalid"), "must be one of")
+})
+
+test_that("search functions validate max_search_results before requests", {
+  expect_error(
+    search_basic("test", max_search_results = -1),
+    "max_search_results"
+  )
+  expect_error(
+    search_advanced("test", max_search_results = 0),
+    "max_search_results"
+  )
+  expect_error(
+    search_detailed(title = "test", max_search_results = "many"),
+    "max_search_results"
+  )
+})
+
+test_that("search_basic points thesis number searches to detailed search", {
+  expect_error(
+    search_basic("1003627", search_field = "thesis_no"),
+    "search_detailed\\(thesis_no"
+  )
 })
 
 test_that("search_basic returns cached results without network", {
@@ -63,6 +87,8 @@ test_that("search_basic forwards ignore_cache to run_basic_search", {
 
 test_that("search_advanced validates keyword input", {
   expect_error(search_advanced(keyword = ""), "non-empty")
+  expect_error(search_advanced(keyword = "   "), "non-empty")
+  expect_error(search_advanced(keyword = NA_character_), "non-empty")
   expect_error(
     search_advanced(keyword = 123),
     "single non-empty character string"
@@ -104,6 +130,12 @@ test_that("search_advanced validates year_end", {
     search_advanced("test", year_end = 1800),
     "between 1959"
   )
+})
+
+test_that("search_advanced validates language input before requests", {
+  expect_error(search_advanced("test", language = ""), "language")
+  expect_error(search_advanced("test", language = NA_character_), "language")
+  expect_error(search_advanced("test", language = c("tr", "en")), "language")
 })
 
 test_that("search_advanced returns cached results without network", {
@@ -162,7 +194,7 @@ test_that("search_advanced paginates when year range provided", {
   expect_true(called)
 })
 
-test_that("search_advanced resolves and forwards university/institute filters", {
+test_that("search_advanced forwards university and group filters", {
   captured <- new.env(parent = emptyenv())
   captured$form <- NULL
 
@@ -170,13 +202,9 @@ test_that("search_advanced resolves and forwards university/institute filters", 
     get_cached = function(...) NULL,
     set_cached = function(...) NULL,
     init_session = function(...) NULL,
-    lookup_university_id = function(name) {
+    lookup_university_item = function(name) {
       expect_equal(name, "Test Uni")
-      "123"
-    },
-    lookup_institute_id = function(name) {
-      expect_equal(name, "Test Inst")
-      "456"
+      tibble::tibble(name = "TEST UNI", id = "123")
     },
     perform_search_request = function(form_data) {
       captured$form <- form_data
@@ -189,15 +217,62 @@ test_that("search_advanced resolves and forwards university/institute filters", 
 
   result <- search_advanced(
     keyword = "test",
-    university = "Test Uni",
+    group = "science",
+    university = "Test Uni"
+  )
+
+  expect_equal(nrow(result), 0)
+  expect_equal(captured$form$islem, 4L)
+  expect_equal(captured$form$EnstituGrubu, group_codes$science)
+  expect_equal(captured$form$Universite, 123L)
+  expect_equal(captured$form$source, "TR")
+})
+
+test_that("search_advanced routes institute filters through detailed form", {
+  captured <- new.env(parent = emptyenv())
+  captured$form <- NULL
+
+  testthat::local_mocked_bindings(
+    get_cached = function(...) NULL,
+    set_cached = function(...) NULL,
+    init_session = function(...) NULL,
+    lookup_institute_item = function(name) {
+      expect_equal(name, "Test Inst")
+      tibble::tibble(name = "TEST INST", id = "215")
+    },
+    perform_search_request = function(form_data) {
+      captured$form <- form_data
+      list(
+        total_count = 0L,
+        search_results = tibble::tibble(thesis_no = character())
+      )
+    }
+  )
+
+  result <- search_advanced(
+    keyword = "test",
+    search_field = "title",
+    match_type = "contains",
     institute = "Test Inst"
   )
 
   expect_equal(nrow(result), 0)
-  expect_equal(captured$form$uniad, "Test Uni")
-  expect_equal(captured$form$Universite, 123L)
-  expect_equal(captured$form$ensad, "Test Inst")
-  expect_equal(captured$form$Enstitu, 456L)
+  expect_equal(captured$form$islem, 2L)
+  expect_equal(captured$form$TezAd, "test")
+  expect_equal(captured$form$ensad, "TEST INST")
+  expect_equal(captured$form$Enstitu, 215L)
+  expect_equal(captured$form$selected_institute, "on")
+})
+
+test_that("search_advanced rejects all-field institute filters", {
+  expect_error(
+    search_advanced(
+      keyword = "test",
+      search_field = "all",
+      institute_id = 215L
+    ),
+    "all-field keyword endpoint ignores institute"
+  )
 })
 
 test_that("search_advanced defaults to title field to match web advanced form", {
@@ -353,6 +428,25 @@ test_that("search_basic warns at 2000 with default max_search_results", {
   )
 })
 
+test_that("search_basic trims server-visible results to max_search_results", {
+  fake_results <- tibble::tibble(thesis_no = as.character(seq_len(10)))
+
+  testthat::local_mocked_bindings(
+    run_basic_search = function(...) {
+      list(results = fake_results, total_count = 10L)
+    }
+  )
+
+  expect_message(
+    result <- search_basic("test", max_search_results = 3),
+    "Returning 3"
+  )
+
+  expect_equal(nrow(result), 3L)
+  expect_equal(result$thesis_no, c("1", "2", "3"))
+  expect_equal(attr(result, "total_count", exact = TRUE), 10L)
+})
+
 test_that("search_basic delegates to advanced search when max_search_results > 2000", {
   delegated <- FALSE
   advanced_args <- list()
@@ -403,6 +497,20 @@ test_that("search_basic delegates to advanced search when max_search_results > 2
 })
 
 test_that("search_basic to search_advanced delegation reuses one initialized session", {
+  old_cookies <- tezr_env$cookies
+  old_session_start <- tezr_env$session_start
+  old_request_count <- tezr_env$request_count
+
+  withr::defer({
+    tezr_env$cookies <- old_cookies
+    tezr_env$session_start <- old_session_start
+    tezr_env$request_count <- old_request_count
+  })
+
+  tezr_env$cookies <- NULL
+  tezr_env$session_start <- NULL
+  tezr_env$request_count <- 0L
+
   init_calls <- 0L
   request_calls <- 0L
 
@@ -640,9 +748,41 @@ test_that("search_detailed validates status parameter", {
     search_detailed(author = "test", status = "invalid"),
     "Invalid.*status"
   )
+  expect_error(
+    search_detailed(author = "test", status = c("approved", "all")),
+    "status"
+  )
 })
 
-test_that("search_detailed accepts webpage-aligned institution IDs and skips lookups", {
+test_that("search_detailed validates empty vector filters", {
+  expect_error(
+    search_detailed(author = "test", thesis_type = character(0)),
+    "thesis_type"
+  )
+  expect_error(
+    search_detailed(author = "test", access_type = character(0)),
+    "access_type"
+  )
+  expect_error(
+    search_detailed(author = "test", group = character(0)),
+    "group"
+  )
+})
+
+test_that("search_detailed validates blank text criteria", {
+  expect_error(search_detailed(author = "   "), "author")
+  expect_error(search_detailed(title = c("valid", "   ")), "title")
+  expect_error(search_detailed(subject = NA_character_), "subject")
+  expect_error(search_detailed(university = character(0)), "university")
+})
+
+test_that("search_detailed validates language values before expansion", {
+  expect_error(search_detailed(author = "test", language = ""), "language")
+  expect_error(search_detailed(author = "test", language = NA_character_), "language")
+  expect_error(search_detailed(author = "test", language = c("tr", "")), "language")
+})
+
+test_that("search_detailed sends field and institutional filters to detailed form", {
   captured <- new.env(parent = emptyenv())
   captured$form <- NULL
 
@@ -651,18 +791,6 @@ test_that("search_detailed accepts webpage-aligned institution IDs and skips loo
     set_cached = function(...) NULL,
     has_session = function(...) TRUE,
     init_session = function(...) NULL,
-    lookup_university_id = function(...) {
-      stop("university lookup should not be called")
-    },
-    lookup_institute_id = function(...) {
-      stop("institute lookup should not be called")
-    },
-    lookup_division_id = function(...) {
-      stop("division lookup should not be called")
-    },
-    lookup_discipline_id = function(...) {
-      stop("discipline lookup should not be called")
-    },
     perform_search_request = function(form_data) {
       captured$form <- form_data
       list(
@@ -673,19 +801,252 @@ test_that("search_detailed accepts webpage-aligned institution IDs and skips loo
   )
 
   result <- search_detailed(
-    university_id = 6L,
-    institute_id = 12L,
-    division_id = 128L,
-    discipline_id = 512L,
-    group = "science"
+    title = "sulama",
+    university_id = 25L,
+    group = "science",
+    year_start = 2015,
+    year_end = 2024
   )
 
   expect_equal(nrow(result), 0)
-  expect_equal(captured$form$Universite, 6L)
-  expect_equal(captured$form$Enstitu, 12L)
-  expect_equal(captured$form$ABD, 128L)
-  expect_equal(captured$form$BilimDali, 512L)
+  expect_equal(captured$form$islem, 2L)
+  expect_equal(captured$form$TezAd, "sulama")
+  expect_equal(captured$form$Universite, 25L)
   expect_equal(captured$form$EnstituGrubu, group_codes$science)
+  expect_equal(captured$form$yil1, 2015L)
+  expect_equal(captured$form$yil2, 2024L)
+  expect_false("keyword" %in% names(captured$form))
+  expect_false("nevi" %in% names(captured$form))
+})
+
+test_that("search_detailed posts canonical lookup labels from YOK lists", {
+  captured <- new.env(parent = emptyenv())
+  captured$form <- NULL
+
+  testthat::local_mocked_bindings(
+    get_cached = function(...) NULL,
+    set_cached = function(...) NULL,
+    has_session = function(...) TRUE,
+    init_session = function(...) NULL,
+    lookup_university_item = function(name) {
+      expect_equal(name, "Ankara Üniversitesi")
+      tibble::tibble(name = "ANKARA ÜNİVERSİTESİ", id = "3")
+    },
+    lookup_division_item = function(name) {
+      expect_equal(name, "İktisat Ana Bilim Dalı")
+      tibble::tibble(name = "İKTİSAT ANABİLİM DALI", id = "51")
+    },
+    perform_search_request = function(form_data) {
+      captured$form <- form_data
+      list(
+        total_count = 1L,
+        search_results = tibble::tibble(thesis_no = "1")
+      )
+    }
+  )
+
+  result <- search_detailed(
+    university = "Ankara Üniversitesi",
+    division = "İktisat Ana Bilim Dalı",
+    thesis_type = "phd",
+    year_start = 2020
+  )
+
+  expect_equal(result$thesis_no, "1")
+  expect_equal(captured$form$uniad, "ANKARA ÜNİVERSİTESİ")
+  expect_equal(captured$form$Universite, 3L)
+  expect_equal(captured$form$abdad, "İKTİSAT ANABİLİM DALI")
+  expect_equal(captured$form$ABD, 51L)
+})
+
+test_that("search_detailed retries university filters locally when YOK returns zero", {
+  forms <- list()
+  fake_fallback_results <- tibble::tibble(
+    thesis_no = c("955043", "900001"),
+    university = c("ANKARA ÜNİVERSİTESİ", "İSTANBUL ÜNİVERSİTESİ")
+  )
+
+  testthat::local_mocked_bindings(
+    get_cached = function(...) NULL,
+    set_cached = function(...) NULL,
+    has_session = function(...) TRUE,
+    init_session = function(...) NULL,
+    lookup_university_item = function(name) {
+      expect_equal(name, "Ankara Üniversitesi")
+      tibble::tibble(name = "ANKARA ÜNİVERSİTESİ", id = "3")
+    },
+    lookup_division_item = function(name) {
+      expect_equal(name, "İktisat Ana Bilim Dalı")
+      tibble::tibble(name = "İKTİSAT ANABİLİM DALI", id = "51")
+    },
+    perform_search_request = function(form_data) {
+      forms[[length(forms) + 1L]] <<- form_data
+      if (!identical(form_data$Universite, "")) {
+        return(list(
+          total_count = 0L,
+          search_results = tibble::tibble(thesis_no = character())
+        ))
+      }
+
+      list(
+        total_count = nrow(fake_fallback_results),
+        search_results = fake_fallback_results
+      )
+    }
+  )
+
+  result <- search_detailed(
+    university = "Ankara Üniversitesi",
+    division = "İktisat Ana Bilim Dalı",
+    thesis_type = "phd",
+    year_start = 2020
+  )
+
+  expect_equal(length(forms), 2L)
+  expect_equal(forms[[1]]$uniad, "ANKARA ÜNİVERSİTESİ")
+  expect_equal(forms[[1]]$Universite, 3L)
+  expect_equal(forms[[2]]$uniad, "")
+  expect_equal(forms[[2]]$Universite, "")
+  expect_equal(result$thesis_no, "955043")
+  expect_equal(result$university, "ANKARA ÜNİVERSİTESİ")
+  expect_true(attr(result, "complete", exact = TRUE))
+})
+
+test_that("search_detailed retries university filters with narrowed type-year queries", {
+  forms <- list()
+  fake_fallback_results <- tibble::tibble(
+    thesis_no = c("955043", "900001"),
+    university = c("ANKARA ÜNİVERSİTESİ", "İSTANBUL ÜNİVERSİTESİ")
+  )
+
+  testthat::local_mocked_bindings(
+    get_cached = function(...) NULL,
+    set_cached = function(...) NULL,
+    has_session = function(...) TRUE,
+    init_session = function(...) NULL,
+    lookup_university_item = function(name) {
+      expect_equal(name, "Ankara Üniversitesi")
+      tibble::tibble(name = "ANKARA ÜNİVERSİTESİ", id = "3")
+    },
+    perform_search_request = function(form_data) {
+      forms[[length(forms) + 1L]] <<- form_data
+      if (!identical(form_data$Universite, "")) {
+        return(list(
+          total_count = 0L,
+          search_results = tibble::tibble(thesis_no = character())
+        ))
+      }
+
+      list(
+        total_count = nrow(fake_fallback_results),
+        search_results = fake_fallback_results
+      )
+    }
+  )
+
+  result <- search_detailed(
+    university = "Ankara Üniversitesi",
+    thesis_type = "phd",
+    year_start = 2020
+  )
+
+  expect_equal(length(forms), 2L)
+  expect_equal(forms[[2]]$Tur, thesis_type_codes$phd)
+  expect_equal(forms[[2]]$yil1, 2020L)
+  expect_equal(result$thesis_no, "955043")
+})
+
+test_that("search_detailed sends subject searches through detailed form", {
+  captured <- new.env(parent = emptyenv())
+  captured$form <- NULL
+  fake_results <- tibble::tibble(
+    thesis_no = c("1", "2", "3"),
+    subject_tr = c("Ekonometri", "Ekonomi; Ekonometri", "Ekonomi"),
+    subject_en = c(NA_character_, NA_character_, NA_character_)
+  )
+
+  testthat::local_mocked_bindings(
+    get_cached = function(...) NULL,
+    set_cached = function(...) NULL,
+    has_session = function(...) TRUE,
+    init_session = function(...) NULL,
+    perform_search_request = function(form_data) {
+      captured$form <- form_data
+      list(
+        total_count = 3L,
+        search_results = fake_results
+      )
+    }
+  )
+
+  result <- search_detailed(
+    subject = "Ekonometri",
+    thesis_type = "phd",
+    year_start = 2020
+  )
+
+  expect_equal(captured$form$islem, 2L)
+  expect_equal(captured$form$Konu, "Ekonometri")
+  expect_equal(captured$form$Tur, thesis_type_codes$phd)
+  expect_equal(captured$form$yil1, 2020L)
+  expect_equal(result$thesis_no, c("1", "2", "3"))
+  expect_equal(attr(result, "total_count", exact = TRUE), 3L)
+})
+
+test_that("search_detailed uses detailed form for thesis number", {
+  captured <- new.env(parent = emptyenv())
+  captured$form <- NULL
+
+  testthat::local_mocked_bindings(
+    get_cached = function(...) NULL,
+    set_cached = function(...) NULL,
+    has_session = function(...) TRUE,
+    init_session = function(...) NULL,
+    perform_search_request = function(form_data) {
+      captured$form <- form_data
+      list(
+        total_count = 1L,
+        search_results = tibble::tibble(thesis_no = "12345")
+      )
+    }
+  )
+
+  result <- search_detailed(thesis_no = "12345")
+
+  expect_equal(result$thesis_no, "12345")
+  expect_equal(captured$form$islem, 2L)
+  expect_equal(captured$form$TezNo, "12345")
+  expect_equal(captured$form$source, "TR")
+  expect_equal(captured$form$uni_yoksis_id, "")
+  expect_equal(captured$form$Universite, "")
+  expect_false("keyword" %in% names(captured$form))
+  expect_false("nevi" %in% names(captured$form))
+})
+
+test_that("search_detailed supports institute-only detailed searches", {
+  captured <- new.env(parent = emptyenv())
+  captured$form <- NULL
+
+  testthat::local_mocked_bindings(
+    get_cached = function(...) NULL,
+    set_cached = function(...) NULL,
+    has_session = function(...) TRUE,
+    init_session = function(...) NULL,
+    perform_search_request = function(form_data) {
+      captured$form <- form_data
+      list(
+        total_count = 1L,
+        search_results = tibble::tibble(thesis_no = "997244")
+      )
+    }
+  )
+
+  result <- search_detailed(institute_id = 215L)
+
+  expect_equal(result$thesis_no, "997244")
+  expect_equal(captured$form$islem, 2L)
+  expect_equal(captured$form$Enstitu, 215L)
+  expect_equal(captured$form$selected_institute, "on")
 })
 
 test_that("search_detailed validates optional institution ID arguments", {

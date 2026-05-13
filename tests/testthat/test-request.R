@@ -34,55 +34,20 @@ local_mock_search_pipeline <- function(
   )
 }
 
-test_that("resolve_lookup_id skips lookup for NULL input", {
-  called <- FALSE
-  lookup <- function(x) {
-    called <<- TRUE
-    "1"
-  }
-
-  result <- resolve_lookup_id(NULL, lookup, "University")
-
-  expect_false(called)
-  expect_null(result)
-})
-
-test_that("resolve_lookup_id returns id and logs info", {
-  called <- FALSE
+test_that("resolve_lookup_item returns canonical name and id", {
   info <- NULL
-  warn <- NULL
-  lookup <- function(x) {
-    called <<- TRUE
-    "5"
-  }
+  lookup <- function(x) tibble::tibble(name = "ANKARA ÜNİVERSİTESİ", id = "3")
 
   testthat::local_mocked_bindings(
     cli_alert_info = function(msg, ...) info <<- msg,
-    cli_warn = function(msg, ...) warn <<- msg,
     .package = "cli"
   )
 
-  result <- resolve_lookup_id("Foo University", lookup, "University")
+  result <- resolve_lookup_item("Ankara Üniversitesi", lookup, "University")
 
-  expect_true(called)
-  expect_equal(result, "5")
+  expect_equal(result$id, "3")
+  expect_equal(result$name, "ANKARA ÜNİVERSİTESİ")
   expect_true(is.character(info))
-  expect_null(warn)
-})
-
-test_that("resolve_lookup_id warns when id is not found", {
-  warn <- NULL
-  lookup <- function(x) NULL
-
-  testthat::local_mocked_bindings(
-    cli_warn = function(msg, ...) warn <<- msg,
-    .package = "cli"
-  )
-
-  result <- resolve_lookup_id("Missing University", lookup, "University")
-
-  expect_null(result)
-  expect_true(is.character(warn))
 })
 
 test_that("perform_search_request errors on non-200 search response", {
@@ -179,6 +144,40 @@ test_that("perform_search_request reuses one session object and counts one logic
 
   expect_equal(create_session_calls, 1L)
   expect_equal(increment_calls, 1L)
+})
+
+test_that("perform_search_request resets the session when search operation changes", {
+  init_calls <- 0L
+  old_has_last_search_mode <- exists(
+    "last_search_mode",
+    envir = tezr_env,
+    inherits = FALSE
+  )
+  old_last_search_mode <- tezr_env$last_search_mode
+  withr::defer({
+    if (old_has_last_search_mode) {
+      tezr_env$last_search_mode <- old_last_search_mode
+    } else if (exists("last_search_mode", envir = tezr_env, inherits = FALSE)) {
+      rm(list = "last_search_mode", envir = tezr_env)
+    }
+  })
+
+  tezr_env$last_search_mode <- "4"
+
+  local_mock_search_pipeline(
+    tezr_overrides = list(
+      init_session = function(...) {
+        init_calls <<- init_calls + 1L
+        rm(list = "last_search_mode", envir = tezr_env)
+        invisible(TRUE)
+      }
+    )
+  )
+
+  perform_search_request(list(islem = 2L))
+
+  expect_equal(init_calls, 1L)
+  expect_equal(tezr_env$last_search_mode, "2")
 })
 
 test_that("perform_search_request errors on non-200 results page", {

@@ -40,24 +40,25 @@ Default is "exact".}
 
 \item{year_end}{Integer. End year (optional).}
 
-\item{group}{Character. Group filter. One of "all",
-"science" (Fen), "social" (Sosyal), "medical" (Tıp). Default is "all".}
+\item{group}{Character. Group filter. One of "all", "science", "social", or
+"medical". Default is "all".}
 
 \item{university}{Character. University name (optional). If provided without
 \code{university_id}, the ID is looked up automatically.}
 
 \item{university_id}{Integer. University ID (optional). Use this to skip
-lookup and match the "Choose" behavior in the web form.}
+lookup.}
 
 \item{thesis_type}{Character. Type of thesis. One of "all", "masters", "phd",
 "medical_specialty", "arts", "dentistry", "medical_sub", "pharmacy".
 Default is "all".}
 
 \item{institute}{Character. Institute name (optional). If provided without
-\code{institute_id}, the ID is looked up automatically.}
+\code{institute_id}, the ID is looked up automatically. Institute filters
+require a field-specific \code{search_field}.}
 
 \item{institute_id}{Integer. Institute ID (optional). Use this to skip
-lookup and match the "Choose" behavior in the web form.}
+lookup. Institute filters require a field-specific \code{search_field}.}
 
 \item{language}{Integer language ID or character label (e.g., "tr", "en",
 "Turkish", "İngilizce").}
@@ -80,7 +81,7 @@ A tibble containing thesis records (same structure as search_basic).
 }
 \description{
 Keyword-based search with common filter options. Similar to basic search
-but adds year filtering, language, group, institution, and status
+but adds year filtering, language, university, institute, group, and status
 filters.
 Limited to 2000 results per request (server limit). For more results or
 field-specific searches, use \code{\link{search_detailed}}.
@@ -96,6 +97,9 @@ Boolean logic as a single query string (e.g., \code{"term1 AND term2"}).
 The YOK portal does not accept free-form Boolean strings; it uses
 structured form fields for each keyword row, making that pattern
 inapplicable here.
+University and group filters are sent with the keyword endpoint. Institute
+filters are sent through the detailed form for field-specific searches
+because YOK's all-field keyword endpoint ignores institute values.
 
 For equivalent results:
 \itemize{
@@ -116,10 +120,9 @@ climate <- search_advanced(
   year_start = 2015
 )
 
-# Search science theses only
+# Search PhD theses only
 ml <- search_advanced(
   keyword = "makine öğrenmesi",
-  group = "science",
   thesis_type = "phd"
 )
 
@@ -129,14 +132,7 @@ ongoing <- search_advanced(
   status = "in_preparation"
 )
 
-# Filter by university/institute (same fields as web advanced form)
-odtu <- search_advanced(
-  keyword = "yapay zeka",
-  university = "Orta Doğu Teknik Üniversitesi",
-  institute = "Fen Bilimleri Enstitüsü"
-)
-
-# Get all available results (auto-paginate)
+# Paginate a broad query
 all_climate <- search_advanced(
   keyword = "iklim değişikliği",
   max_search_results = Inf

@@ -49,6 +49,14 @@ test_that("extract_total_count works with real search HTML", {
   expect_equal(count, 3697L)
 })
 
+test_that("extract_total_count works with real English search HTML", {
+  html <- rvest::read_html(
+    testthat::test_path("fixtures", "results_en.html")
+  )
+  count <- extract_total_count(html)
+  expect_equal(count, 3697L)
+})
+
 # -- Detail page (Turkish) ----------------------------------------------------
 
 test_that("parse_detail_page extracts fields from real detail HTML", {

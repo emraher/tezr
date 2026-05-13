@@ -8,10 +8,12 @@ vignette: >
 ---
 
 ```{r, include = FALSE}
+live_docs <- identical(Sys.getenv("TEZR_LIVE_DOCS"), "true")
+
 knitr::opts_chunk$set(
   collapse = TRUE,
   comment = "#>",
-  eval = TRUE,
+  eval = live_docs,
   cache = TRUE,
   warning = FALSE,
   message = FALSE
@@ -19,6 +21,8 @@ knitr::opts_chunk$set(
 ```
 
 This vignette demonstrates three very simple analysis workflows using thesis metadata from the NTC. Each example starts with data collection and ends with a table or plot. The workflows cover research trends, institutional comparisons, and keyword mining.
+
+Package builds show the code without running live requests. Set `TEZR_LIVE_DOCS=true` before rendering if you want to refresh all outputs.
 
 **Prerequisites:** Familiarity with dplyr and ggplot2. See the [Getting Started](getting-started.html) vignette for search function details.
 
@@ -197,7 +201,7 @@ degree_comparison
 
 ## Example 3: Keyword and Abstract Analysis
 
-You can extract research themes from thesis abstracts and keywords. Detail records include `keywords_tr`, `keywords_en`, `abstract_original`, and `abstract_translation`. This example fetches details for all matching theses, so it is slow.
+You can extract research themes from thesis abstracts and keywords. Detail records include `keywords_tr`, `keywords_en`, `abstract_original`, and `abstract_translation`. This example fetches details for a small sample so the article builds quickly.
 
 ### Collecting Detailed Metadata
 
@@ -208,9 +212,11 @@ ml_search <- search_basic("makine öğrenmesi",
 
 # Fetch full details (abstracts, keywords, advisor, PDF URLs)
 ml_search_sample <- ml_search |> 
-  slice_sample(n = 20)
+  slice_head(n = 5)
 
-ml_details <- detail(ml_search_sample$detail_id)
+ml_details <- ml_search_sample$detail_id |>
+  lapply(detail) |>
+  bind_rows()
 ```
 
 ### Keyword Frequency

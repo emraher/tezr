@@ -31,6 +31,7 @@ normalize_basic_cache_entry <- function(cache_entry) {
 #' Internal helper to execute search and parse results
 #' @noRd
 perform_search_request <- function(form_data) {
+  reset_session_if_search_mode_changed(form_data)
   refresh_session_if_needed()
   increment_request_count()
 
@@ -66,24 +67,53 @@ perform_search_request <- function(form_data) {
   )
 }
 
-#' Resolve a lookup ID with consistent messaging
+#' Reset the server session when switching search form modes
 #' @noRd
-resolve_lookup_id <- function(value, lookup_fn, label) {
+reset_session_if_search_mode_changed <- function(form_data) {
+  search_mode <- form_data[["islem"]]
+  if (
+    is.null(search_mode) ||
+      length(search_mode) == 0L ||
+      is.na(search_mode[[1L]])
+  ) {
+    return(invisible(NULL))
+  }
+
+  search_mode <- as.character(search_mode[[1L]])
+  previous_mode <- tezr_env$last_search_mode
+
+  if (!is.null(previous_mode) && !identical(previous_mode, search_mode)) {
+    init_session()
+  }
+
+  tezr_env$last_search_mode <- search_mode
+  invisible(NULL)
+}
+
+#' Resolve a lookup item with its canonical API label
+#' @noRd
+resolve_lookup_item <- function(value, lookup_fn, label) {
   if (is.null(value)) {
     return(NULL)
   }
 
-  id <- lookup_fn(value)
-  if (is.null(id)) {
-    label_lower <- tolower(label)
+  item <- lookup_fn(value)
+  if (is.null(item) || nrow(item) == 0) {
     cli::cli_warn(
-      "{label} {.val {value}} not found. Search may not filter by {label_lower} correctly."
+      "{label} {.val {value}} not found. Search may not filter by {tolower(label)} correctly."
     )
     return(NULL)
   }
 
+  id <- item$id[[1L]]
+  name <- if ("name" %in% names(item)) clean_text(item$name[[1L]]) else value
+
   cli::cli_alert_info("Found {label} ID: {.val {id}}")
-  return(id)
+
+  list(
+    id = id,
+    name = name
+  )
 }
 
 #' Read and normalize a cached search payload
@@ -159,7 +189,7 @@ run_basic_search <- function(
 
   if (!is.null(cached_search)) {
     cli::cli_alert_success(
-      "Returning cached results ({.val {nrow(cached_search$results)}} records)"
+      "Found cached results ({.val {nrow(cached_search$results)}} records)"
     )
     return(list(
       results = cached_search$results,
@@ -184,10 +214,6 @@ run_basic_search <- function(
     list(results = search_results, total_count = total_count),
     ignore_cache = ignore_cache
   )
-
-  if (total_count - nrow(search_results) <= 1) {
-    cli::cli_alert_success("Returning {.val {nrow(search_results)}} results")
-  }
 
   return(list(results = search_results, total_count = total_count))
 }

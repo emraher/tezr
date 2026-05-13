@@ -1,6 +1,6 @@
 Package: tezr
 Title: Access the Turkiye's National Thesis Center Database
-Version: 0.1.0
+Version: 0.2.0
 Authors@R:
     person("Emrah", "Er", , "eer@eremrah.com", role = c("aut", "cre"))
 Description: Access the Turkiye's National Thesis Center (Ulusal Tez Merkezi)
@@ -18,6 +18,7 @@ Depends:
     R (>= 4.1.0)
 Imports:
     httr2,
+    xml2,
     rvest,
     dplyr,
     tibble,
@@ -25,6 +26,7 @@ Imports:
     purrr,
     stringr,
     stringi,
+    jsonlite,
     cli,
     rlang
 Suggests:

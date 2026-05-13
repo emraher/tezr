@@ -7,9 +7,18 @@
 #' @return A tibble with parsed thesis records
 #' @noRd
 parse_results_table <- function(html) {
-  # Get the raw HTML text - data is in JavaScript, not HTML tables
   html_text <- as.character(html)
 
+  if (grepl("result-card", html_text, fixed = TRUE)) {
+    reference_data <- extract_reference_data(html_text)
+    card_records <- parse_result_cards(html, reference_data)
+
+    if (length(card_records) > 0) {
+      return(build_results_tibble(card_records))
+    }
+  }
+
+  # Get the raw HTML text - legacy data is in JavaScript, not HTML tables.
   doc_matches <- extract_js_doc_blocks(html_text)
 
   if (length(doc_matches) == 0) {
@@ -81,7 +90,9 @@ empty_results_tibble <- function() {
     language_en = character(),
     subject_tr = character(),
     subject_en = character(),
-    detail_id = character()
+    detail_id = character(),
+    encrypted_no = character(),
+    detail_url = character()
   ))
 }
 
@@ -103,6 +114,8 @@ build_results_tibble <- function(parsed_records) {
   subject_tr <- character(record_count)
   subject_en <- character(record_count)
   detail_id <- character(record_count)
+  encrypted_no <- character(record_count)
+  detail_url <- character(record_count)
 
   for (record_index in seq_len(record_count)) {
     parsed_record <- parsed_records[[record_index]]
@@ -126,6 +139,10 @@ build_results_tibble <- function(parsed_records) {
     subject_tr[[record_index]] <- parsed_record$subject_tr %|na|% NA_character_
     subject_en[[record_index]] <- parsed_record$subject_en %|na|% NA_character_
     detail_id[[record_index]] <- parsed_record$detail_id %|na|% NA_character_
+    encrypted_no[[record_index]] <- parsed_record$encrypted_no %|na|%
+      NA_character_
+    detail_url[[record_index]] <- parsed_record$detail_url %|na|%
+      NA_character_
   }
 
   return(tibble::tibble(
@@ -141,8 +158,275 @@ build_results_tibble <- function(parsed_records) {
     language_en = language_en,
     subject_tr = subject_tr,
     subject_en = subject_en,
-    detail_id = detail_id
+    detail_id = detail_id,
+    encrypted_no = encrypted_no,
+    detail_url = detail_url
   ))
+}
+
+#' Extract the redesigned `referenceData` JavaScript object from results HTML
+#' @noRd
+extract_reference_data <- function(html_text) {
+  marker <- "const referenceData ="
+  marker_start <- regexpr(marker, html_text, fixed = TRUE)[[1]]
+
+  if (marker_start < 0) {
+    return(list())
+  }
+
+  reference_tail <- substr(html_text, marker_start, nchar(html_text))
+  script_end <- regexpr("</script>", reference_tail, fixed = TRUE)[[1]]
+
+  if (script_end > 0) {
+    reference_tail <- substr(reference_tail, 1L, script_end - 1L)
+  }
+
+  brace_start <- regexpr(
+    "\\{",
+    reference_tail,
+    perl = TRUE
+  )[[1]]
+
+  if (brace_start < 0) {
+    return(list())
+  }
+
+  brace_end <- find_matching_js_brace(reference_tail, brace_start)
+
+  if (is.na(brace_end)) {
+    return(list())
+  }
+
+  raw_json <- substr(reference_tail, brace_start, brace_end)
+  clean_json <- gsub(",(\\s*[}\\]])", "\\1", raw_json, perl = TRUE)
+
+  tryCatch(
+    jsonlite::fromJSON(clean_json, simplifyVector = FALSE),
+    error = function(error) {
+      list()
+    }
+  )
+}
+
+#' Find the closing brace for a JavaScript object literal
+#' @noRd
+find_matching_js_brace <- function(text, open_position) {
+  code_points <- utf8ToInt(text)
+
+  if (
+    length(code_points) == 0 ||
+      is.na(open_position) ||
+      open_position < 1L ||
+      open_position > length(code_points) ||
+      !identical(code_points[[open_position]], 123L)
+  ) {
+    return(NA_integer_)
+  }
+
+  depth <- 0L
+  in_string <- FALSE
+  string_quote <- NA_integer_
+  text_length <- length(code_points)
+  position <- open_position
+
+  while (position <= text_length) {
+    character_at_position <- code_points[[position]]
+
+    if (in_string) {
+      if (character_at_position == 92L) {
+        position <- position + 2L
+        next
+      }
+      if (character_at_position == string_quote) {
+        in_string <- FALSE
+        string_quote <- NA_integer_
+      }
+    } else {
+      if (character_at_position == 34L || character_at_position == 39L) {
+        in_string <- TRUE
+        string_quote <- character_at_position
+      } else if (character_at_position == 123L) {
+        depth <- depth + 1L
+      } else if (character_at_position == 125L) {
+        depth <- depth - 1L
+        if (depth == 0L) {
+          return(position)
+        }
+      }
+    }
+
+    position <- position + 1L
+  }
+
+  NA_integer_
+}
+
+#' Parse redesigned result cards from the 2026 YOK search output
+#' @noRd
+parse_result_cards <- function(html, reference_data) {
+  cards <- xml2::xml_find_all(
+    html,
+    ".//div[contains(concat(' ', normalize-space(@class), ' '), ' result-card ')]",
+    ns = character()
+  )
+
+  if (length(cards) == 0) {
+    return(list())
+  }
+
+  parsed_records <- vector("list", length(cards))
+  parsed_count <- 0L
+
+  for (card in cards) {
+    parsed_card <- parse_result_card(card, reference_data)
+    if (!is.null(parsed_card)) {
+      parsed_count <- parsed_count + 1L
+      parsed_records[[parsed_count]] <- parsed_card
+    }
+  }
+
+  if (parsed_count == 0L) {
+    return(list())
+  }
+
+  parsed_records[seq_len(parsed_count)]
+}
+
+#' Parse one redesigned result card
+#' @noRd
+parse_result_card <- function(card, reference_data) {
+  detail_id <- xml2::xml_attr(card, "data-kayitno")
+  encrypted_no <- xml2::xml_attr(card, "data-tezno")
+  card_index <- xml2::xml_attr(card, "data-index")
+
+  if (is.na(detail_id) || is.na(encrypted_no)) {
+    return(NULL)
+  }
+
+  title_node <- xml2::xml_find_first(
+    card,
+    ".//div[contains(concat(' ', normalize-space(@class), ' '), ' card-title ')]",
+    ns = character()
+  )
+  title_original <- if (!is_missing_xml_node(title_node)) {
+    clean_text(xml2::xml_text(title_node))
+  } else {
+    NA_character_
+  }
+
+  card_info <- extract_card_info(card)
+  meta <- extract_card_meta(reference_data, card_index)
+
+  subject_raw <- meta[["subject"]] %|na|% NA_character_
+  subjects <- split_bilingual_subjects(subject_raw)
+  language <- extract_stat_language(meta[["lang"]] %|na|% "")
+  thesis_type <- extract_stat_thesis_type(meta[["type"]] %|na|% "")
+  university <- clean_text(meta[["yer"]] %|na|% NA_character_)
+  university <- sub("\\s*/\\s*$", "", university, perl = TRUE)
+
+  list(
+    thesis_no = card_info$thesis_no %|na|% NA_character_,
+    title_original = title_original %|na|% NA_character_,
+    title_translation = card_info$title_translation %|na|% NA_character_,
+    author = clean_text(meta[["author"]] %|na|% NA_character_),
+    university = university %|na|% NA_character_,
+    year = suppressWarnings(as.integer(meta[["year"]] %|na|% NA_character_)),
+    thesis_type_tr = thesis_type$tr %|na|% NA_character_,
+    thesis_type_en = thesis_type$en %|na|% NA_character_,
+    language_tr = language$tr,
+    language_en = language$en,
+    subject_tr = subjects$subject_tr,
+    subject_en = subjects$subject_en,
+    detail_id = detail_id,
+    encrypted_no = encrypted_no,
+    detail_url = build_detail_url(detail_id, encrypted_no)
+  )
+}
+
+#' Does an xml2 lookup result represent a missing node?
+#' @noRd
+is_missing_xml_node <- function(node) {
+  inherits(node, "xml_missing") || length(node) == 0L || isTRUE(is.na(node))
+}
+
+#' Return metadata for a result card index
+#' @noRd
+extract_card_meta <- function(reference_data, card_index) {
+  if (is.na(card_index) || is.null(reference_data[[card_index]])) {
+    return(list())
+  }
+
+  meta <- reference_data[[card_index]][["meta"]]
+  if (is.null(meta)) {
+    return(list())
+  }
+
+  meta
+}
+
+#' Extract translated title and visible thesis number from card-info rows
+#' @noRd
+extract_card_info <- function(card) {
+  info_nodes <- xml2::xml_find_all(
+    card,
+    ".//div[contains(concat(' ', normalize-space(@class), ' '), ' card-info ')]",
+    ns = character()
+  )
+
+  title_translation <- NA_character_
+  thesis_no <- NA_character_
+
+  for (info_node in info_nodes) {
+    style <- xml2::xml_attr(info_node, "style")
+    info_text <- clean_text(xml2::xml_text(info_node))
+
+    if (
+      is.na(title_translation) &&
+      !is.na(style) && grepl("font-style\\s*:\\s*italic", style, perl = TRUE)
+    ) {
+      title_translation <- info_text
+    }
+
+    if (is.na(thesis_no)) {
+      thesis_match <- regexec(
+        "(?:Tez|Thesis)\\s+No[:\\s]*([0-9]+)",
+        info_text,
+        ignore.case = TRUE,
+        perl = TRUE
+      )
+      thesis_parts <- regmatches(info_text, thesis_match)[[1]]
+      if (length(thesis_parts) >= 2L) {
+        thesis_no <- thesis_parts[[2]]
+      }
+    }
+
+    if (!is.na(title_translation) && !is.na(thesis_no)) {
+      break
+    }
+  }
+
+  list(
+    title_translation = title_translation,
+    thesis_no = thesis_no
+  )
+}
+
+#' Build a YOK detail URL from the redesigned search identifiers
+#' @noRd
+build_detail_url <- function(detail_id, encrypted_no = NULL) {
+  if (is.na(detail_id) || nchar(detail_id) == 0) {
+    return(NA_character_)
+  }
+
+  detail_url <- paste0(base_url, endpoints$detail, "?id=", detail_id)
+
+  if (
+    !is.null(encrypted_no) && !is.na(encrypted_no) && nchar(encrypted_no) > 0
+  ) {
+    detail_url <- paste0(detail_url, "&no=", encrypted_no)
+  }
+
+  detail_url
 }
 
 #' Parse JavaScript object fields into a named character vector
@@ -286,6 +570,11 @@ parse_js_doc <- function(doc_str) {
     "tezDetay\\('([^']+)'\\s*,\\s*'([^']+)'\\)"
   )
   detail_id <- if (!is.na(detail_match[1])) detail_match[2] else NA_character_
+  encrypted_no <- if (!is.na(detail_match[1])) {
+    detail_match[3]
+  } else {
+    NA_character_
+  }
 
   author <- get_doc_field(parsed_fields, "name")
   year <- suppressWarnings(as.integer(get_doc_field(parsed_fields, "age")))
@@ -321,6 +610,8 @@ parse_js_doc <- function(doc_str) {
     language_en = language$en,
     subject_tr = subjects$subject_tr,
     subject_en = subjects$subject_en,
-    detail_id = detail_id
+    detail_id = detail_id,
+    encrypted_no = encrypted_no,
+    detail_url = build_detail_url(detail_id, encrypted_no)
   ))
 }

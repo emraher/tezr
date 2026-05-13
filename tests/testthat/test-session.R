@@ -8,6 +8,12 @@ local_clean_session <- function(env = parent.frame()) {
   old_cookies <- tezr_env$cookies
   old_request_count <- tezr_env$request_count
   old_session_start <- tezr_env$session_start
+  old_has_last_search_mode <- exists(
+    "last_search_mode",
+    envir = tezr_env,
+    inherits = FALSE
+  )
+  old_last_search_mode <- tezr_env$last_search_mode
 
   withr::defer(
     {
@@ -15,6 +21,13 @@ local_clean_session <- function(env = parent.frame()) {
       tezr_env$cookies <- old_cookies
       tezr_env$request_count <- old_request_count
       tezr_env$session_start <- old_session_start
+      if (old_has_last_search_mode) {
+        tezr_env$last_search_mode <- old_last_search_mode
+      } else if (
+        exists("last_search_mode", envir = tezr_env, inherits = FALSE)
+      ) {
+        rm(list = "last_search_mode", envir = tezr_env)
+      }
     },
     envir = env
   )
@@ -104,6 +117,27 @@ test_that("init_session applies default headers", {
   init_session()
 
   expect_true(called)
+})
+
+test_that("init_session applies retry policy", {
+  local_clean_session()
+  retry_called <- FALSE
+
+  testthat::local_mocked_bindings(
+    req_retry = function(req, ...) {
+      retry_called <<- TRUE
+      req
+    },
+    req_perform = function(req, ...) {
+      structure(list(), class = "httr2_response")
+    },
+    resp_header = function(...) NULL,
+    .package = "httr2"
+  )
+
+  init_session()
+
+  expect_true(retry_called)
 })
 
 test_that("rate_limit sleeps the correct remaining time", {
@@ -200,6 +234,25 @@ test_that("init_session handles missing Set-Cookie header", {
 
   # Cookies should remain NULL when no Set-Cookie header
   expect_null(tezr_env$cookies)
+})
+
+test_that("init_session clears previous search mode", {
+  local_clean_session()
+
+  testthat::local_mocked_bindings(
+    req_perform = function(req, ...) {
+      structure(list(), class = "httr2_response")
+    },
+    resp_header = function(...) NULL,
+    .package = "httr2"
+  )
+
+  tezr_env <- get("tezr_env", envir = asNamespace("tezr"))
+  tezr_env$last_search_mode <- "4"
+
+  init_session()
+
+  expect_false(exists("last_search_mode", envir = tezr_env, inherits = FALSE))
 })
 
 test_that("has_session returns FALSE before init, TRUE after", {

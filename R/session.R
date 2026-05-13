@@ -8,7 +8,9 @@ endpoints <- list(
   home = "giris.jsp",
   search = "SearchTez",
   results = "tezSorguSonucYeni.jsp",
-  detail = "tezDetay.jsp"
+  detail = "tezDetay.jsp",
+  detail_json = "tezBilgiDetay.jsp",
+  recent = "TezIslemleri"
 )
 
 #' Thesis Environment
@@ -60,7 +62,8 @@ init_session <- function(ssl_verify = FALSE) {
   req <- httr2::request(base_url) |>
     httr2::req_url_path_append(endpoints$home) |>
     httr2::req_options(ssl_verifypeer = ssl_verify) |>
-    httr2::req_headers(!!!default_request_headers())
+    httr2::req_headers(!!!default_request_headers()) |>
+    httr2::req_retry(max_tries = 3)
 
   resp <- httr2::req_perform(req)
 
@@ -71,6 +74,9 @@ init_session <- function(ssl_verify = FALSE) {
 
   tezr_env$request_count <- 0L
   tezr_env$session_start <- Sys.time()
+  if (exists("last_search_mode", envir = tezr_env, inherits = FALSE)) {
+    rm(list = "last_search_mode", envir = tezr_env)
+  }
 
   invisible(TRUE)
 }

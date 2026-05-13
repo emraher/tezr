@@ -3,6 +3,6 @@ bibentry(
   title = "tezr: Access the Turkiye's National Thesis Center Database",
   author = person("Emrah", "Er", email = "eer@eremrah.com"),
   year = "2025",
-  note = "R package version 0.1.0",
+  note = "R package version 0.2.0",
   url = "https://github.com/emraher/tezr"
 )

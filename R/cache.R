@@ -26,24 +26,49 @@ cache_config <- function(
   search_ttl = 3600,
   detail_ttl = NULL
 ) {
-  # Validate search_ttl
-  if (!is.null(search_ttl)) {
-    if (!is.numeric(search_ttl) || search_ttl < 0) {
-      cli::cli_abort("{.arg search_ttl} must be a positive number or NULL")
-    }
-  }
-
-  # Validate detail_ttl
-  if (!is.null(detail_ttl)) {
-    if (!is.numeric(detail_ttl) || detail_ttl < 0) {
-      cli::cli_abort("{.arg detail_ttl} must be a positive number or NULL")
-    }
-  }
+  enable <- validate_cache_enable(enable)
+  search_ttl <- validate_cache_ttl(search_ttl, "search_ttl")
+  detail_ttl <- validate_cache_ttl(detail_ttl, "detail_ttl")
 
   tezr_env$cache_enabled <- enable
   tezr_env$search_ttl <- search_ttl
   tezr_env$detail_ttl <- detail_ttl
   return(invisible(NULL))
+}
+
+#' Validate cache enabled flag
+#' @noRd
+validate_cache_enable <- function(enable) {
+  if (
+    !is.logical(enable) ||
+      length(enable) != 1L ||
+      is.na(enable)
+  ) {
+    cli::cli_abort("{.arg enable} must be TRUE or FALSE")
+  }
+
+  enable
+}
+
+#' Validate a cache TTL value
+#' @noRd
+validate_cache_ttl <- function(ttl, arg_name) {
+  if (is.null(ttl)) {
+    return(NULL)
+  }
+
+  if (
+    !is.numeric(ttl) ||
+      length(ttl) != 1L ||
+      is.na(ttl) ||
+      ttl < 0
+  ) {
+    cli::cli_abort(
+      "{.arg {arg_name}} must be a single non-negative number or NULL"
+    )
+  }
+
+  ttl
 }
 
 #' Clear the cache

@@ -1,5 +1,38 @@
 lookup_cache <- new.env(parent = emptyenv())
 
+#' Normalize lookup labels for robust Turkish name matching
+#' @noRd
+normalize_lookup_label <- function(text, compact = FALSE) {
+  normalized <- clean_text(text)
+  normalized <- stringi::stri_trans_tolower(normalized, locale = "tr")
+  normalized <- stringi::stri_trans_general(normalized, "Latin-ASCII")
+  normalized <- gsub("[^A-Za-z0-9]+", " ", normalized, perl = TRUE)
+  normalized <- clean_text(normalized)
+
+  if (isTRUE(compact)) {
+    normalized <- gsub("\\s+", "", normalized, perl = TRUE)
+  }
+
+  normalized
+}
+
+#' Return source labels for lookup matching
+#' @noRd
+lookup_source_labels <- function(items) {
+  labels <- if ("name" %in% names(items)) {
+    items$name
+  } else {
+    items$clean_name
+  }
+
+  if ("clean_name" %in% names(items)) {
+    missing_labels <- is.na(labels) | !nzchar(labels)
+    labels[missing_labels] <- items$clean_name[missing_labels]
+  }
+
+  labels
+}
+
 #' Fetch an entity list from the API and cache it by type
 #' @noRd
 generic_fetch_list <- function(cache_key, endpoint) {
@@ -22,7 +55,9 @@ generic_fetch_list <- function(cache_key, endpoint) {
       id = matches[, 3]
     ) |>
       dplyr::mutate(
-        clean_name = clean_text(.data$name) |> stringr::str_to_lower()
+        clean_name = clean_text(.data$name) |> stringr::str_to_lower(),
+        normalized_name = normalize_lookup_label(.data$name),
+        compact_name = normalize_lookup_label(.data$name, compact = TRUE)
       )
 
     lookup_cache[[cache_key]] <- filter_options
@@ -32,21 +67,36 @@ generic_fetch_list <- function(cache_key, endpoint) {
   return(tibble::tibble(
     name = character(),
     id = character(),
-    clean_name = character()
+    clean_name = character(),
+    normalized_name = character(),
+    compact_name = character()
   ))
 }
 
 #' Resolve a human-readable name to its API ID via exact or partial match
 #' @noRd
-generic_lookup_id <- function(name, fetch_fn) {
+generic_lookup_item <- function(name, fetch_fn) {
   if (is.null(name) || length(name) == 0L || !nzchar(name[[1L]])) {
     return(NULL)
   }
 
   items <- fetch_fn()
   name_lower <- stringr::str_to_lower(clean_text(name))
+  normalized_name <- normalize_lookup_label(name)
+  compact_name <- normalize_lookup_label(name, compact = TRUE)
 
   matched_items <- items |> dplyr::filter(.data$clean_name == name_lower)
+
+  if (nrow(matched_items) == 0) {
+    lookup_names <- if ("normalized_name" %in% names(items)) {
+      items$normalized_name
+    } else {
+      normalize_lookup_label(lookup_source_labels(items))
+    }
+
+    match_mask <- !is.na(lookup_names) & lookup_names == normalized_name
+    matched_items <- items[match_mask, , drop = FALSE]
+  }
 
   if (nrow(matched_items) == 0) {
     matched_items <- items |>
@@ -56,8 +106,43 @@ generic_lookup_id <- function(name, fetch_fn) {
       ))
   }
 
+  if (nrow(matched_items) == 0) {
+    lookup_names <- if ("normalized_name" %in% names(items)) {
+      items$normalized_name
+    } else {
+      normalize_lookup_label(lookup_source_labels(items))
+    }
+
+    match_mask <- !is.na(lookup_names) &
+      stringr::str_detect(lookup_names, stringr::fixed(normalized_name))
+    matched_items <- items[match_mask, , drop = FALSE]
+  }
+
+  if (nrow(matched_items) == 0) {
+    lookup_names <- if ("compact_name" %in% names(items)) {
+      items$compact_name
+    } else {
+      normalize_lookup_label(lookup_source_labels(items), compact = TRUE)
+    }
+
+    match_mask <- !is.na(lookup_names) & lookup_names == compact_name
+    matched_items <- items[match_mask, , drop = FALSE]
+  }
+
+  if (nrow(matched_items) == 0) {
+    lookup_names <- if ("compact_name" %in% names(items)) {
+      items$compact_name
+    } else {
+      normalize_lookup_label(lookup_source_labels(items), compact = TRUE)
+    }
+
+    match_mask <- !is.na(lookup_names) &
+      stringr::str_detect(lookup_names, stringr::fixed(compact_name))
+    matched_items <- items[match_mask, , drop = FALSE]
+  }
+
   if (nrow(matched_items) > 0) {
-    return(matched_items$id[1])
+    return(matched_items[1, , drop = FALSE])
   }
 
   return(NULL)
@@ -102,32 +187,29 @@ fetch_subject_list <- function() {
   generic_fetch_list("subject", lookup_config$subject)
 }
 
-#' Resolve a university name to its API ID
+#' Resolve a university name to its API item
 #' @noRd
-lookup_university_id <- function(name) {
-  generic_lookup_id(name, fetch_university_list)
+lookup_university_item <- function(name) {
+  generic_lookup_item(name, fetch_university_list)
 }
 
-#' Resolve an institute name to its API ID
+#' Resolve an institute name to its API item
 #' @noRd
-lookup_institute_id <- function(name) {
-  generic_lookup_id(name, fetch_institute_list)
+lookup_institute_item <- function(name) {
+  generic_lookup_item(name, fetch_institute_list)
 }
 
-#' Resolve a division name to its API ID
+#' Resolve a division name to its API item
 #' @noRd
-lookup_division_id <- function(name) {
-  generic_lookup_id(name, fetch_division_list)
+lookup_division_item <- function(name) {
+  generic_lookup_item(name, fetch_division_list)
 }
 
-#' Resolve a discipline name to its API ID
+#' Resolve a discipline name to its API item
 #' @noRd
-lookup_discipline_id <- function(name) {
-  generic_lookup_id(name, fetch_discipline_list)
+lookup_discipline_item <- function(name) {
+  generic_lookup_item(name, fetch_discipline_list)
 }
-#' Resolve a subject name to its API ID
-#' @noRd
-lookup_subject_id <- function(name) generic_lookup_id(name, fetch_subject_list)
 
 #' Return a cleaned two-column lookup table
 #' @noRd

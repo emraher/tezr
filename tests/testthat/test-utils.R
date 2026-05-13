@@ -20,11 +20,12 @@ test_that("build_basic_search_form creates correct structure", {
   )
 
   expect_type(form, "list")
-  expect_equal(form$neden, "test")
+  expect_equal(form$keyword, "test")
   expect_equal(form$nevi, 1L)
-  expect_equal(form$tur, 2L)
+  expect_equal(form$Tur, 2L)
   expect_equal(form$izin, 1L)
-  expect_equal(form$islem, 1L)
+  expect_equal(form$islem, 4L)
+  expect_equal(form$tip, match_type_codes$contains)
 })
 
 test_that("build_advanced_search_form produces correct field count and values", {
@@ -69,22 +70,21 @@ test_that("build_advanced_search_form respects match_type parameter", {
   expect_equal(form_contains$tip, 2L)
 })
 
-test_that("build_advanced_search_form handles university/institute IDs", {
+test_that("build_advanced_search_form includes supported university and group filters", {
   form <- build_advanced_search_form(
     keyword = "test",
     search_field = "all",
     thesis_type = "all",
     access_type = "all",
-    university = "Test Uni",
-    university_id = "123",
-    institute = "Test Inst",
-    institute_id = 456
+    group = "science",
+    university_id = "123"
   )
 
-  expect_equal(form$uniad, "Test Uni")
+  expect_equal(form$EnstituGrubu, group_codes$science)
   expect_equal(form$Universite, 123L)
-  expect_equal(form$ensad, "Test Inst")
-  expect_equal(form$Enstitu, 456L)
+  expect_equal(form$source, "TR")
+  expect_false("ensad" %in% names(form))
+  expect_false("Enstitu" %in% names(form))
 })
 
 test_that("build_detailed_search_form respects status parameter", {
@@ -125,6 +125,8 @@ test_that("validate_year works correctly", {
   expect_equal(validate_year(2020), 2020L)
   expect_equal(validate_year("2020"), 2020L)
   expect_error(validate_year(c(2020, 2021)), "single")
+  expect_error(validate_year(2020.5), "valid year")
+  expect_error(validate_year("2020.5"), "valid year")
   expect_error(validate_year(1800))
   expect_error(validate_year(2200))
 })
@@ -135,6 +137,21 @@ test_that("validate_year at boundary values", {
   expect_equal(validate_year(current_year), current_year)
   expect_error(validate_year(1958), "between 1959")
   expect_error(validate_year(current_year + 1), "between 1959")
+})
+
+test_that("validate_max_search_results rejects invalid values cleanly", {
+  expect_equal(validate_max_search_results(1), 1L)
+  expect_equal(validate_max_search_results(Inf), Inf)
+  expect_error(validate_max_search_results(0), "max_search_results")
+  expect_error(validate_max_search_results(1.5), "max_search_results")
+  expect_error(validate_max_search_results("many"), "max_search_results")
+  expect_error(validate_max_search_results(1e20), "max_search_results")
+})
+
+test_that("validate_optional_id rejects decimal values", {
+  expect_equal(validate_optional_id("123", "university_id"), 123L)
+  expect_error(validate_optional_id(123.5, "university_id"), "university_id")
+  expect_error(validate_optional_id("123.5", "university_id"), "university_id")
 })
 
 test_that("search forms resolve language labels", {
@@ -169,6 +186,10 @@ test_that("resolve_language_id handles ids and labels", {
   expect_equal(resolve_language_id(tr_id), tr_id)
   expect_equal(resolve_language_id(as.character(tr_id)), tr_id)
   expect_equal(resolve_language_id("tr"), tr_id)
+  expect_error(resolve_language_id(1.5), "language")
+  expect_error(resolve_language_id("1.5"), "language")
+  expect_error(resolve_language_id(""), "language")
+  expect_error(resolve_language_id(NA_character_), "language")
   expect_error(resolve_language_id("klingon"), "language")
 })
 
@@ -222,7 +243,6 @@ test_that("build_detailed_search_form handles IDs correctly", {
     discipline = "Test Discipline",
     discipline_id = "101112",
     subject = "Test Subject",
-    subject_id = "131415",
     group = "social"
   )
 
@@ -230,6 +250,7 @@ test_that("build_detailed_search_form handles IDs correctly", {
   expect_equal(form$Universite, 123L)
   expect_equal(form$ensad, "Test Inst")
   expect_equal(form$Enstitu, 456L)
+  expect_equal(form$selected_institute, "on")
   expect_equal(form$abdad, "Test Division")
   expect_equal(form$ABD, 789L)
   expect_equal(form$bilim, "Test Discipline")

@@ -20,6 +20,7 @@
 ^_pkgdown\.yml$
 ^docs$
 ^pkgdown$
+^README\.html$
 ^README\.Rmd$
 ^README_cache$
 ^README_files$
@@ -42,3 +43,5 @@
 # Miscellaneous local artifacts
 ^todo\.md$
 ^texput\.log$
+^doc$
+^Meta$

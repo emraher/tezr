@@ -21,19 +21,19 @@ test_that("lookup_cache is an environment", {
   expect_true(exists("lookup_cache", envir = asNamespace("tezr")))
 })
 
-test_that("generic_lookup_id returns NULL for NULL input", {
+test_that("generic_lookup_item returns NULL for NULL input", {
   fetch_fn <- function() tibble::tibble(name = "X", id = "1", clean_name = "x")
-  result <- generic_lookup_id(NULL, fetch_fn)
+  result <- generic_lookup_item(NULL, fetch_fn)
   expect_null(result)
 })
 
-test_that("generic_lookup_id returns NULL for empty string input", {
+test_that("generic_lookup_item returns NULL for empty string input", {
   fetch_fn <- function() tibble::tibble(name = "X", id = "1", clean_name = "x")
-  result <- generic_lookup_id("", fetch_fn)
+  result <- generic_lookup_item("", fetch_fn)
   expect_null(result)
 })
 
-test_that("generic_lookup_id returns first ID on exact match", {
+test_that("generic_lookup_item returns first item on exact match", {
   items <- tibble::tibble(
     name = c("Ankara Uni", "Istanbul Uni"),
     id = c("3", "5"),
@@ -41,11 +41,12 @@ test_that("generic_lookup_id returns first ID on exact match", {
   )
   fetch_fn <- function() items
 
-  result <- generic_lookup_id("Ankara Uni", fetch_fn)
-  expect_equal(result, "3")
+  result <- generic_lookup_item("Ankara Uni", fetch_fn)
+  expect_equal(result$id, "3")
+  expect_equal(result$name, "Ankara Uni")
 })
 
-test_that("generic_lookup_id returns first ID on substring match when exact fails", {
+test_that("generic_lookup_item returns first item on substring match", {
   items <- tibble::tibble(
     name = c("Ankara Universitesi", "Istanbul Universitesi"),
     id = c("3", "5"),
@@ -53,11 +54,12 @@ test_that("generic_lookup_id returns first ID on substring match when exact fail
   )
   fetch_fn <- function() items
 
-  result <- generic_lookup_id("ankara", fetch_fn)
-  expect_equal(result, "3")
+  result <- generic_lookup_item("ankara", fetch_fn)
+  expect_equal(result$id, "3")
+  expect_equal(result$name, "Ankara Universitesi")
 })
 
-test_that("generic_lookup_id returns NULL when no match found", {
+test_that("generic_lookup_item returns NULL when no match found", {
   items <- tibble::tibble(
     name = c("Ankara Uni"),
     id = c("3"),
@@ -65,11 +67,11 @@ test_that("generic_lookup_id returns NULL when no match found", {
   )
   fetch_fn <- function() items
 
-  result <- generic_lookup_id("Nonexistent", fetch_fn)
+  result <- generic_lookup_item("Nonexistent", fetch_fn)
   expect_null(result)
 })
 
-test_that("generic_lookup_id matches case-insensitively", {
+test_that("generic_lookup_item matches case-insensitively", {
   items <- tibble::tibble(
     name = c("ANKARA UNI", "Istanbul Uni"),
     id = c("3", "5"),
@@ -77,14 +79,14 @@ test_that("generic_lookup_id matches case-insensitively", {
   )
   fetch_fn <- function() items
 
-  result <- generic_lookup_id("ankara uni", fetch_fn)
-  expect_equal(result, "3")
+  result <- generic_lookup_item("ankara uni", fetch_fn)
+  expect_equal(result$id, "3")
 
-  result2 <- generic_lookup_id("ANKARA UNI", fetch_fn)
-  expect_equal(result2, "3")
+  result2 <- generic_lookup_item("ANKARA UNI", fetch_fn)
+  expect_equal(result2$id, "3")
 })
 
-test_that("generic_lookup_id matches when input case matches data case", {
+test_that("generic_lookup_item matches when input case matches data case", {
   # Turkish İ (dotted capital I) lowercased produces i + combining dot.
   # Lookup works when both sides go through the same clean_text + str_to_lower path.
   all_caps <- "\u0130STANBUL \u00dcN\u0130VERS\u0130TES\u0130"
@@ -96,11 +98,11 @@ test_that("generic_lookup_id matches when input case matches data case", {
   fetch_fn <- function() items
 
   # Same all-caps input matches because both sides produce identical lowercased form
-  result <- generic_lookup_id(all_caps, fetch_fn)
-  expect_equal(result, "7")
+  result <- generic_lookup_item(all_caps, fetch_fn)
+  expect_equal(result$id, "7")
 })
 
-test_that("generic_lookup_id falls back to substring for Turkish mixed-case", {
+test_that("generic_lookup_item falls back to substring for Turkish mixed-case", {
   # When data has all-caps Turkish İ and user types mixed-case,
   # exact match fails due to Unicode normalization differences,
 
@@ -117,11 +119,41 @@ test_that("generic_lookup_id falls back to substring for Turkish mixed-case", {
 
   # Substring of just the İ-prefixed word — str_to_lower("İstanbul") produces
   # "i̇stanbul" which IS contained in the clean_name "i̇stanbul ..."
-  result <- generic_lookup_id(mixed_case, fetch_fn)
-  expect_equal(result, "7")
+  result <- generic_lookup_item(mixed_case, fetch_fn)
+  expect_equal(result$id, "7")
 })
 
-test_that("generic_lookup_id prefers exact match over substring", {
+test_that("generic_lookup_item ignores Turkish case, accents, and spacing", {
+  items <- tibble::tibble(
+    name = c(
+      "ANKARA ÜNİVERSİTESİ",
+      "BÖLGESEL KALKINMA İKTİSAT ANABİLİM DALI",
+      "İKTİSAT ANABİLİM DALI"
+    ),
+    id = c("3", "1753", "51"),
+    clean_name = stringr::str_to_lower(clean_text(name))
+  )
+  fetch_fn <- function() items
+
+  expect_equal(generic_lookup_item("Ankara Üniversitesi", fetch_fn)$id, "3")
+  expect_equal(generic_lookup_item("İktisat Ana Bilim Dalı", fetch_fn)$id, "51")
+})
+
+test_that("generic_lookup_item returns canonical label and ID", {
+  items <- tibble::tibble(
+    name = c("ANKARA ÜNİVERSİTESİ", "İKTİSAT ANABİLİM DALI"),
+    id = c("3", "51"),
+    clean_name = stringr::str_to_lower(clean_text(name))
+  )
+  fetch_fn <- function() items
+
+  matched_item <- generic_lookup_item("Ankara Üniversitesi", fetch_fn)
+
+  expect_equal(matched_item$name, "ANKARA ÜNİVERSİTESİ")
+  expect_equal(matched_item$id, "3")
+})
+
+test_that("generic_lookup_item prefers exact match over substring", {
   items <- tibble::tibble(
     name = c("Ankara Universitesi Fen", "Ankara Universitesi"),
     id = c("10", "20"),
@@ -130,8 +162,8 @@ test_that("generic_lookup_id prefers exact match over substring", {
   fetch_fn <- function() items
 
   # Exact match should return "20", not "10" (which would match as substring)
-  result <- generic_lookup_id("Ankara Universitesi", fetch_fn)
-  expect_equal(result, "20")
+  result <- generic_lookup_item("Ankara Universitesi", fetch_fn)
+  expect_equal(result$id, "20")
 })
 
 test_that("generic_fetch_list returns empty tibble for no-link HTML", {

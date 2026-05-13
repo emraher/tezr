@@ -123,6 +123,33 @@ mock_empty_results_html <- "
 </html>
 "
 
+# Mock HTML for the redesigned 2026 result-card structure.
+mock_result_cards_html <- '
+<!DOCTYPE html>
+<html>
+<body>
+<div class="result-limit-warning">
+Tarama sonucunda 2.345 kayıt bulundu. 2.000 tanesi görüntülenmektedir.
+</div>
+<div class="result-card" data-kayitno="abc123" data-tezno="enc456" data-index="0">
+  <div class="card-title">Yapay zeka ile veri analizi</div>
+  <div class="card-info" style="font-style: italic;">Data analysis with artificial intelligence</div>
+  <div class="card-info"><strong>Tez No:</strong> 1003627</div>
+</div>
+<div class="result-card" data-kayitno="def789" data-tezno="enc999" data-index="1">
+  <div class="card-title">Makine ogrenmesi uygulamalari</div>
+  <div class="card-info"><strong>Tez No:</strong> 1003628</div>
+</div>
+<script>
+const referenceData = {
+  "0": {"meta": {"author": "AYSE YILMAZ", "year": "2026", "subject": "Bilgisayar Muhendisligi=Computer Engineering", "type": "Doktora", "lang": "Turkce", "yer": "MARMARA UNIVERSITESI / "}},
+  "1": {"meta": {"author": "MEHMET DEMIR", "year": "2025", "subject": "Yazilim Muhendisligi=Software Engineering", "type": "Yuksek Lisans", "lang": "Ingilizce", "yer": "ANKARA UNIVERSITESI / Fen Bilimleri Enstitusu / "}},
+};
+</script>
+</body>
+</html>
+'
+
 test_that("parse_results_table extracts records from JavaScript objects", {
   html <- rvest::read_html(mock_search_results_html)
   results <- parse_results_table(html)
@@ -145,6 +172,66 @@ test_that("parse_results_table extracts records from JavaScript objects", {
   expect_equal(results$year[2], 2022L)
   expect_equal(results$subject_tr[2], "Yazilim Muhendisligi")
   expect_equal(results$subject_en[2], "Software Engineering")
+})
+
+test_that("parse_results_table extracts redesigned result cards", {
+  html <- rvest::read_html(mock_result_cards_html)
+  parsed_results <- parse_results_table(html)
+
+  expect_s3_class(parsed_results, "tbl_df")
+  expect_equal(nrow(parsed_results), 2)
+  expect_equal(parsed_results$thesis_no, c("1003627", "1003628"))
+  expect_equal(parsed_results$detail_id, c("abc123", "def789"))
+  expect_equal(parsed_results$encrypted_no, c("enc456", "enc999"))
+  expect_equal(parsed_results$author, c("AYSE YILMAZ", "MEHMET DEMIR"))
+  expect_equal(parsed_results$year, c(2026L, 2025L))
+  expect_equal(
+    parsed_results$title_translation[1],
+    "Data analysis with artificial intelligence"
+  )
+  expect_true(grepl("id=abc123", parsed_results$detail_url[1], fixed = TRUE))
+  expect_true(grepl("no=enc456", parsed_results$detail_url[1], fixed = TRUE))
+})
+
+test_that("parse_results_table extracts English result-card thesis numbers", {
+  html <- rvest::read_html(gsub(
+    "Tez No",
+    "Thesis No",
+    mock_result_cards_html,
+    fixed = TRUE
+  ))
+  parsed_results <- parse_results_table(html)
+
+  expect_equal(parsed_results$thesis_no, c("1003627", "1003628"))
+})
+
+test_that("extract_reference_data handles large redesigned metadata blocks", {
+  entries <- vapply(
+    seq_len(2000),
+    function(index) {
+      sprintf(
+        '"%d": {"meta": {"author": "AUTHOR %d", "year": "2026", "subject": "Ekonomi {hane}=Household } text", "type": "Doktora", "lang": "Turkce", "yer": "TEST UNIVERSITY / "}}',
+        index - 1L,
+        index
+      )
+    },
+    character(1)
+  )
+
+  html_text <- paste0(
+    "<script>const referenceData = {\n",
+    paste(entries, collapse = ",\n"),
+    "\n};</script><div>other page content</div>"
+  )
+
+  reference_data <- extract_reference_data(html_text)
+
+  expect_length(reference_data, 2000)
+  expect_equal(reference_data[["0"]]$meta$author, "AUTHOR 1")
+  expect_equal(
+    reference_data[["1999"]]$meta$subject,
+    "Ekonomi {hane}=Household } text"
+  )
 })
 
 test_that("parse_results_table handles closing brace characters inside field values", {
@@ -319,6 +406,18 @@ test_that("extract_total_count extracts count from page text", {
   html <- rvest::read_html(mock_search_results_html)
   count <- extract_total_count(html)
   expect_equal(count, 42L)
+})
+
+test_that("extract_total_count handles redesigned dotted thousands text", {
+  html <- rvest::read_html(mock_result_cards_html)
+  count <- extract_total_count(html)
+  expect_equal(count, 2345L)
+})
+
+test_that("extract_total_count handles English records-found text", {
+  html <- rvest::read_html("<html><body>1.404 records found.</body></html>")
+  count <- extract_total_count(html)
+  expect_equal(count, 1404L)
 })
 
 test_that("extract_total_count returns 0 for missing count", {

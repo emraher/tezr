@@ -18,6 +18,7 @@ cache/
 figure/
 README_cache/
 README_files/
+README.html
 inst/doc/
 docs/
 pkgdown/
@@ -37,3 +38,6 @@ texput.log
 # OS files
 .DS_Store
 Thumbs.db
+.positai
+/doc/
+/Meta/

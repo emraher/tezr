@@ -77,6 +77,24 @@ test_that("cache_config sets TTL values", {
   expect_equal(env$detail_ttl, 7200)
 })
 
+test_that("cache_config validates scalar arguments", {
+  local_clean_cache()
+
+  expect_error(cache_config(enable = NA), "enable")
+  expect_error(cache_config(enable = c(TRUE, FALSE)), "enable")
+  expect_error(cache_config(enable = "TRUE"), "enable")
+
+  expect_error(cache_config(search_ttl = NA_real_), "search_ttl")
+  expect_error(cache_config(search_ttl = c(1, 2)), "search_ttl")
+  expect_error(cache_config(search_ttl = -1), "search_ttl")
+  expect_error(cache_config(search_ttl = "10"), "search_ttl")
+
+  expect_error(cache_config(detail_ttl = NA_real_), "detail_ttl")
+  expect_error(cache_config(detail_ttl = c(1, 2)), "detail_ttl")
+  expect_error(cache_config(detail_ttl = -1), "detail_ttl")
+  expect_error(cache_config(detail_ttl = "10"), "detail_ttl")
+})
+
 test_that("cache_info returns correct structure", {
   local_clean_cache()
   info <- cache_info()

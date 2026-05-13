@@ -61,3 +61,11 @@ status_codes <- list(
   in_preparation = 1L, # Hazırlanıyor (In preparation)
   approved = 3L # Onaylandı (Approved)
 )
+
+#' Recent thesis list codes
+#' Maps English list names to TezIslemleri operation codes
+#' @noRd
+recent_list_codes <- list(
+  last_15_days = 7L,
+  current_year = 8L
+)

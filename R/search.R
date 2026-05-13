@@ -7,8 +7,9 @@
 #'
 #' @param keyword Character. The search term(s).
 #' @param search_field Character. The field to search in. One of "title",
-#'   "author", "supervisor", "subject", "index", "abstract", "all", or "thesis_no".
-#'   Default is "all".
+#'   "author", "supervisor", "subject", "index", "abstract", or "all".
+#'   Default is "all". The legacy `"thesis_no"` value is not supported by
+#'   YOK's keyword endpoint. Use `search_detailed(thesis_no = ...)` instead.
 #' @param access_type Character. Access type filter. One of "all", "open", or
 #'   "restricted". Default is "all".
 #' @param thesis_type Character. Type of thesis to search for. One of "all",
@@ -25,9 +26,9 @@
 #' Basic search returns up to 2000 results per query (YOK server limit). When
 #' results exceed 2000 and \code{max_search_results > 2000}, the search
 #' delegates to \code{\link{search_advanced}} which paginates via
-#' year-range splitting to retrieve all results. With the default
-#' \code{max_search_results = 2000}, a warning is issued suggesting
-#' \code{max_search_results = Inf}.
+#' year-range splitting to retrieve more results. Single-year ranges can still
+#' be capped by the server. With the default \code{max_search_results = 2000},
+#' a warning is issued suggesting \code{max_search_results = Inf}.
 #'
 #' @return A tibble containing thesis records with columns:
 #'   \itemize{
@@ -59,7 +60,7 @@
 #' # Search for open access theses
 #' search_results <- search_basic("tarım", access_type = "open")
 #'
-#' # Get all results (auto-delegates to advanced search for pagination)
+#' # Paginate beyond the first server batch when possible
 #' all_results <- search_basic("hanehalkı", max_search_results = Inf)
 #' }
 search_basic <- function(
@@ -93,15 +94,21 @@ search_basic <- function(
   thesis_type <- rlang::arg_match(thesis_type)
   access_type <- rlang::arg_match(access_type)
   validate_ignore_cache(ignore_cache)
+  max_search_results <- validate_max_search_results(max_search_results)
 
-  if (
-    missing(keyword) ||
-      !is.character(keyword) ||
-      length(keyword) != 1 ||
-      nchar(keyword) == 0
-  ) {
+  if (identical(search_field, "thesis_no")) {
+    cli::cli_abort(
+      paste0(
+        "YOK's keyword endpoint does not support thesis number search ",
+        "reliably. Use {.code search_detailed(thesis_no = ...)} instead."
+      )
+    )
+  }
+
+  if (missing(keyword)) {
     cli::cli_abort("{.arg keyword} must be a single non-empty character string")
   }
+  keyword <- validate_text_values(keyword, "keyword", allow_multiple = FALSE)
 
   cache_key <- build_search_cache_key(
     type = "basic",
@@ -129,6 +136,7 @@ search_basic <- function(
 
   search_results <- search_data$results
   total_count <- search_data$total_count
+  fetched_count <- nrow(search_results)
 
   search_results <- annotate_search_results(
     search_results,
@@ -140,7 +148,7 @@ search_basic <- function(
     return(search_results)
   }
 
-  overflow <- total_count - nrow(search_results) > 1
+  overflow <- total_count - fetched_count > 1
 
   if (overflow && max_search_results > 2000) {
     cli::cli_alert_info("Delegating to advanced search for pagination...")
@@ -163,6 +171,14 @@ search_basic <- function(
         "Set {.arg max_search_results = Inf} to auto-paginate."
       )
     )
+  }
+
+  if (nrow(search_results) > max_search_results) {
+    search_results <- search_results[seq_len(max_search_results), ]
+  }
+
+  if (!overflow) {
+    cli::cli_alert_success("Returning {.val {nrow(search_results)}} results")
   }
 
   return(search_results)
@@ -205,7 +221,7 @@ warn_incomplete_results <- function(
     year_text <- format_overflow_years(single_year_overflow_years)
     cli::cli_alert_warning(
       c(
-        "Returning {.val {returned_count}} of {.val {total_count}} results.",
+        "Returning {.val {returned_count}} of {.val {total_count}} results. ",
         paste0(
           "At least one single-year range exceeded the server limit and ",
           "cannot split further (years: ",
@@ -221,7 +237,7 @@ warn_incomplete_results <- function(
   if (requested_all_results) {
     cli::cli_alert_warning(
       c(
-        "Returning {.val {returned_count}} of {.val {total_count}} results.",
+        "Returning {.val {returned_count}} of {.val {total_count}} results. ",
         paste0(
           "Some results could not be retrieved due to server-side limits or ",
           "response inconsistencies. Review range warnings and add more ",
@@ -235,7 +251,7 @@ warn_incomplete_results <- function(
   cli::cli_alert_warning(
     c(
       "Returning {.val {returned_count}} of {.val {total_count}} results. ",
-      "Set {.arg max_search_results = Inf} to auto-paginate and retrieve all results."
+      "Set {.arg max_search_results = Inf} to auto-paginate beyond the first server batch."
     )
   )
 
@@ -274,6 +290,124 @@ can_use_cached_search <- function(results, requested_all_results) {
   isTRUE(attr(results, "complete", exact = TRUE))
 }
 
+#' Validate detailed-search vector choices
+#' @noRd
+validate_detailed_choices <- function(values, arg_name, valid_values) {
+  if (!is.character(values) || length(values) == 0L || any(is.na(values))) {
+    cli::cli_abort("{.arg {arg_name}} must contain one or more valid values")
+  }
+
+  invalid_values <- setdiff(values, valid_values)
+  if (length(invalid_values) > 0L) {
+    cli::cli_abort(
+      "Invalid {.arg {arg_name}} value{?s}: {.val {invalid_values}}"
+    )
+  }
+
+  values
+}
+
+#' Decide whether a detailed university query can be retried locally
+#' @noRd
+has_university_fallback_filter <- function(
+  thesis_no = NULL,
+  title = NULL,
+  author = NULL,
+  supervisor = NULL,
+  abstract = NULL,
+  keyword = NULL,
+  subject = NULL,
+  institute = NULL,
+  institute_id = NULL,
+  division = NULL,
+  division_id = NULL,
+  discipline = NULL,
+  discipline_id = NULL,
+  year_start = NULL,
+  year_end = NULL,
+  language = NULL,
+  group = "all",
+  thesis_type = "all",
+  access_type = "all",
+  status = "approved"
+) {
+  is_non_default <- function(value, default) {
+    !is.null(value) &&
+      !(length(value) == 1L && identical(value[[1L]], default))
+  }
+
+  any(vapply(
+    list(
+      thesis_no,
+      title,
+      author,
+      supervisor,
+      abstract,
+      keyword,
+      subject,
+      institute,
+      institute_id,
+      division,
+      division_id,
+      discipline,
+      discipline_id,
+      year_start,
+      year_end,
+      language,
+      if (is_non_default(group, "all")) group else NULL,
+      if (is_non_default(thesis_type, "all")) thesis_type else NULL,
+      if (is_non_default(access_type, "all")) access_type else NULL,
+      if (is_non_default(status, "approved")) status else NULL
+    ),
+    function(value) !is.null(value),
+    logical(1)
+  ))
+}
+
+#' Filter search rows by canonical university label
+#' @noRd
+filter_search_results_by_university <- function(search_results, university) {
+  if (
+    is.null(university) ||
+      nrow(search_results) == 0 ||
+      !"university" %in% names(search_results)
+  ) {
+    return(search_results[0, , drop = FALSE])
+  }
+
+  target <- normalize_lookup_label(university)
+  row_universities <- normalize_lookup_label(search_results$university)
+  keep <- !is.na(row_universities) &
+    nzchar(row_universities) &
+    (
+      row_universities == target |
+        stringr::str_detect(row_universities, stringr::fixed(target)) |
+        stringr::str_detect(target, stringr::fixed(row_universities))
+    )
+
+  filtered_results <- search_results[keep, , drop = FALSE]
+  source_overflow_years <- attr(
+    search_results,
+    "single_year_overflow_years",
+    exact = TRUE
+  )
+  if (is.null(source_overflow_years)) {
+    source_overflow_years <- integer(0)
+  }
+
+  filtered_results <- annotate_search_results(
+    filtered_results,
+    total_count = nrow(filtered_results),
+    paginated = isTRUE(attr(search_results, "paginated", exact = TRUE)),
+    single_year_overflow_years = source_overflow_years
+  )
+  attr(filtered_results, "complete") <- isTRUE(
+    attr(search_results, "complete", exact = TRUE)
+  )
+
+  filtered_results
+}
+
 #' Run the common search request, cache, pagination, and warning pipeline
 #' @noRd
 run_search_pipeline <- function(
@@ -294,12 +428,21 @@ run_search_pipeline <- function(
   )
 
   if (can_use_cached_search(cached_search_results, requested_all_results)) {
-    cli::cli_alert_success(
-      "Returning cached results ({.val {nrow(cached_search_results)}} records)"
-    )
+    cached_count <- nrow(cached_search_results)
     if (nrow(cached_search_results) > max_search_results) {
-      return(cached_search_results[seq_len(max_search_results), ])
+      cached_search_results <- cached_search_results[seq_len(max_search_results), ]
+      cli::cli_alert_success(
+        sprintf(
+          "Returning cached results (%d of %d records)",
+          nrow(cached_search_results),
+          cached_count
+        )
+      )
+      return(cached_search_results)
     }
+    cli::cli_alert_success(
+      sprintf("Returning cached results (%d records)", cached_count)
+    )
     return(cached_search_results)
   }
 
@@ -414,7 +557,7 @@ run_search_pipeline <- function(
 #' Advanced search of the Turkiye's National Thesis Center
 #'
 #' Keyword-based search with common filter options. Similar to basic search
-#' but adds year filtering, language, group, institution, and status
+#' but adds year filtering, language, university, institute, group, and status
 #' filters.
 #' Limited to 2000 results per request (server limit). For more results or
 #' field-specific searches, use \code{\link{search_detailed}}.
@@ -435,6 +578,9 @@ run_search_pipeline <- function(
 #' The YOK portal does not accept free-form Boolean strings; it uses
 #' structured form fields for each keyword row, making that pattern
 #' inapplicable here.
+#' University and group filters are sent with the keyword endpoint. Institute
+#' filters are sent through the detailed form for field-specific searches
+#' because YOK's all-field keyword endpoint ignores institute values.
 #'
 #' For equivalent results:
 #' \itemize{
@@ -448,19 +594,20 @@ run_search_pipeline <- function(
 #' }
 #' @param year_start Integer. Start year (optional).
 #' @param year_end Integer. End year (optional).
-#' @param group Character. Group filter. One of "all",
-#'   "science" (Fen), "social" (Sosyal), "medical" (Tıp). Default is "all".
+#' @param group Character. Group filter. One of "all", "science", "social", or
+#'   "medical". Default is "all".
 #' @param university Character. University name (optional). If provided without
 #'   \code{university_id}, the ID is looked up automatically.
 #' @param university_id Integer. University ID (optional). Use this to skip
-#'   lookup and match the "Choose" behavior in the web form.
+#'   lookup.
 #' @param thesis_type Character. Type of thesis. One of "all", "masters", "phd",
 #'   "medical_specialty", "arts", "dentistry", "medical_sub", "pharmacy".
 #'   Default is "all".
 #' @param institute Character. Institute name (optional). If provided without
-#'   \code{institute_id}, the ID is looked up automatically.
+#'   \code{institute_id}, the ID is looked up automatically. Institute filters
+#'   require a field-specific `search_field`.
 #' @param institute_id Integer. Institute ID (optional). Use this to skip
-#'   lookup and match the "Choose" behavior in the web form.
+#'   lookup. Institute filters require a field-specific `search_field`.
 #' @param language Integer language ID or character label (e.g., "tr", "en",
 #'   "Turkish", "İngilizce").
 #' @param access_type Character. Access type. One of "all", "open", "restricted".
@@ -488,10 +635,9 @@ run_search_pipeline <- function(
 #'   year_start = 2015
 #' )
 #'
-#' # Search science theses only
+#' # Search PhD theses only
 #' ml <- search_advanced(
 #'   keyword = "makine öğrenmesi",
-#'   group = "science",
 #'   thesis_type = "phd"
 #' )
 #'
@@ -501,14 +647,7 @@ run_search_pipeline <- function(
 #'   status = "in_preparation"
 #' )
 #'
-#' # Filter by university/institute (same fields as web advanced form)
-#' odtu <- search_advanced(
-#'   keyword = "yapay zeka",
-#'   university = "Orta Doğu Teknik Üniversitesi",
-#'   institute = "Fen Bilimleri Enstitüsü"
-#' )
-#'
-#' # Get all available results (auto-paginate)
+#' # Paginate a broad query
 #' all_climate <- search_advanced(
 #'   keyword = "iklim değişikliği",
 #'   max_search_results = Inf
@@ -557,15 +696,12 @@ search_advanced <- function(
   status <- rlang::arg_match(status)
   match_type <- rlang::arg_match(match_type)
   validate_ignore_cache(ignore_cache)
+  max_search_results <- validate_max_search_results(max_search_results)
 
-  if (
-    missing(keyword) ||
-      !is.character(keyword) ||
-      length(keyword) != 1 ||
-      nchar(keyword) == 0
-  ) {
+  if (missing(keyword)) {
     cli::cli_abort("{.arg keyword} must be a single non-empty character string")
   }
+  keyword <- validate_text_values(keyword, "keyword", allow_multiple = FALSE)
 
   year_start <- validate_year(year_start, "year_start")
   year_end <- validate_year(year_end, "year_end")
@@ -575,6 +711,7 @@ search_advanced <- function(
       "{.arg year_start} must be less than or equal to {.arg year_end}"
     )
   }
+  language <- validate_language_values(language, allow_multiple = FALSE)
 
   university <- validate_optional_label(university, "university")
   institute <- validate_optional_label(institute, "institute")
@@ -584,6 +721,133 @@ search_advanced <- function(
   requested_all_results <- is.infinite(max_search_results)
   if (requested_all_results) {
     max_search_results <- .Machine$integer.max
+  }
+
+  prepare_request <- function() {
+    if (!is.null(university) && is.null(university_id)) {
+      matched_university <- resolve_lookup_item(
+        university,
+        lookup_university_item,
+        "University"
+      )
+      if (!is.null(matched_university)) {
+        university_id <<- matched_university$id
+        university <<- matched_university$name
+      }
+    }
+
+    if (!is.null(institute) && is.null(institute_id)) {
+      matched_institute <- resolve_lookup_item(
+        institute,
+        lookup_institute_item,
+        "Institute"
+      )
+      if (!is.null(matched_institute)) {
+        institute_id <<- matched_institute$id
+        institute <<- matched_institute$name
+      }
+    }
+  }
+
+  use_detailed_form <- !is.null(institute) || !is.null(institute_id)
+
+  if (use_detailed_form && identical(search_field, "all")) {
+    cli::cli_abort(
+      paste0(
+        "YOK's all-field keyword endpoint ignores institute filters. ",
+        "Use {.fn search_detailed} for institute-only searches or set ",
+        "{.arg search_field} to a specific field."
+      )
+    )
+  }
+
+  if (use_detailed_form) {
+    if (!identical(match_type, "contains")) {
+      cli::cli_alert_warning(
+        paste0(
+          "YOK applies institute filters through the detailed form, which ",
+          "does not expose exact keyword matching. Using the detailed form's ",
+          "text matching."
+        )
+      )
+    }
+
+    detailed_field <- switch(
+      search_field,
+      title = "title",
+      author = "author",
+      supervisor = "supervisor",
+      subject = "subject",
+      index = "keyword",
+      abstract = "abstract"
+    )
+
+    cache_key <- build_search_cache_key(
+      type = "advanced_detailed",
+      params = list(
+        keyword = keyword,
+        search_field = search_field,
+        thesis_type = thesis_type,
+        access_type = access_type,
+        year_start = year_start,
+        year_end = year_end,
+        language = language,
+        group = group,
+        university = university,
+        university_id = university_id,
+        institute = institute,
+        institute_id = institute_id,
+        status = status
+      )
+    )
+
+    form_builder <- function(range_start, range_end) {
+      form_args <- list(
+        thesis_type = thesis_type,
+        access_type = access_type,
+        year_start = range_start,
+        year_end = range_end,
+        language = language,
+        group = group,
+        status = status,
+        university = university,
+        university_id = university_id,
+        institute = institute,
+        institute_id = institute_id
+      )
+      form_args[[detailed_field]] <- keyword
+      do.call(build_detailed_search_form, form_args)
+    }
+
+    cache_key_params <- function() {
+      list(
+        search_type = "advanced_detailed",
+        keyword = keyword,
+        search_field = search_field,
+        thesis_type = thesis_type,
+        access_type = access_type,
+        language = language,
+        group = group,
+        university = university,
+        university_id = university_id,
+        institute = institute,
+        institute_id = institute_id,
+        status = status
+      )
+    }
+
+    return(run_search_pipeline(
+      search_label = "advanced",
+      cache_key = cache_key,
+      cache_key_params = cache_key_params,
+      form_builder = form_builder,
+      year_start = year_start,
+      year_end = year_end,
+      max_search_results = max_search_results,
+      requested_all_results = requested_all_results,
+      ignore_cache = ignore_cache,
+      prepare_request = prepare_request
+    ))
   }
 
   cache_key <- build_search_cache_key(
@@ -599,30 +863,10 @@ search_advanced <- function(
       group = group,
       university = university,
       university_id = university_id,
-      institute = institute,
-      institute_id = institute_id,
       status = status,
       match_type = match_type
     )
   )
-
-  prepare_request <- function() {
-    if (!is.null(university) && is.null(university_id)) {
-      university_id <<- resolve_lookup_id(
-        university,
-        lookup_university_id,
-        "University"
-      )
-    }
-
-    if (!is.null(institute) && is.null(institute_id)) {
-      institute_id <<- resolve_lookup_id(
-        institute,
-        lookup_institute_id,
-        "Institute"
-      )
-    }
-  }
 
   form_builder <- function(range_start, range_end) {
     build_advanced_search_form(
@@ -636,10 +880,7 @@ search_advanced <- function(
       group = group,
       status = status,
       match_type = match_type,
-      university = university,
-      university_id = university_id,
-      institute = institute,
-      institute_id = institute_id
+      university_id = university_id
     )
   }
 
@@ -654,8 +895,6 @@ search_advanced <- function(
       group = group,
       university = university,
       university_id = university_id,
-      institute = institute,
-      institute_id = institute_id,
       status = status,
       match_type = match_type
     )
@@ -677,37 +916,38 @@ search_advanced <- function(
 
 #' Detailed search of the Turkiye's National Thesis Center
 #'
-#' Searches with detailed field-specific filter options. When total results exceed 2000
-#' (server limit), automatically paginates using year ranges to retrieve
-#' all results.
+#' Searches YOK's redesigned detailed form. When total results exceed 2000,
+#' automatically paginates using year ranges to retrieve more results. Very
+#' broad single-year ranges can still be capped by the server.
 #'
-#' @param university University name (optional). Accepts character vector for multiple universities.
-#' @param university_id University ID (optional). If provided, lookup by
-#'   \code{university} is skipped.
+#' @param university University name filter. If provided without
+#'   \code{university_id}, the ID is looked up automatically.
+#' @param university_id University ID filter. Use this to skip lookup.
 #' @param thesis_type Type(s) of thesis. Default is "all". Accepts character vector
 #'   for multiple types: "all", "masters", "phd", "medical_specialty", "arts",
 #'   "dentistry", "medical_sub", "pharmacy". Multiple values will trigger
 #'   separate searches that are combined.
 #' @param year_start Start year (optional). Used for pagination when results > 2000.
 #' @param year_end End year (optional). Used for pagination when results > 2000.
-#' @param institute Institute name (optional). Accepts character vector for multiple institutes.
-#' @param institute_id Institute ID (optional). If provided, lookup by
-#'   \code{institute} is skipped.
+#' @param institute Institute name filter. If provided without
+#'   \code{institute_id}, the ID is looked up automatically.
+#' @param institute_id Institute ID filter. Use this to skip lookup.
 #' @param access_type Access type. Default is "all". Accepts character vector for
 #'   multiple access types: "all", "open", "restricted". Multiple values will
 #'   trigger separate searches that are combined.
-#' @param group Group filter. One of "all", "science", "social", or
-#'   "medical". Default is "all".
-#' @param thesis_no Thesis number to search for (optional). Accepts character vector for multiple thesis numbers.
-#' @param division Division name (optional). Accepts character vector for multiple divisions.
-#' @param division_id Division ID (optional). If provided, lookup by
-#'   \code{division} is skipped.
+#' @param group Group filter. One of "all", "science", "social", or "medical".
+#' @param thesis_no Thesis number to search for. This uses YOK's detailed form
+#'   endpoint because the redesigned keyword endpoint is unreliable for thesis
+#'   numbers.
+#' @param division Division name filter. If provided without
+#'   \code{division_id}, the ID is looked up automatically.
+#' @param division_id Division ID filter. Use this to skip lookup.
 #' @param status Character. Thesis status filter. One of "approved", "all",
 #'   "in_preparation". Default is "approved".
 #' @param title Title to search for (optional). Accepts character vector for multiple titles.
-#' @param discipline Discipline name (optional). Accepts character vector for multiple disciplines.
-#' @param discipline_id Discipline ID (optional). If provided, lookup by
-#'   \code{discipline} is skipped.
+#' @param discipline Discipline name filter. If provided without
+#'   \code{discipline_id}, the ID is looked up automatically.
+#' @param discipline_id Discipline ID filter. Use this to skip lookup.
 #' @param language Integer language ID or character label (e.g., "tr", "en",
 #'   "Turkish", "İngilizce"). Accepts a character vector for multiple languages.
 #' @param author Author name (optional). Accepts character vector for multiple authors.
@@ -717,19 +957,17 @@ search_advanced <- function(
 #'   for multiple keywords.
 #' @param abstract Abstract text to search (optional). Accepts character vector for multiple abstracts.
 #' @param max_search_results Maximum results to return. Default is 2000 (server limit per query).
-#'   Use higher values or `Inf` to get all available results via automatic pagination.
+#'   Use higher values or `Inf` to paginate beyond the first server batch when
+#'   year-range splitting can narrow each request below the server cap.
 #' @param ignore_cache Logical. If `TRUE`, bypass cached search/range results and
 #'   fetch fresh data from the server.
 #'
 #' @details
-#' The YOK web portal accepts only a single value per filter field. This
-#' function extends beyond the portal by accepting vector-valued parameters
-#' for most fields. Multiple values are expanded into separate API calls,
-#' and the results are combined and deduplicated by thesis number.
-#'
-#' When the total result count exceeds 2000 and no year range is specified,
-#' the function automatically uses 1959-present as the year range and paginates
-#' to retrieve all results.
+#' The detailed form accepts field-specific and institutional filters in the
+#' same request, including `title`, `author`, `supervisor`, `subject`,
+#' `keyword`, `abstract`, `thesis_no`, `university`, `institute`, `division`,
+#' `discipline`, and `group`. Vector-valued fields are expanded into separate
+#' requests, and the results are combined and deduplicated by thesis number.
 #'
 #' @return A tibble containing thesis records with columns:
 #'   \itemize{
@@ -759,41 +997,27 @@ search_advanced <- function(
 #'   year_end = 2024
 #' )
 #'
-#' # Title search with university filter
+#' # Title search with a thesis type filter
 #' ml_theses <- search_detailed(
 #'   title = "makine öğrenmesi",
-#'   university = "Orta Doğu Teknik Üniversitesi",
 #'   thesis_type = "phd"
 #' )
 #'
-#' # Search by university and division
+#' # Search by subject and year range
 #' search_results <- search_detailed(
-#'   university = "Ankara Üniversitesi",
-#'   division = "İktisat Ana Bilim Dalı",
+#'   subject = "Ekonometri",
 #'   year_start = 2020,
 #'   year_end = 2023
 #' )
 #'
-#' # Get ALL results for a subject (auto-paginates if > 2000)
+#' # Paginate a broad subject search
 #' all_econ <- search_detailed(subject = "Ekonometri", max_search_results = Inf)
 #'
 #' # Search for a specific supervisor's theses
 #' search_results <- search_detailed(supervisor = "Hasan Şahin")
 #'
-#' # Search across multiple universities (automatically expands)
-#' search_results <- search_detailed(
-#'   university = c("Ankara Üniversitesi", "İstanbul Üniversitesi"),
-#'   subject = "Ekonomi"
-#' )
-#'
-#' # Search multiple disciplines within a subject
-#' search_results <- search_detailed(
-#'   subject = "Ekonomi",
-#'   discipline = c("İktisat", "Maliye", "Ekonometri")
-#' )
-#'
-#' # Search for multiple specific thesis numbers
-#' search_results <- search_detailed(thesis_no = c("123456", "234567", "345678"))
+#' # Search for a specific thesis number
+#' search_results <- search_detailed(thesis_no = "12345")
 #'
 #' # Search for multiple titles
 #' search_results <- search_detailed(
@@ -821,7 +1045,6 @@ search_advanced <- function(
 #' # Complex multi-parameter search
 #' search_results <- search_detailed(
 #'   author = c("Ahmet Yılmaz", "Mehmet Demir"),
-#'   university = c("Ankara Üniversitesi", "İstanbul Üniversitesi"),
 #'   year_start = 2020
 #' )
 #' }
@@ -852,6 +1075,7 @@ search_detailed <- function(
   ignore_cache = FALSE
 ) {
   max_search_results_missing <- missing(max_search_results)
+  max_search_results <- validate_max_search_results(max_search_results)
 
   # Validate thesis_type values
   valid_thesis_types <- c(
@@ -864,38 +1088,38 @@ search_detailed <- function(
     "medical_sub",
     "pharmacy"
   )
-  if (!all(thesis_type %in% valid_thesis_types)) {
-    invalid <- setdiff(thesis_type, valid_thesis_types)
-    cli::cli_abort(
-      "Invalid {.arg thesis_type} value{?s}: {.val {invalid}}"
-    )
-  }
+  thesis_type <- validate_detailed_choices(
+    thesis_type,
+    "thesis_type",
+    valid_thesis_types
+  )
 
   # Validate access_type values
   valid_access_types <- c("all", "open", "restricted")
-  if (!all(access_type %in% valid_access_types)) {
-    invalid <- setdiff(access_type, valid_access_types)
-    cli::cli_abort(
-      "Invalid {.arg access_type} value{?s}: {.val {invalid}}"
-    )
-  }
+  access_type <- validate_detailed_choices(
+    access_type,
+    "access_type",
+    valid_access_types
+  )
 
   valid_groups <- c("all", "science", "social", "medical")
-  if (!all(group %in% valid_groups)) {
-    invalid <- setdiff(group, valid_groups)
-    cli::cli_abort("Invalid {.arg group} value{?s}: {.val {invalid}}")
-  }
+  group <- validate_detailed_choices(group, "group", valid_groups)
 
   # Validate status
   valid_status <- c("all", "approved", "in_preparation")
-  if (!status %in% valid_status) {
+  if (
+    !is.character(status) ||
+      length(status) != 1L ||
+      is.na(status) ||
+      !status %in% valid_status
+  ) {
     cli::cli_abort(
       "Invalid {.arg status} value: {.val {status}}. Must be one of {.val {valid_status}}"
     )
   }
   validate_ignore_cache(ignore_cache)
 
-  # Handle max_search_results = Inf (get all available results)
+  # Handle max_search_results = Inf (paginate beyond the first server batch)
   requested_all_results <- is.infinite(max_search_results)
   if (requested_all_results) {
     max_search_results <- .Machine$integer.max
@@ -906,47 +1130,67 @@ search_detailed <- function(
   division_id <- validate_optional_id(division_id, "division_id")
   discipline_id <- validate_optional_id(discipline_id, "discipline_id")
 
-  # At least one search criterion or filter must be provided
-  has_text_criteria <- !is.null(thesis_no) ||
-    !is.null(title) ||
-    !is.null(author) ||
-    !is.null(supervisor) ||
-    !is.null(abstract) ||
-    !is.null(keyword)
+  thesis_no <- validate_text_values(thesis_no, "thesis_no", coerce = TRUE)
+  title <- validate_text_values(title, "title")
+  author <- validate_text_values(author, "author")
+  supervisor <- validate_text_values(supervisor, "supervisor")
+  abstract <- validate_text_values(abstract, "abstract")
+  keyword <- validate_text_values(keyword, "keyword")
+  subject <- validate_text_values(subject, "subject")
+  university <- validate_text_values(university, "university")
+  institute <- validate_text_values(institute, "institute")
+  division <- validate_text_values(division, "division")
+  discipline <- validate_text_values(discipline, "discipline")
+  language <- validate_language_values(language, allow_multiple = TRUE)
 
-  has_institution_criteria <- !is.null(university) ||
-    !is.null(university_id) ||
-    !is.null(institute) ||
-    !is.null(institute_id) ||
-    !is.null(division) ||
-    !is.null(division_id) ||
-    !is.null(subject) ||
-    !is.null(discipline) ||
-    !is.null(discipline_id)
+  prepare_request <- function() {
+    if (!is.null(university) && is.null(university_id)) {
+      matched_university <- resolve_lookup_item(
+        university,
+        lookup_university_item,
+        "University"
+      )
+      if (!is.null(matched_university)) {
+        university_id <<- matched_university$id
+        university <<- matched_university$name
+      }
+    }
 
-  has_year_criteria <- !is.null(year_start) || !is.null(year_end)
+    if (!is.null(institute) && is.null(institute_id)) {
+      matched_institute <- resolve_lookup_item(
+        institute,
+        lookup_institute_item,
+        "Institute"
+      )
+      if (!is.null(matched_institute)) {
+        institute_id <<- matched_institute$id
+        institute <<- matched_institute$name
+      }
+    }
 
-  has_type_criteria <- !is.null(thesis_type) &&
-    (length(thesis_type) > 1 || !identical(thesis_type, "all"))
+    if (!is.null(division) && is.null(division_id)) {
+      matched_division <- resolve_lookup_item(
+        division,
+        lookup_division_item,
+        "Division"
+      )
+      if (!is.null(matched_division)) {
+        division_id <<- matched_division$id
+        division <<- matched_division$name
+      }
+    }
 
-  has_access_criteria <- !is.null(access_type) &&
-    (length(access_type) > 1 || !identical(access_type, "all"))
-
-  has_group_criteria <- !is.null(group) &&
-    (length(group) > 1 || !identical(group, "all"))
-
-  has_language_criteria <- !is.null(language)
-
-  has_criteria <- has_text_criteria ||
-    has_institution_criteria ||
-    has_year_criteria ||
-    has_type_criteria ||
-    has_access_criteria ||
-    has_group_criteria ||
-    has_language_criteria
-
-  if (!has_criteria) {
-    cli::cli_abort("At least one search criterion or filter must be provided")
+    if (!is.null(discipline) && is.null(discipline_id)) {
+      matched_discipline <- resolve_lookup_item(
+        discipline,
+        lookup_discipline_item,
+        "Discipline"
+      )
+      if (!is.null(matched_discipline)) {
+        discipline_id <<- matched_discipline$id
+        discipline <<- matched_discipline$name
+      }
+    }
   }
 
   year_start <- validate_year(year_start, "year_start")
@@ -957,6 +1201,39 @@ search_detailed <- function(
     )
   }
 
+  has_detailed_criteria <- any(vapply(
+    list(
+      thesis_no = thesis_no,
+      title = title,
+      author = author,
+      supervisor = supervisor,
+      abstract = abstract,
+      keyword = keyword,
+      subject = subject,
+      university = university,
+      university_id = university_id,
+      institute = institute,
+      institute_id = institute_id,
+      division = division,
+      division_id = division_id,
+      discipline = discipline,
+      discipline_id = discipline_id,
+      year_start = year_start,
+      year_end = year_end,
+      language = language,
+      group = if (!identical(group, "all")) group else NULL,
+      thesis_type = if (!identical(thesis_type, "all")) thesis_type else NULL,
+      access_type = if (!identical(access_type, "all")) access_type else NULL,
+      status = if (!identical(status, "approved")) status else NULL
+    ),
+    function(value) !is.null(value),
+    logical(1)
+  ))
+
+  if (!has_detailed_criteria) {
+    cli::cli_abort("At least one search criterion or filter must be provided")
+  }
+
   # Check if any parameters have multiple values
   multi_params <- list(
     thesis_no = thesis_no,
@@ -965,10 +1242,10 @@ search_detailed <- function(
     supervisor = supervisor,
     abstract = abstract,
     keyword = keyword,
+    subject = subject,
     university = university,
     institute = institute,
     division = division,
-    subject = subject,
     discipline = discipline,
     language = language,
     thesis_type = thesis_type,
@@ -1024,57 +1301,24 @@ search_detailed <- function(
       supervisor = supervisor,
       abstract = abstract,
       keyword = keyword,
+      subject = subject,
       university = university,
       university_id = university_id,
       institute = institute,
       institute_id = institute_id,
       division = division,
       division_id = division_id,
-      subject = subject,
       discipline = discipline,
       discipline_id = discipline_id,
+      group = group,
       thesis_type = thesis_type,
       year_start = year_start,
       year_end = year_end,
       language = language,
       access_type = access_type,
-      group = group,
       status = status
     )
   )
-
-  subject_id <- NULL
-  prepare_request <- function() {
-    if (is.null(university_id)) {
-      university_id <<- resolve_lookup_id(
-        university,
-        lookup_university_id,
-        "University"
-      )
-    }
-    if (is.null(institute_id)) {
-      institute_id <<- resolve_lookup_id(
-        institute,
-        lookup_institute_id,
-        "Institute"
-      )
-    }
-    if (is.null(division_id)) {
-      division_id <<- resolve_lookup_id(
-        division,
-        lookup_division_id,
-        "Division"
-      )
-    }
-    if (is.null(discipline_id)) {
-      discipline_id <<- resolve_lookup_id(
-        discipline,
-        lookup_discipline_id,
-        "Discipline"
-      )
-    }
-    subject_id <<- resolve_lookup_id(subject, lookup_subject_id, "Subject")
-  }
 
   form_builder <- function(range_start, range_end) {
     build_detailed_search_form(
@@ -1091,7 +1335,6 @@ search_detailed <- function(
       division = division,
       division_id = division_id,
       subject = subject,
-      subject_id = subject_id,
       discipline = discipline,
       discipline_id = discipline_id,
       thesis_type = thesis_type,
@@ -1113,20 +1356,24 @@ search_detailed <- function(
       supervisor = supervisor,
       abstract = abstract,
       keyword = keyword,
+      subject = subject,
+      group = group,
+      university = university,
       university_id = university_id,
+      institute = institute,
       institute_id = institute_id,
+      division = division,
       division_id = division_id,
-      subject_id = subject_id,
+      discipline = discipline,
       discipline_id = discipline_id,
       thesis_type = thesis_type,
       language = language,
       access_type = access_type,
-      group = group,
       status = status
     )
   }
 
-  run_search_pipeline(
+  search_results <- run_search_pipeline(
     search_label = "detailed",
     cache_key = cache_key,
     cache_key_params = cache_key_params,
@@ -1138,4 +1385,141 @@ search_detailed <- function(
     ignore_cache = ignore_cache,
     prepare_request = prepare_request
   )
+
+  if (
+    nrow(search_results) == 0 &&
+      !is.null(university) &&
+      has_university_fallback_filter(
+        thesis_no = thesis_no,
+        title = title,
+        author = author,
+        supervisor = supervisor,
+        abstract = abstract,
+        keyword = keyword,
+        subject = subject,
+        institute = institute,
+        institute_id = institute_id,
+        division = division,
+        division_id = division_id,
+        discipline = discipline,
+        discipline_id = discipline_id,
+        year_start = year_start,
+        year_end = year_end,
+        language = language,
+        group = group,
+        thesis_type = thesis_type,
+        access_type = access_type,
+        status = status
+      )
+  ) {
+    cli::cli_alert_info(
+      paste0(
+        "YOK returned no rows with the university filter. Retrying without ",
+        "that filter and matching the returned rows locally..."
+      )
+    )
+
+    fallback_cache_key <- build_search_cache_key(
+      type = "detailed_university_fallback",
+      params = list(
+        thesis_no = thesis_no,
+        title = title,
+        author = author,
+        supervisor = supervisor,
+        abstract = abstract,
+        keyword = keyword,
+        subject = subject,
+        institute = institute,
+        institute_id = institute_id,
+        division = division,
+        division_id = division_id,
+        discipline = discipline,
+        discipline_id = discipline_id,
+        group = group,
+        thesis_type = thesis_type,
+        year_start = year_start,
+        year_end = year_end,
+        language = language,
+        access_type = access_type,
+        status = status
+      )
+    )
+
+    fallback_form_builder <- function(range_start, range_end) {
+      build_detailed_search_form(
+        thesis_no = thesis_no,
+        title = title,
+        author = author,
+        supervisor = supervisor,
+        abstract = abstract,
+        keyword = keyword,
+        university = NULL,
+        university_id = NULL,
+        institute = institute,
+        institute_id = institute_id,
+        division = division,
+        division_id = division_id,
+        subject = subject,
+        discipline = discipline,
+        discipline_id = discipline_id,
+        thesis_type = thesis_type,
+        year_start = range_start,
+        year_end = range_end,
+        language = language,
+        access_type = access_type,
+        group = group,
+        status = status
+      )
+    }
+
+    fallback_cache_key_params <- function() {
+      list(
+        search_type = "detailed_university_fallback",
+        thesis_no = thesis_no,
+        title = title,
+        author = author,
+        supervisor = supervisor,
+        abstract = abstract,
+        keyword = keyword,
+        subject = subject,
+        group = group,
+        institute = institute,
+        institute_id = institute_id,
+        division = division,
+        division_id = division_id,
+        discipline = discipline,
+        discipline_id = discipline_id,
+        thesis_type = thesis_type,
+        language = language,
+        access_type = access_type,
+        status = status
+      )
+    }
+
+    fallback_results <- run_search_pipeline(
+      search_label = "detailed",
+      cache_key = fallback_cache_key,
+      cache_key_params = fallback_cache_key_params,
+      form_builder = fallback_form_builder,
+      year_start = year_start,
+      year_end = year_end,
+      max_search_results = max_search_results,
+      requested_all_results = requested_all_results,
+      ignore_cache = ignore_cache
+    )
+
+    filtered_results <- filter_search_results_by_university(
+      fallback_results,
+      university
+    )
+
+    if (nrow(filtered_results) > 0) {
+      cli::cli_alert_success(
+        "Returning {.val {nrow(filtered_results)}} locally filtered results"
+      )
+      search_results <- filtered_results
+    }
+  }
+
+  search_results
 }

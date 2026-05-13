@@ -1008,18 +1008,34 @@ extract_total_count <- function(html) {
   page_text <- rvest::html_text(html)
 
   # Try "X kayit bulundu" pattern first (search results)
-  match <- stringr::str_match(page_text, "([0-9,]+)\\s+kay\u0131t bulundu")
+  match <- stringr::str_match(
+    page_text,
+    "([0-9][0-9\\.,]*)\\s+kay[\u0131i]t bulundu"
+  )
 
   # Try "Tarama sonucunda X kayit" pattern (detail pages)
   if (is.na(match[1])) {
-    match <- stringr::str_match(page_text, "Tarama sonucunda\\s+(\\d+)\\s+kay")
+    match <- stringr::str_match(
+      page_text,
+      "Tarama sonucunda\\s+([0-9][0-9\\.,]*)\\s+kay"
+    )
+  }
+
+  if (is.na(match[1])) {
+    match <- stringr::str_match(
+      page_text,
+      stringr::regex(
+        "([0-9][0-9\\.,]*)\\s+records?\\s+found",
+        ignore_case = TRUE
+      )
+    )
   }
 
   if (is.na(match[1])) {
     return(0L)
   }
 
-  count_str <- stringr::str_remove_all(match[2], ",")
+  count_str <- stringr::str_remove_all(match[2], "[^0-9]")
   count <- suppressWarnings(as.integer(count_str))
 
   if (is.na(count)) {
@@ -1027,4 +1043,77 @@ extract_total_count <- function(html) {
   }
 
   return(count)
+}
+
+#' Strip HTML and leading label text from JSON detail fields
+#' @noRd
+strip_detail_json_label <- function(text) {
+  if (is.null(text) || length(text) == 0 || is.na(text)) {
+    return(NA_character_)
+  }
+
+  stripped_text <- gsub(
+    "<strong>\\s*[^<:]+:\\s*</strong>",
+    "",
+    text,
+    perl = TRUE
+  )
+  stripped_text <- gsub("<[^>]+>", "", stripped_text, perl = TRUE)
+  stripped_text <- clean_text(stripped_text)
+
+  if (nchar(stripped_text) == 0) {
+    return(NA_character_)
+  }
+
+  stripped_text
+}
+
+#' Collapse character values after dropping missing and duplicate entries
+#' @noRd
+collapse_unique_text <- function(values) {
+  values <- values[!is.na(values)]
+  values <- unique(values[nchar(values) > 0])
+
+  if (length(values) == 0) {
+    return(NA_character_)
+  }
+
+  paste(values, collapse = "; ")
+}
+
+#' Parse bilingual keyword strings from the JSON detail endpoint
+#' @noRd
+parse_detail_json_keywords <- function(keywords_tr, keywords_en = NULL) {
+  parsed_tr <- parse_bilingual_entries(strip_detail_json_label(keywords_tr))
+  parsed_en <- parse_bilingual_entries(strip_detail_json_label(keywords_en))
+
+  list(
+    keywords_tr = collapse_unique_text(c(parsed_tr$tr, parsed_en$en)),
+    keywords_en = collapse_unique_text(c(parsed_tr$en, parsed_en$tr))
+  )
+}
+
+#' Parse payload returned by tezBilgiDetay.jsp
+#' @noRd
+parse_detail_json_payload <- function(payload) {
+  keyword_fields <- parse_detail_json_keywords(
+    payload[["anahtarKelimeTr"]],
+    payload[["anahtarKelimeEn"]]
+  )
+
+  list(
+    advisor = strip_detail_json_label(payload[["danisman"]]),
+    location_full = clean_text(payload[["yer"]] %|na|% NA_character_),
+    abstract_original = clean_text(payload[["trOzet"]] %|na|% NA_character_),
+    abstract_translation = clean_text(payload[["enOzet"]] %|na|% NA_character_),
+    keywords_tr = keyword_fields$keywords_tr,
+    keywords_en = keyword_fields$keywords_en,
+    citation_apa = clean_text(payload[["apa_ref"]] %|na|% NA_character_),
+    citation_ieee = clean_text(payload[["ieee_ref"]] %|na|% NA_character_),
+    citation_mla = clean_text(payload[["mla_ref"]] %|na|% NA_character_),
+    citation_chicago = clean_text(
+      payload[["chicago_ref"]] %|na|% NA_character_
+    ),
+    citation_harvard = clean_text(payload[["harvard_ref"]] %|na|% NA_character_)
+  )
 }

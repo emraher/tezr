@@ -19,6 +19,7 @@ reference:
       - search_basic
       - search_advanced
       - search_detailed
+      - list_recent_theses
 
   - title: Detail Functions
     desc: Retrieve detailed information about theses
