@@ -45,5 +45,6 @@
 ^plan\.md$
 ^todo\.md$
 ^texput\.log$
+^build$
 ^doc$
 ^Meta$
