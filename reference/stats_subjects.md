@@ -12,10 +12,17 @@ stats_subjects()
 
 A tibble containing thesis counts per subject and type.
 
+## See also
+
+Other statistics functions:
+[`stats_types()`](https://eremrah.com/tezr/reference/stats_types.md),
+[`stats_universities()`](https://eremrah.com/tezr/reference/stats_universities.md),
+[`stats_years()`](https://eremrah.com/tezr/reference/stats_years.md)
+
 ## Examples
 
 ``` r
-if (FALSE) { # \dontrun{
+if (FALSE) { # interactive()
 stats <- stats_subjects()
-} # }
+}
 ```

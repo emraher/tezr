@@ -6,29 +6,22 @@ National Thesis Center using encoded IDs from search results.
 ## Usage
 
 ``` r
-detail(detail_id, progress = TRUE, encrypted_no = NULL, ...)
+detail(detail_id, progress = TRUE, ...)
 ```
 
 ## Arguments
 
 - detail_id:
 
-  Character vector, detail URL, or search-result data frame. Character
-  values may be encoded IDs from the `detail_id` column or redesigned
-  YOK detail URLs. A data frame returned by a search function can be
-  passed directly. Accepts multiple values or rows for batch retrieval.
+  Character vector. Encoded thesis detail identifier(s) from the
+  `detail_id` column of search results. Treat these values as opaque.
+  They may contain one or more portal identifiers depending on the
+  current National Thesis Center markup.
 
 - progress:
 
   Logical. Show text progress updates when fetching multiple theses?
   Default is TRUE.
-
-- encrypted_no:
-
-  Character vector. Optional encrypted thesis number from the
-  `encrypted_no` column of redesigned search results. When available,
-  `detail()` includes it in the YOK detail request and uses the JSON
-  detail endpoint to add citation metadata.
 
 - ...:
 
@@ -48,8 +41,8 @@ A tibble with thesis details (one row per thesis). Columns (in order):
 
 - advisor - Advisor name and title
 
-- co_advisor - Co-advisor name(s) (semicolon-separated if multiple; NA
-  when absent)
+- co_advisor - Co-advisor name(s). Multiple names are
+  semicolon-separated, and absent values are `NA`.
 
 - university - University name
 
@@ -61,21 +54,21 @@ A tibble with thesis details (one row per thesis). Columns (in order):
 
 - pages - Number of pages
 
-- thesis_type_tr - Thesis type in Turkish (e.g., "Doktora", "Yüksek
-  Lisans")
+- thesis_type_tr - Thesis type in Turkish, such as "Doktora" or "Yüksek
+  Lisans"
 
-- thesis_type_en - Thesis type in English (e.g., "Doctorate",
-  "Master's")
+- thesis_type_en - Thesis type in English, such as "Doctorate" or
+  "Master's"
 
-- language_tr - Language in Turkish (e.g., "Türkçe", "İngilizce")
+- language_tr - Language in Turkish, such as "Türkçe" or "İngilizce"
 
 - language_en - Language in English (e.g., "Turkish", "English")
 
-- subject_tr - Turkish subject classifications (semicolon-separated when
-  multiple)
+- subject_tr - Turkish subject classifications, semicolon-separated when
+  multiple
 
-- subject_en - English subject classifications (semicolon-separated when
-  multiple)
+- subject_en - English subject classifications, semicolon-separated when
+  multiple
 
 - abstract_original - Abstract in the thesis's original language when
   available
@@ -92,24 +85,20 @@ A tibble with thesis details (one row per thesis). Columns (in order):
 
 - detail_url - URL to the thesis detail page
 
-- citation_apa, citation_ieee, citation_mla, citation_chicago,
-  citation_harvard - Citation strings when YOK's JSON detail endpoint is
-  available
-
 ## Examples
 
 ``` r
-if (FALSE) { # \dontrun{
+if (FALSE) { # interactive()
 # Search for theses
 results <- search_basic("panel veri")
 
-# Get details for a single thesis, including citation metadata when present
-thesis_details <- detail(results[1, ])
+# Get details for a single thesis
+thesis_details <- detail(results$detail_id[1])
 
 # Get details for multiple theses (batch)
-all_details <- detail(results)
+all_details <- detail(detail_id = results$detail_id)
 
 # Without progress updates
-all_details <- detail(results, progress = FALSE)
-} # }
+all_details <- detail(detail_id = results$detail_id, progress = FALSE)
+}
 ```

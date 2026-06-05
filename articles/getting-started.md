@@ -5,9 +5,9 @@ builds on the previous one, starting with simple keyword searches and
 progressing to multi-filter queries, detail retrieval, and cache
 management.
 
-Package builds show the code without running live requests. Set
-`TEZR_LIVE_DOCS=true` before rendering if you want to refresh all
-outputs.
+The vignette does not run live NTC queries during ordinary package
+builds. Set `TEZR_LIVE_EXAMPLES=true` before rendering if you want to
+execute the portal requests.
 
 ``` r
 
@@ -21,6 +21,28 @@ library(dplyr)
 and
 [`search_detailed()`](https://eremrah.com/tezr/reference/search_detailed.md).
 The sections below cover each function in order.
+
+## Responsible Use
+
+Use `tezr` for academic, reproducible research workflows. Cache or save
+large results locally, avoid repeated identical requests, and respect
+the NTC portal’s access controls and terms. Do not post private
+researcher data, access tokens, local cookies, or sensitive
+institutional details in issues or pull requests.
+
+When publishing results, cite both `tezr` and the National Thesis Center
+or Council of Higher Education data source. Record the query terms,
+filters, retrieval date, and any completeness warnings returned by the
+package.
+
+## More Than Downloading
+
+`tezr` does more than submit a web form and return rows. It resolves
+lookup labels, filters searches through structured portal fields,
+paginates capped result sets by adaptive year ranges, parses bilingual
+metadata, deduplicates expanded searches, annotates results with
+completeness attributes, caches repeated requests, and exposes
+statistics tables that help check retrieval completeness.
 
 ## Basic Search
 
@@ -52,26 +74,31 @@ field.
 
 # Search only in thesis titles
 ag_irrigation_title <- search_basic(
-  "tarımsal sulama", 
+  "tarımsal sulama",
   search_field = "title")
 dplyr::glimpse(ag_irrigation_title)
 ```
 
-Available search field values are `"all"` (default), `"title"`,
-`"author"`, `"supervisor"`, `"subject"`, `"index"`, and `"abstract"`.
-Use `search_detailed(thesis_no = ...)` for thesis-number lookup.
+Available search field values are: `"all"` (default), `"title"`,
+`"author"`, `"supervisor"`, `"subject"`, `"index"`, `"abstract"`, and
+`"thesis_no"`.
 
 ``` r
 
 # Search abstracts
 abstract_search <- search_basic(
-  "production function", 
+  "production function",
   search_field = "abstract")
 
 # Search by author name
 author_search <- search_basic(
-  "Işıl Şirin Selçuk", 
+  "Işıl Şirin Selçuk",
   search_field = "author")
+
+# Search by thesis number
+number_search <- search_basic(
+  "889301",
+  search_field = "thesis_no")
 ```
 
 ### Filtering by Thesis Type and Access Status
@@ -88,7 +115,7 @@ Available `thesis_type` values are: `"all"` (default), `"masters"`,
 
 # PhD dissertations only
 phd_results <- search_basic(
-  "ekonometri", 
+  "ekonometri",
   thesis_type = "phd")
 dplyr::glimpse(phd_results)
 ```
@@ -100,7 +127,7 @@ Available access type values are: `"all"` (default), `"open"`,
 
 # Open access theses only
 open_results <- search_basic(
-  "hanehalkı", 
+  "hanehalkı",
   access_type = "open")
 ```
 
@@ -130,8 +157,8 @@ climate_change_all <- search_basic(
 ## Advanced Search
 
 [`search_advanced()`](https://eremrah.com/tezr/reference/search_advanced.md)
-adds year range, language, thesis type, access type, and thesis status
-filters to keyword search.
+adds year range, language, group, university/institute, and thesis
+status filters to keyword search.
 
 The NTC advanced search form supports up to three keyword rows combined
 with Boolean operators (`AND`, `OR`, `NOT`), each targeting a different
@@ -187,13 +214,23 @@ french_theses <- search_advanced(
 )
 ```
 
-### Thesis Status
+### Group and Thesis Status
+
+`group` limits results to a broad group: `"all"` (default), `"science"`
+(Fen Bilimleri), `"social"` (Sosyal Bilimler), `"medical"` (Tıp ve
+Sağlık Bilimleri).
 
 `status` controls whether results include only approved theses or also
 in-preparation ones: `"approved"` (default), `"all"`,
 `"in_preparation"`.
 
 ``` r
+
+# Social sciences only
+social_econ <- search_advanced(
+  keyword = "ekonometri",
+  group = "social"
+)
 
 # In-preparation theses (not yet defended)
 ongoing_ml <- search_advanced(
@@ -216,6 +253,7 @@ complex_query <- search_advanced(
   thesis_type = "phd",
   year_start = 2000,
   year_end = 2024,
+  group = "social",
   access_type = "open"
 )
 ```
@@ -240,11 +278,11 @@ filters.
 
 ``` r
 
-# Retrieve all title matches (auto-paginate by year)
+# Retrieve all results (auto-paginate by year)
 all_eu <- search_advanced(
   keyword = "avrupa",
-  search_field = "title",
-  year_start = 2010,
+  search_field = "all",
+  year_start = 2018,
   year_end = 2020,
   max_search_results = Inf
 )
@@ -254,28 +292,31 @@ dplyr::glimpse(all_eu)
 ## Detailed Search
 
 [`search_detailed()`](https://eremrah.com/tezr/reference/search_detailed.md)
-provides field-specific keyword search. Use it when you need to target
-thesis titles, authors, supervisors, subjects, index terms, or
-abstracts. It supports the same auto-pagination flow as
+provides field-specific and institutional filters. Use it when you need
+to target thesis titles, authors, supervisors, universities, divisions,
+disciplines, or subjects. It supports the same auto-pagination flow as
 [`search_advanced()`](https://eremrah.com/tezr/reference/search_advanced.md).
 
-Supported keyword parameters in
+Available parameters in
 [`search_detailed()`](https://eremrah.com/tezr/reference/search_detailed.md)
-are `title`, `author`, `supervisor`, `abstract`, `keyword`, and
-`subject`. You can combine those with `university`, `university_id`,
-`group`, `thesis_type`, `year_start`, `year_end`, `language`,
-`access_type`, `status`, `max_search_results`, and `ignore_cache`.
+are: `thesis_no`, `title`, `author`, `supervisor`, `abstract`,
+`keyword`, `university`, `university_id`, `institute`, `institute_id`,
+`division`, `division_id`, `subject`, `discipline`, `discipline_id`,
+`thesis_type`, `year_start`, `year_end`, `language`, `access_type`,
+`group`, `status`, `max_search_results`, `ignore_cache`.
 
-YÖK’s redesigned detailed form supports field-specific and institutional
-filters. `tezr` sends university, institute, division, subject,
-discipline, group, and thesis-number filters through that form when you
-use
-[`search_detailed()`](https://eremrah.com/tezr/reference/search_detailed.md).
+You should provide at least one search criterion or filter to use the
+function.
 
 ### Finding Valid Filter Values
 
-You can still use the `list_*()` functions to inspect YÖK’s metadata
-tables and interpret result fields.
+You can use the `list_*()` functions to discover valid filter names from
+the server. In normal use, you can pass names (for example
+`university = "Ankara Üniversitesi"`) into functions, and `tezr` will
+handle ID mapping internally. The `id` columns are mainly lookup keys
+used by `tezr` but you can also pass IDs directly for advanced or
+performance-sensitive workflows (for example `university_id`,
+`institute_id`, `division_id`, `discipline_id`) if you want.
 
 ``` r
 
@@ -289,7 +330,7 @@ head(unis)
 # Subjects have Turkish and English names
 subjects <- list_subjects()
 subjects |>
-  filter(stringr::str_detect(name_tr, "Ekonomi"))
+  filter(stringr::str_detect(name_tr, stringr::fixed("Ekonomi")))
 ```
 
 ``` r
@@ -300,12 +341,67 @@ divisions <- list_divisions()
 disciplines <- list_disciplines()
 ```
 
-### Filtering by Subject
+### Filtering by Institution
+
+You can pass university, institute, or division names as strings. `tezr`
+resolves them to internal IDs automatically via lookup as we mentioned
+above.
+
+``` r
+
+# All theses from Ankara University
+ankara <- search_detailed(university = "Ankara Üniversitesi")
+```
+
+``` r
+
+# Narrow to a specific division within a university
+ankara_econ <- search_detailed(
+  university = "Ankara Üniversitesi",
+  division = "İktisat Ana Bilim Dalı"
+)
+```
+
+``` r
+
+# Filter by institute
+sosyal_bilimler <- search_detailed(
+  university = "İstanbul Üniversitesi",
+  institute = "Sosyal Bilimler Enstitüsü"
+)
+```
+
+### Filtering by Subject and Discipline
+
+Subjects are broad categories (e.g., “Ekonometri”) whereas disciplines
+are specializations (e.g., “İktisat Teorisi”). You can use
+[`list_subjects()`](https://eremrah.com/tezr/reference/list_subjects.md)
+and
+[`list_disciplines()`](https://eremrah.com/tezr/reference/list_disciplines.md)
+to confirm exact names.
 
 ``` r
 
 # All econometrics theses
 econ_all <- search_detailed(subject = "Ekonometri")
+```
+
+``` r
+
+# Narrow to a discipline within a subject
+theory <- search_detailed(
+  subject = "Ekonomi",
+  discipline = "İktisat Teorisi"
+)
+```
+
+``` r
+
+# Combine discipline with university
+boun_theory <- search_detailed(
+  university = "Boğaziçi Üniversitesi",
+  discipline = "İktisat Teorisi"
+)
 ```
 
 ### Filtering by Supervisor
@@ -321,17 +417,26 @@ head(supervisor_theses)
 
 ### Vector-Valued Parameters
 
-The YÖK web portal accepts only one value per keyword field. `tezr`
-removes this restriction for supported keyword fields and selected
-filters. When you pass multiple values, the package expands them into
-separate API calls, combines the results, and deduplicates by
-`thesis_no`.
+The YÖK web portal accepts only one value per filter field. `tezr`
+removes this restriction. Most
+[`search_detailed()`](https://eremrah.com/tezr/reference/search_detailed.md)
+parameters accept character vectors. When you pass multiple values, the
+package expands them into separate API calls, combines the results, and
+deduplicates by `thesis_no`. This makes cross-institutional and
+cross-disciplinary comparisons possible in a single function call.
 
 ``` r
 
-# Search multiple subjects
-multi_subject <- search_detailed(
-  subject = c("Ekonomi", "Ekonometri")
+# Search across multiple universities
+multi_uni <- search_detailed(
+  university = c("Ankara Üniversitesi", "İstanbul Üniversitesi"),
+  subject = "Ekonomi"
+)
+
+# Search multiple disciplines within a subject
+multi_discipline <- search_detailed(
+  subject = "Ekonomi",
+  discipline = c("İktisat", "Maliye", "Ekonometri")
 )
 
 # Multiple thesis types
@@ -346,9 +451,10 @@ multi_lang <- search_detailed(
   language = c("tr", "en", "fr")
 )
 
-# Search multiple subjects with pagination
-multi_subject_all <- search_detailed(
-  subject = c("Ekonomi", "Ekonometri"),
+# Search across multiple universities with pagination
+multi_uni_all <- search_detailed(
+  university = c("Ankara Üniversitesi", "İstanbul Üniversitesi"),
+  subject = "Ekonomi",
   max_search_results = Inf,
   ignore_cache = TRUE
 )
@@ -363,48 +469,48 @@ supervisor names, page counts, and PDF links, you can use
 
 ### Single Thesis
 
-Pass a search-result row to
-[`detail()`](https://eremrah.com/tezr/reference/detail.md) to fetch the
-full record. When the row includes `encrypted_no`,
-[`detail()`](https://eremrah.com/tezr/reference/detail.md) uses it
-automatically to request citation metadata.
+You can pass a single `detail_id` from search results to
+[`detail()`](https://eremrah.com/tezr/reference/detail.md). The function
+returns a one-row tibble.
 
 ``` r
 
 # Search and get details for the first match
-econ_phd <- search_detailed(
-  subject = "Ekonometri",
+ankara_econ <- search_detailed(
+  university = "Ankara Üniversitesi",
+  division = "İktisat Ana Bilim Dalı",
   thesis_type = "phd",
   year_start = 2024,
   year_end = 2025
 )
 
-econ_phd_details <- detail(econ_phd[2, ])
+ankara_econ_details <- detail(ankara_econ$detail_id[2])
 
-dplyr::glimpse(econ_phd_details)
+dplyr::glimpse(ankara_econ_details)
 
 # English abstract
-econ_phd_details$abstract_translation
+ankara_econ_details$abstract_translation
 ```
 
 ### Batch Retrieval
 
-You can also pass all search-result rows to fetch details for multiple
-theses. The function shows text progress updates by default and fetches
-uncached records in parallel (up to 5 active requests).
+You can also pass a vector of `detail_id` values to fetch details for
+multiple theses. The function shows text progress updates by default and
+fetches uncached records in parallel (up to 5 active requests).
 
 ``` r
 
 # Fetch details for all results
-econ_phd <- search_detailed(
-  subject = "Ekonometri",
+ankara_econ <- search_detailed(
+  university = "Ankara Üniversitesi",
+  division = "İktisat Ana Bilim Dalı",
   thesis_type = "phd",
   year_start = 2025,
   year_end = 2026
 )
 
 # Batch retrieval
-econ_phd_all_details <- detail(econ_phd)
+ankara_econ_all_details <- detail(ankara_econ$detail_id)
 ```
 
 ## Aggregate Statistics
@@ -493,6 +599,27 @@ cache_config(enable = FALSE)
 cache_config(enable = TRUE, search_ttl = 3600, detail_ttl = NULL)
 ```
 
+## Request Configuration
+
+`tezr` identifies itself with a package-specific user agent by default.
+You can override that value for an institutional network policy or a
+portal compatibility issue.
+
+``` r
+
+request_config(user_agent = "my-lab-contact@example.edu")
+request_config(reset = TRUE)
+```
+
+Set `request_config(verbose = FALSE)` or `TEZR_VERBOSE=false` to silence
+informational progress messages. Warnings and errors are still shown.
+
+The package applies a two-second request delay, retries requests up to
+three times, refreshes sessions after 50 logical requests or 20 minutes,
+and uses in-memory caches for repeated searches, range chunks, details,
+and lookups. Detail requests fetch uncached records in bounded parallel
+batches.
+
 ## Working with Results
 
 Search results are returned in tibbles, so they work directly with
@@ -534,12 +661,13 @@ vignette for complete analysis workflows with visualizations.
   around the 2000-result server cap, but cannot split below a single
   calendar year. If a query matches more than 2000 theses in one year,
   the package retrieves only the first 2000 for that year and issues a
-  warning. You should narrow your search with supported filters such as
-  thesis type, language, access type, status, subject, or year range.
+  warning. You should narrow your search with additional filters (thesis
+  type, university, subject) to avoid this.
 - **In-memory cache only.** All cached data (searches, details, lookups)
   is stored in R environment objects and lost when the session ends. You
-  can save results to disk with `readr::write_rds()` or
-  [`saveRDS()`](https://rdrr.io/r/base/readRDS.html) for persistence
+  can save results to disk with
+  [`readr::write_rds()`](https://readr.tidyverse.org/reference/read_rds.html)
+  or [`saveRDS()`](https://rdrr.io/r/base/readRDS.html) for persistence
   across sessions.
 - **SSL verification disabled.** The YÖK server has certificate issues,
   so SSL peer verification is turned off (`ssl_verifypeer = FALSE`).
@@ -549,12 +677,15 @@ vignette for complete analysis workflows with visualizations.
   time.
 - **Vector parameter expansion.**
   [`search_detailed()`](https://eremrah.com/tezr/reference/search_detailed.md)
-  expands vector-valued supported parameters into separate API calls via
-  cartesian product. Passing many multi-valued parameters can generate a
-  large number of requests.
-- **Lookup tables.** The `list_*()` lookup functions expose metadata
-  tables from YÖK. These IDs can be passed to detailed searches to skip
-  name lookup.
+  expands vector-valued parameters (e.g., multiple universities,
+  subjects) into separate API calls via cartesian product. Passing many
+  multi-valued parameters can generate a large number of requests (e.g.,
+  10 universities × 5 subjects = 50 searches).
+- **Lookup matching.** The `list_*()` lookup functions use exact and
+  substring matching. Typos or minor name variations (for example,
+  missing diacritics) will not match. Use
+  [`list_universities()`](https://eremrah.com/tezr/reference/list_universities.md)
+  and related lookup functions to confirm exact names before searching.
 - **Metadata only.** The package retrieves thesis metadata. PDF URLs are
   included in detail records but full-text files are not downloaded. You
   can use URLs to download the PDFs.
@@ -562,12 +693,20 @@ vignette for complete analysis workflows with visualizations.
 ### Best Practices
 
 - **Cache and save results.** Run large queries once and save locally
-  with `readr::write_rds()`, `readr::write_csv()`, or similar functions.
-  Then reload from disk in later sessions.
-- **Filter before paginating.** Add year ranges, thesis types,
-  languages, access types, statuses, or supported keyword fields to keep
-  result sets manageable before setting `max_search_results = Inf`.
+  with
+  [`readr::write_rds()`](https://readr.tidyverse.org/reference/read_rds.html),
+  [`readr::write_csv()`](https://readr.tidyverse.org/reference/write_delim.html),
+  or similar functions. Then reload from disk in later sessions.
+- **Filter before paginating.** Add year ranges, thesis types, and
+  institutional filters to keep result sets manageable before setting
+  `max_search_results = Inf`.
 - **Minimize server load.** Use cached results when possible. Avoid
   repeating identical queries.
 - **Validate data quality.** Metadata may have inconsistencies (missing
   fields, encoding issues). Clean and validate before analysis.
+
+## Citation
+
+Use `citation("tezr")` for the preferred package citation. Also cite the
+National Thesis Center or Council of Higher Education as the source of
+thesis metadata and include the date you retrieved the data.

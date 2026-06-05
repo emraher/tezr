@@ -5,9 +5,9 @@ thesis metadata from the NTC. Each example starts with data collection
 and ends with a table or plot. The workflows cover research trends,
 institutional comparisons, and keyword mining.
 
-Package builds show the code without running live requests. Set
-`TEZR_LIVE_DOCS=true` before rendering if you want to refresh all
-outputs.
+The vignette does not run live NTC queries during ordinary package
+builds. Set `TEZR_LIVE_EXAMPLES=true` before rendering if you want to
+execute the portal requests.
 
 **Prerequisites:** Familiarity with dplyr and ggplot2. See the [Getting
 Started](https://eremrah.com/tezr/articles/getting-started.md) vignette
@@ -72,8 +72,8 @@ yearly_counts <- climate |>
   )
 
 # Bar chart with rolling average overlay
-yearly_counts |> 
-  na.omit() |> 
+yearly_counts |>
+  na.omit() |>
   ggplot(aes(x = year_numeric)) +
   geom_col(aes(y = n), fill = "steelblue", alpha = 0.6) +
   geom_line(aes(y = rolling_avg), color = "red", linewidth = 1) +
@@ -100,7 +100,7 @@ type_trends <- climate |>
   count(year, thesis_type_en) |>
   mutate(year = as.numeric(year))
 
-type_trends |> 
+type_trends |>
   ggplot(aes(x = year, y = n, color = thesis_type_en)) +
   geom_line(linewidth = 1) +
   labs(
@@ -129,7 +129,7 @@ econ_theses <- search_detailed(subject = "Ekonometri",
 uni_counts <- econ_theses |>
   count(university, sort = TRUE)
 
-uni_counts |> 
+uni_counts |>
   head(10)
 ```
 
@@ -140,8 +140,8 @@ university names easy to read.
 
 ``` r
 
-uni_counts |> 
-  head(10) |> 
+uni_counts |>
+  head(10) |>
   ggplot(aes(x = n, y = reorder(university, n))) +
   geom_col() +
   labs(
@@ -168,7 +168,7 @@ uni_trends <- econ_theses |>
   filter(year >= 2000) |>
   count(year, university)
 
-uni_trends |> 
+uni_trends |>
   ggplot(aes(x = year, y = n, color = university)) +
   geom_line() +
   labs(
@@ -181,7 +181,6 @@ uni_trends |>
   facet_wrap(~university, scales = "free_y") +
   theme_minimal(base_size = 11) +
   theme(legend.position = "none")
-  
 ```
 
 ### PhD-to-Total Ratio
@@ -199,7 +198,7 @@ degree_comparison <- econ_theses |>
   filter(thesis_type_en %in% c("Master", "Doctorate")) |>
   count(university, thesis_type_en) |>
   pivot_wider(names_from = thesis_type_en, values_from = n, values_fill = 0) |>
-  mutate(phd_ratio = Doctorate / (Doctorate + Master)) |> 
+  mutate(phd_ratio = Doctorate / (Doctorate + Master)) |>
   arrange(desc(phd_ratio))
 
 degree_comparison
@@ -210,7 +209,7 @@ degree_comparison
 You can extract research themes from thesis abstracts and keywords.
 Detail records include `keywords_tr`, `keywords_en`,
 `abstract_original`, and `abstract_translation`. This example fetches
-details for a small sample so the article builds quickly.
+details for all matching theses, so it is slow.
 
 ### Collecting Detailed Metadata
 
@@ -221,12 +220,10 @@ ml_search <- search_basic("makine öğrenmesi",
                           max_search_results = Inf)
 
 # Fetch full details (abstracts, keywords, advisor, PDF URLs)
-ml_search_sample <- ml_search |> 
-  slice_head(n = 5)
+ml_search_sample <- ml_search |>
+  slice_sample(n = 20)
 
-ml_details <- ml_search_sample$detail_id |>
-  lapply(detail) |>
-  bind_rows()
+ml_details <- detail(ml_search_sample$detail_id)
 ```
 
 ### Keyword Frequency
@@ -240,7 +237,7 @@ them, trim whitespace, and count.
 keywords <- ml_details |>
   filter(!is.na(keywords_tr)) |>
   select(thesis_no, keywords_tr) |>
-  mutate(keywords_tr = str_split(keywords_tr, ";")) |>
+  mutate(keywords_tr = str_split(keywords_tr, stringr::fixed(";"))) |>
   unnest(keywords_tr) |>
   mutate(keyword = str_trim(keywords_tr)) |>
   filter(keyword != "")
@@ -250,7 +247,7 @@ keyword_freq <- keywords |>
   count(keyword, sort = TRUE) |>
   head(5)
 
-keyword_freq |> 
+keyword_freq |>
   ggplot(aes(x = n, y = reorder(keyword, n))) +
   geom_col() +
   labs(
@@ -273,6 +270,7 @@ useful for sharing.
 
 # Save after first fetch
 saveRDS(econ_theses, "econ_theses.rds")
+readr::write_rds(econ_theses, "econ_theses_readr.rds")
 readr::write_csv(econ_theses, "econ_theses.csv")
 
 # Load in a later session

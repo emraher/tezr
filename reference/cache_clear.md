@@ -1,6 +1,6 @@
 # Clear the cache
 
-Removes cached search results, thesis details, and/or lookup data from
+Removes cached search results, thesis details, and lookup data from
 memory.
 
 ## Usage
@@ -19,6 +19,12 @@ cache_clear(what = c("all", "searches", "details", "lookups"))
 ## Value
 
 Invisible NULL
+
+## See also
+
+Other cache functions:
+[`cache_config()`](https://eremrah.com/tezr/reference/cache_config.md),
+[`cache_info()`](https://eremrah.com/tezr/reference/cache_info.md)
 
 ## Examples
 

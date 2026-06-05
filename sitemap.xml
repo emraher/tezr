@@ -1,5 +1,6 @@
 <urlset xmlns = 'http://www.sitemaps.org/schemas/sitemap/0.9'>
 <url><loc>https://eremrah.com/tezr/404.html</loc></url>
+<url><loc>https://eremrah.com/tezr/CODE_OF_CONDUCT.html</loc></url>
 <url><loc>https://eremrah.com/tezr/CONTRIBUTING.html</loc></url>
 <url><loc>https://eremrah.com/tezr/LICENSE-text.html</loc></url>
 <url><loc>https://eremrah.com/tezr/LICENSE.html</loc></url>
@@ -17,9 +18,9 @@
 <url><loc>https://eremrah.com/tezr/reference/list_disciplines.html</loc></url>
 <url><loc>https://eremrah.com/tezr/reference/list_divisions.html</loc></url>
 <url><loc>https://eremrah.com/tezr/reference/list_institutes.html</loc></url>
-<url><loc>https://eremrah.com/tezr/reference/list_recent_theses.html</loc></url>
 <url><loc>https://eremrah.com/tezr/reference/list_subjects.html</loc></url>
 <url><loc>https://eremrah.com/tezr/reference/list_universities.html</loc></url>
+<url><loc>https://eremrah.com/tezr/reference/request_config.html</loc></url>
 <url><loc>https://eremrah.com/tezr/reference/search_advanced.html</loc></url>
 <url><loc>https://eremrah.com/tezr/reference/search_basic.html</loc></url>
 <url><loc>https://eremrah.com/tezr/reference/search_detailed.html</loc></url>

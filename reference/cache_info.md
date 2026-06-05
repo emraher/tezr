@@ -25,6 +25,12 @@ A list with cache statistics:
 
 - detail_ttl - Detail cache TTL in seconds (NULL = session)
 
+## See also
+
+Other cache functions:
+[`cache_clear()`](https://eremrah.com/tezr/reference/cache_clear.md),
+[`cache_config()`](https://eremrah.com/tezr/reference/cache_config.md)
+
 ## Examples
 
 ``` r

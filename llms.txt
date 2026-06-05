@@ -1,13 +1,27 @@
 # tezr
 
-**tezr** provides functions to query Turkiye’s [National Thesis
-Center](https://tez.yok.gov.tr) (Ulusal Tez Merkezi) and extract
-metadata.
+`tezr` retrieves, parses, caches, and checks thesis metadata from
+Turkiye’s [National Thesis Center](https://tez.yok.gov.tr) (NTC, Ulusal
+Tez Merkezi).
 
-**Disclaimer**: This package is not affiliated with, endorsed by, or
-connected to YOK (Yükseköğretim Kurulu / Council of Higher Education) or
-the National Thesis Center. It is an independent tool for academic
-research purposes.
+The NTC is the Council of Higher Education’s national portal for
+graduate thesis records from Turkish universities. It exposes thesis
+titles, authors, institutions, degree types, languages, subjects,
+abstracts, advisors, page counts, access status, and detail-page links
+through a public web interface. The portal contains close to one million
+records, but it has no documented public API, no bulk export, and a
+visible-result cap of 2,000 rows per query.
+
+`tezr` turns that capped web-only archive into a scriptable R workflow.
+It maps the basic, advanced, and detailed search forms into R functions.
+It resolves valid university, institute, division, discipline, and
+subject labels. It retrieves detail pages, parses bilingual metadata
+into tibbles, deduplicates merged searches, caches repeated queries,
+paginates large searches by adaptive year ranges, and exposes statistics
+functions for retrieval checks.
+
+`tezr` is not affiliated with, endorsed by, or connected to YOK, YÖK,
+the Council of Higher Education, or the National Thesis Center.
 
 ## Installation
 
@@ -19,6 +33,10 @@ pak::pak("emraher/tezr")
 
 ## Quick Start
 
+Live examples are not run when this README is built. Set
+`TEZR_LIVE_EXAMPLES=true` before rendering the README or pkgdown site if
+you want to run the portal queries.
+
 ``` r
 
 library(tezr)
@@ -27,37 +45,11 @@ library(tezr)
 Search results use `title_original` and `title_translation`. Detail
 records use `abstract_original` and `abstract_translation`.
 
-### Basic Keyword Search
-
 ``` r
 
 household <- search_basic(keyword = "hanehalkı")
-#> ℹ Initializing session...
-#> ℹ Searching for: hanehalkı
-#> ✔ Found 1040 results
-#> ✔ Returning 1040 results
-
 dplyr::glimpse(household)
-#> Rows: 1,040
-#> Columns: 15
-#> $ thesis_no         <chr> "1002204", "999418", "1002109", "1001006", "1001935"…
-#> $ title_original    <chr> "Coğrafi bilgi sistemleri aracılığıyla ulaşım modlar…
-#> $ title_translation <chr> "Transportation modes through geographic information…
-#> $ author            <chr> "EMİNE BERFİN ŞAHİN", "GÜNSENİN ALTINKAYNAK", "CANSU…
-#> $ university        <chr> "YILDIZ TEKNİK ÜNİVERSİTESİ", "PAMUKKALE ÜNİVERSİTES…
-#> $ year              <int> 2026, 2026, 2026, 2026, 2026, 2026, 2026, 2026, 2026…
-#> $ thesis_type_tr    <chr> "Yüksek Lisans", "Doktora", "Yüksek Lisans", "Yüksek…
-#> $ thesis_type_en    <chr> "Master", "Doctorate", "Master", "Master", "Master",…
-#> $ language_tr       <chr> "Türkçe", "Türkçe", "İngilizce", "İngilizce", "Türkç…
-#> $ language_en       <chr> "Turkish", "Turkish", "English", "English", "Turkish…
-#> $ subject_tr        <chr> "Jeodezi ve Fotogrametri; Ulaşım; Şehircilik ve Bölg…
-#> $ subject_en        <chr> NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, …
-#> $ detail_id         <chr> "sY_pvMMRcFTFZJBPvsSHDw", "SAPTHPMDjlwDmZOmgUMV4g", …
-#> $ encrypted_no      <chr> "d-_X3r5CRNDVZ_qEp8nuWA", "5iGLCCiXIg_o7q1Za8MQQQ", …
-#> $ detail_url        <chr> "https://tez.yok.gov.tr/UlusalTezMerkezi/tezDetay.js…
 ```
-
-### Advanced Search with Filters
 
 ``` r
 
@@ -66,12 +58,7 @@ climate_change <- search_advanced(
   year_start = 2015,
   group = "science"
 )
-#> ℹ Performing advanced search...
-#> ✔ Found 204 results
-#> ✔ Returning 204 results
 ```
-
-### Detailed Search with Filters
 
 ``` r
 
@@ -81,57 +68,140 @@ phd_theses <- search_detailed(
   thesis_type = "phd",
   year_start = 2020
 )
-#> ℹ Found University ID: "3"
-#> ℹ Found Division ID: "51"
-#> ℹ Performing detailed search...
-#> ✔ Found 0 results
-#> ℹ YOK returned no rows with the university filter. Retrying without that filter and matching the returned rows locally...
-#> ℹ Performing detailed search...
-#> ✔ Found 1388 results
-#> ✔ Returning 1388 results
-#> ✔ Returning 20 locally filtered results
 ```
-
-### Get Thesis Details
 
 ``` r
 
-details <- detail(phd_theses[1, ])
-#> ℹ Fetching thesis details...
-#> ✔ Retrieved details for thesis
+details <- detail(phd_theses$detail_id[1])
 
 details |>
-  dplyr::select(
-    thesis_no,
-    title_original,
-    author,
-    university,
-    year,
-    dplyr::starts_with("citation_")
+  tidyr::pivot_longer(
+    cols = dplyr::everything(),
+    names_to = "colname",
+    values_to = "colvalue"
   ) |>
-  dplyr::glimpse(width = 80)
-#> Rows: 1
-#> Columns: 10
-#> $ thesis_no        <chr> "955043"
-#> $ title_original   <chr> "Dijital ekonomide rekabet olgusu: Nedenleri ve sonuç…
-#> $ author           <chr> "ORÇUN"
-#> $ university       <chr> "ANKARA ÜNİVERSİTESİ"
-#> $ year             <chr> "2025"
-#> $ citation_apa     <chr> "KASAP, O. (2025). <i>Dijital ekonomide rekabet olgus…
-#> $ citation_ieee    <chr> "O. KASAP, \"Dijital ekonomide rekabet olgusu: Nedenl…
-#> $ citation_mla     <chr> "KASAP, ORÇUN. <i>Dijital ekonomide rekabet olgusu: N…
-#> $ citation_chicago <chr> "KASAP, ORÇUN. \"Dijital ekonomide rekabet olgusu: Ne…
-#> $ citation_harvard <chr> "KASAP, O. (2025) <i>Dijital ekonomide rekabet olgusu…
+  print(n = 23)
 ```
+
+Save returned objects after large queries so later analysis does not
+repeat the same portal requests.
+
+``` r
+
+saveRDS(climate_change, "climate_change_theses.rds")
+readr::write_rds(climate_change, "climate_change_theses.readr.rds")
+```
+
+## Scope
+
+The primary rOpenSci category is data retrieval. The secondary use case
+is bibliometrics and thesis metadata analysis.
+
+Adjacent packages such as
+[`rentrez`](https://docs.ropensci.org/rentrez/) and
+[`europepmc`](https://docs.ropensci.org/europepmc/) wrap formal
+scholarly APIs. `tezr` differs because the NTC only exposes a web portal
+and uses structured form fields rather than a query language.
+[`bibliometrix`](https://www.bibliometrix.org/) focuses on bibliometric
+analysis after data are already available. `tezr` focuses on retrieval,
+parsing, completeness checks, and preparation of NTC thesis metadata for
+analysis. Turkish higher-education data packages, when available,
+usually target institutional or public statistics sources rather than
+the NTC thesis-record portal.
+
+## Responsible Use
+
+Use `tezr` for academic, reproducible research workflows. Respect the
+NTC portal, avoid unnecessary repeated requests, and cache or save
+results locally. Do not use the package to bypass access restrictions,
+to scrape thesis full text at scale, or to redistribute metadata in ways
+that conflict with the source portal’s terms.
+
+When publishing results, cite both `tezr` and the NTC or Council of
+Higher Education data source. Also document the query terms, filters,
+retrieval dates, and any completeness warnings returned by `tezr`.
+
+The project follows the [rOpenSci Code of
+Conduct](https://ropensci.org/code-of-conduct/). Do not post private
+researcher data, access tokens, local cookies, or sensitive
+institutional details in issues or pull requests.
+
+## Request Behavior
+
+`tezr` sends a package-identifying user agent by default. Override it
+with `request_config(user_agent = "...")` or `TEZR_USER_AGENT` if your
+institution or the portal requires a different header.
+
+``` r
+
+request_config(user_agent = "my-lab-contact@example.edu")
+request_config(reset = TRUE)
+```
+
+Set `request_config(verbose = FALSE)` or `TEZR_VERBOSE=false` to silence
+informational progress messages. Warnings and errors are still shown.
+
+The package applies a two-second request delay, retries requests up to
+three times through `httr2`, refreshes sessions after 50 logical
+requests or 20 minutes, and caches searches, range chunks, details, and
+lookups in memory. Detail requests use bounded parallel fetching for
+uncached records.
+
+## More Than Downloading
+
+`tezr` adds workflow behavior that is not available from the NTC web
+interface.
+
+- Filtered basic, advanced, and detailed search functions.
+- Lookup resolution for valid NTC labels and IDs.
+- Adaptive pagination for queries that exceed the 2,000-row portal cap.
+- Parsing of bilingual search and detail metadata into rectangular
+  tibbles.
+- Deduplication for expanded multi-value detailed searches.
+- Completeness attributes that record reported totals, pagination
+  status, and single-year overflow.
+- In-memory caching for repeated searches, detail pages, range chunks,
+  and lookup lists.
+- Aggregate statistics functions that help compare retrieved records
+  against portal counts.
+
+## Limitations
+
+- The NTC has no public API. Markup, form fields, cookies, or JavaScript
+  behavior may change without notice.
+- Search results are capped at 2,000 rows per portal request.
+- Auto-pagination cannot split below a single calendar year. Single-year
+  overflow can still leave results incomplete.
+- Metadata quality is uneven. Fields can be missing, duplicated,
+  inconsistently translated, or encoded differently across records.
+- The package retrieves metadata and detail-page links. It does not
+  download thesis full text.
+- The package depends on live portal availability. Network failures,
+  certificate issues, and server-side blocking can affect retrieval.
+
+## Maintenance
+
+The package is maintained as active research software. The current
+public API is intended to be review-ready, but the development version
+may still make breaking changes in response to rOpenSci review before a
+stable release. The maintainer commits to at least two years of
+maintenance after review acceptance, including fixes for NTC markup
+changes when feasible.
+
+## Citation
+
+Use `citation("tezr")` for the preferred package citation. Also cite the
+National Thesis Center or Council of Higher Education as the source of
+thesis metadata and include the date you retrieved the data.
 
 ## Learn More
 
-- **[Getting
-  Started](https://emraher.github.io/tezr/articles/getting-started.html)**
-- **[Analysis
-  Examples](https://emraher.github.io/tezr/articles/analysis-examples.html)**
-- **[Function
-  Reference](https://emraher.github.io/tezr/reference/index.html)**
+- [Getting
+  Started](https://eremrah.com/tezr/articles/getting-started.html)
+- [Analysis
+  Examples](https://eremrah.com/tezr/articles/analysis-examples.html)
+- [Function Reference](https://eremrah.com/tezr/reference/index.html)
+- [Contributing](https://eremrah.com/tezr/CONTRIBUTING.md)
 
 # Package index
 
@@ -145,8 +215,6 @@ Search for theses in the database
   : Advanced search of the Turkiye's National Thesis Center
 - [`search_detailed()`](https://eremrah.com/tezr/reference/search_detailed.md)
   : Detailed search of the Turkiye's National Thesis Center
-- [`list_recent_theses()`](https://eremrah.com/tezr/reference/list_recent_theses.md)
-  : List recent theses from YOK Tez
 
 ## Detail Functions
 
@@ -193,6 +261,13 @@ Manage the local cache
   : Configure cache behavior
 - [`cache_info()`](https://eremrah.com/tezr/reference/cache_info.md) :
   Get cache statistics
+
+## Request Configuration
+
+Configure request headers and package verbosity
+
+- [`request_config()`](https://eremrah.com/tezr/reference/request_config.md)
+  : Configure request behavior
 
 # Articles
 

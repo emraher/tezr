@@ -10,8 +10,6 @@ Search for theses in the database
   : Advanced search of the Turkiye's National Thesis Center
 - [`search_detailed()`](https://eremrah.com/tezr/reference/search_detailed.md)
   : Detailed search of the Turkiye's National Thesis Center
-- [`list_recent_theses()`](https://eremrah.com/tezr/reference/list_recent_theses.md)
-  : List recent theses from YOK Tez
 
 ## Detail Functions
 
@@ -58,3 +56,10 @@ Manage the local cache
   : Configure cache behavior
 - [`cache_info()`](https://eremrah.com/tezr/reference/cache_info.md) :
   Get cache statistics
+
+## Request Configuration
+
+Configure request headers and package verbosity
+
+- [`request_config()`](https://eremrah.com/tezr/reference/request_config.md)
+  : Configure request behavior

@@ -7,8 +7,8 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
 <title>Getting Started with `tezr` • tezr</title>
 <script src="../deps/jquery-3.6.0/jquery-3.6.0.min.js"></script><meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-<link href="../deps/bootstrap-5.3.1/bootstrap.min.css" rel="stylesheet">
-<script src="../deps/bootstrap-5.3.1/bootstrap.bundle.min.js"></script><link href="../deps/Open_Sans-0.4.10/font.css" rel="stylesheet">
+<link href="../deps/bootstrap-5.3.8/bootstrap.min.css" rel="stylesheet">
+<script src="../deps/bootstrap-5.3.8/bootstrap.bundle.min.js"></script><link href="../deps/Open_Sans-0.4.10/font.css" rel="stylesheet">
 <link href="../deps/JetBrains_Mono-0.4.10/font.css" rel="stylesheet">
 <link href="../deps/Source_Serif_4-0.4.10/font.css" rel="stylesheet">
 <link href="../deps/font-awesome-6.5.2/css/all.min.css" rel="stylesheet">
@@ -23,7 +23,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">tezr</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.2.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.1.0.9000</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -72,16 +72,39 @@
 Each section builds on the previous one, starting with simple keyword
 searches and progressing to multi-filter queries, detail retrieval, and
 cache management.</p>
-<p>Package builds show the code without running live requests. Set
-<code>TEZR_LIVE_DOCS=true</code> before rendering if you want to refresh
-all outputs.</p>
+<p>The vignette does not run live NTC queries during ordinary package
+builds. Set <code>TEZR_LIVE_EXAMPLES=true</code> before rendering if you
+want to execute the portal requests.</p>
 <div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://eremrah.com/tezr">tezr</a></span><span class="op">)</span></span>
+<code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://eremrah.com/tezr/">tezr</a></span><span class="op">)</span></span>
 <span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://dplyr.tidyverse.org" class="external-link">dplyr</a></span><span class="op">)</span></span></code></pre></div>
 <p><code>tezr</code> has three search functions:
 <code><a href="../reference/search_basic.html">search_basic()</a></code>, <code><a href="../reference/search_advanced.html">search_advanced()</a></code>, and
 <code><a href="../reference/search_detailed.html">search_detailed()</a></code>. The sections below cover each function
 in order.</p>
+<div class="section level2">
+<h2 id="responsible-use">Responsible Use<a class="anchor" aria-label="anchor" href="#responsible-use"></a>
+</h2>
+<p>Use <code>tezr</code> for academic, reproducible research workflows.
+Cache or save large results locally, avoid repeated identical requests,
+and respect the NTC portal’s access controls and terms. Do not post
+private researcher data, access tokens, local cookies, or sensitive
+institutional details in issues or pull requests.</p>
+<p>When publishing results, cite both <code>tezr</code> and the National
+Thesis Center or Council of Higher Education data source. Record the
+query terms, filters, retrieval date, and any completeness warnings
+returned by the package.</p>
+</div>
+<div class="section level2">
+<h2 id="more-than-downloading">More Than Downloading<a class="anchor" aria-label="anchor" href="#more-than-downloading"></a>
+</h2>
+<p><code>tezr</code> does more than submit a web form and return rows.
+It resolves lookup labels, filters searches through structured portal
+fields, paginates capped result sets by adaptive year ranges, parses
+bilingual metadata, deduplicates expanded searches, annotates results
+with completeness attributes, caches repeated requests, and exposes
+statistics tables that help check retrieval completeness.</p>
+</div>
 <div class="section level2">
 <h2 id="basic-search">Basic Search<a class="anchor" aria-label="anchor" href="#basic-search"></a>
 </h2>
@@ -103,25 +126,28 @@ matching to a single field.</p>
 <div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># Search only in thesis titles</span></span>
 <span><span class="va">ag_irrigation_title</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/search_basic.html">search_basic</a></span><span class="op">(</span></span>
-<span>  <span class="st">"tarımsal sulama"</span>, </span>
+<span>  <span class="st">"tarımsal sulama"</span>,</span>
 <span>  search_field <span class="op">=</span> <span class="st">"title"</span><span class="op">)</span></span>
 <span><span class="fu">dplyr</span><span class="fu">::</span><span class="fu"><a href="https://pillar.r-lib.org/reference/glimpse.html" class="external-link">glimpse</a></span><span class="op">(</span><span class="va">ag_irrigation_title</span><span class="op">)</span></span></code></pre></div>
-<p>Available search field values are <code>"all"</code> (default),
+<p>Available search field values are: <code>"all"</code> (default),
 <code>"title"</code>, <code>"author"</code>, <code>"supervisor"</code>,
-<code>"subject"</code>, <code>"index"</code>, and
-<code>"abstract"</code>. Use
-<code>search_detailed(thesis_no = ...)</code> for thesis-number
-lookup.</p>
+<code>"subject"</code>, <code>"index"</code>, <code>"abstract"</code>,
+and <code>"thesis_no"</code>.</p>
 <div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># Search abstracts</span></span>
 <span><span class="va">abstract_search</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/search_basic.html">search_basic</a></span><span class="op">(</span></span>
-<span>  <span class="st">"production function"</span>, </span>
+<span>  <span class="st">"production function"</span>,</span>
 <span>  search_field <span class="op">=</span> <span class="st">"abstract"</span><span class="op">)</span></span>
 <span></span>
 <span><span class="co"># Search by author name</span></span>
 <span><span class="va">author_search</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/search_basic.html">search_basic</a></span><span class="op">(</span></span>
-<span>  <span class="st">"Işıl Şirin Selçuk"</span>, </span>
-<span>  search_field <span class="op">=</span> <span class="st">"author"</span><span class="op">)</span></span></code></pre></div>
+<span>  <span class="st">"Işıl Şirin Selçuk"</span>,</span>
+<span>  search_field <span class="op">=</span> <span class="st">"author"</span><span class="op">)</span></span>
+<span></span>
+<span><span class="co"># Search by thesis number</span></span>
+<span><span class="va">number_search</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/search_basic.html">search_basic</a></span><span class="op">(</span></span>
+<span>  <span class="st">"889301"</span>,</span>
+<span>  search_field <span class="op">=</span> <span class="st">"thesis_no"</span><span class="op">)</span></span></code></pre></div>
 </div>
 <div class="section level3">
 <h3 id="filtering-by-thesis-type-and-access-status">Filtering by Thesis Type and Access Status<a class="anchor" aria-label="anchor" href="#filtering-by-thesis-type-and-access-status"></a>
@@ -137,7 +163,7 @@ so you download fewer records.</p>
 <div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># PhD dissertations only</span></span>
 <span><span class="va">phd_results</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/search_basic.html">search_basic</a></span><span class="op">(</span></span>
-<span>  <span class="st">"ekonometri"</span>, </span>
+<span>  <span class="st">"ekonometri"</span>,</span>
 <span>  thesis_type <span class="op">=</span> <span class="st">"phd"</span><span class="op">)</span></span>
 <span><span class="fu">dplyr</span><span class="fu">::</span><span class="fu"><a href="https://pillar.r-lib.org/reference/glimpse.html" class="external-link">glimpse</a></span><span class="op">(</span><span class="va">phd_results</span><span class="op">)</span></span></code></pre></div>
 <p>Available access type values are: <code>"all"</code> (default),
@@ -145,7 +171,7 @@ so you download fewer records.</p>
 <div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># Open access theses only</span></span>
 <span><span class="va">open_results</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/search_basic.html">search_basic</a></span><span class="op">(</span></span>
-<span>  <span class="st">"hanehalkı"</span>, </span>
+<span>  <span class="st">"hanehalkı"</span>,</span>
 <span>  access_type <span class="op">=</span> <span class="st">"open"</span><span class="op">)</span></span></code></pre></div>
 </div>
 <div class="section level3">
@@ -172,8 +198,8 @@ pagination below.</p>
 <div class="section level2">
 <h2 id="advanced-search">Advanced Search<a class="anchor" aria-label="anchor" href="#advanced-search"></a>
 </h2>
-<p><code><a href="../reference/search_advanced.html">search_advanced()</a></code> adds year range, language, thesis
-type, access type, and thesis status filters to keyword search.</p>
+<p><code><a href="../reference/search_advanced.html">search_advanced()</a></code> adds year range, language, group,
+university/institute, and thesis status filters to keyword search.</p>
 <p>The NTC advanced search form supports up to three keyword rows
 combined with Boolean operators (<code>AND</code>, <code>OR</code>,
 <code>NOT</code>), each targeting a different field.
@@ -220,13 +246,23 @@ field-specific parameters (<code>title</code>, <code>author</code>,
 <span><span class="op">)</span></span></code></pre></div>
 </div>
 <div class="section level3">
-<h3 id="thesis-status">Thesis Status<a class="anchor" aria-label="anchor" href="#thesis-status"></a>
+<h3 id="group-and-thesis-status">Group and Thesis Status<a class="anchor" aria-label="anchor" href="#group-and-thesis-status"></a>
 </h3>
+<p><code>group</code> limits results to a broad group:
+<code>"all"</code> (default), <code>"science"</code> (Fen Bilimleri),
+<code>"social"</code> (Sosyal Bilimler), <code>"medical"</code> (Tıp ve
+Sağlık Bilimleri).</p>
 <p><code>status</code> controls whether results include only approved
 theses or also in-preparation ones: <code>"approved"</code> (default),
 <code>"all"</code>, <code>"in_preparation"</code>.</p>
 <div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="co"># In-preparation theses (not yet defended)</span></span>
+<code class="sourceCode R"><span><span class="co"># Social sciences only</span></span>
+<span><span class="va">social_econ</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/search_advanced.html">search_advanced</a></span><span class="op">(</span></span>
+<span>  keyword <span class="op">=</span> <span class="st">"ekonometri"</span>,</span>
+<span>  group <span class="op">=</span> <span class="st">"social"</span></span>
+<span><span class="op">)</span></span>
+<span></span>
+<span><span class="co"># In-preparation theses (not yet defended)</span></span>
 <span><span class="va">ongoing_ml</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/search_advanced.html">search_advanced</a></span><span class="op">(</span></span>
 <span>  keyword <span class="op">=</span> <span class="st">"makine öğrenmesi"</span>,</span>
 <span>  status <span class="op">=</span> <span class="st">"in_preparation"</span></span>
@@ -245,6 +281,7 @@ a minimal query, then add constraints.</p>
 <span>  thesis_type <span class="op">=</span> <span class="st">"phd"</span>,</span>
 <span>  year_start <span class="op">=</span> <span class="fl">2000</span>,</span>
 <span>  year_end <span class="op">=</span> <span class="fl">2024</span>,</span>
+<span>  group <span class="op">=</span> <span class="st">"social"</span>,</span>
 <span>  access_type <span class="op">=</span> <span class="st">"open"</span></span>
 <span><span class="op">)</span></span></code></pre></div>
 </div>
@@ -268,11 +305,11 @@ periods. Finally, chunk results are merged, deduplicated by
 2000 results, the package cannot paginate further for that year and
 warns you to narrow the query with additional filters.</p>
 <div class="sourceCode" id="cb12"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="co"># Retrieve all title matches (auto-paginate by year)</span></span>
+<code class="sourceCode R"><span><span class="co"># Retrieve all results (auto-paginate by year)</span></span>
 <span><span class="va">all_eu</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/search_advanced.html">search_advanced</a></span><span class="op">(</span></span>
 <span>  keyword <span class="op">=</span> <span class="st">"avrupa"</span>,</span>
-<span>  search_field <span class="op">=</span> <span class="st">"title"</span>,</span>
-<span>  year_start <span class="op">=</span> <span class="fl">2010</span>,</span>
+<span>  search_field <span class="op">=</span> <span class="st">"all"</span>,</span>
+<span>  year_start <span class="op">=</span> <span class="fl">2018</span>,</span>
 <span>  year_end <span class="op">=</span> <span class="fl">2020</span>,</span>
 <span>  max_search_results <span class="op">=</span> <span class="cn">Inf</span></span>
 <span><span class="op">)</span></span>
@@ -282,28 +319,36 @@ warns you to narrow the query with additional filters.</p>
 <div class="section level2">
 <h2 id="detailed-search">Detailed Search<a class="anchor" aria-label="anchor" href="#detailed-search"></a>
 </h2>
-<p><code><a href="../reference/search_detailed.html">search_detailed()</a></code> provides field-specific keyword
-search. Use it when you need to target thesis titles, authors,
-supervisors, subjects, index terms, or abstracts. It supports the same
-auto-pagination flow as <code><a href="../reference/search_advanced.html">search_advanced()</a></code>.</p>
-<p>Supported keyword parameters in <code><a href="../reference/search_detailed.html">search_detailed()</a></code> are
-<code>title</code>, <code>author</code>, <code>supervisor</code>,
-<code>abstract</code>, <code>keyword</code>, and <code>subject</code>.
-You can combine those with <code>university</code>,
-<code>university_id</code>, <code>group</code>,
+<p><code><a href="../reference/search_detailed.html">search_detailed()</a></code> provides field-specific and
+institutional filters. Use it when you need to target thesis titles,
+authors, supervisors, universities, divisions, disciplines, or subjects.
+It supports the same auto-pagination flow as
+<code><a href="../reference/search_advanced.html">search_advanced()</a></code>.</p>
+<p>Available parameters in <code><a href="../reference/search_detailed.html">search_detailed()</a></code> are:
+<code>thesis_no</code>, <code>title</code>, <code>author</code>,
+<code>supervisor</code>, <code>abstract</code>, <code>keyword</code>,
+<code>university</code>, <code>university_id</code>,
+<code>institute</code>, <code>institute_id</code>,
+<code>division</code>, <code>division_id</code>, <code>subject</code>,
+<code>discipline</code>, <code>discipline_id</code>,
 <code>thesis_type</code>, <code>year_start</code>,
 <code>year_end</code>, <code>language</code>, <code>access_type</code>,
-<code>status</code>, <code>max_search_results</code>, and
-<code>ignore_cache</code>.</p>
-<p>YÖK’s redesigned detailed form supports field-specific and
-institutional filters. <code>tezr</code> sends university, institute,
-division, subject, discipline, group, and thesis-number filters through
-that form when you use <code><a href="../reference/search_detailed.html">search_detailed()</a></code>.</p>
+<code>group</code>, <code>status</code>,
+<code>max_search_results</code>, <code>ignore_cache</code>.</p>
+<p>You should provide at least one search criterion or filter to use the
+function.</p>
 <div class="section level3">
 <h3 id="finding-valid-filter-values">Finding Valid Filter Values<a class="anchor" aria-label="anchor" href="#finding-valid-filter-values"></a>
 </h3>
-<p>You can still use the <code>list_*()</code> functions to inspect
-YÖK’s metadata tables and interpret result fields.</p>
+<p>You can use the <code>list_*()</code> functions to discover valid
+filter names from the server. In normal use, you can pass names (for
+example <code>university = "Ankara Üniversitesi"</code>) into functions,
+and <code>tezr</code> will handle ID mapping internally. The
+<code>id</code> columns are mainly lookup keys used by <code>tezr</code>
+but you can also pass IDs directly for advanced or performance-sensitive
+workflows (for example <code>university_id</code>,
+<code>institute_id</code>, <code>division_id</code>,
+<code>discipline_id</code>) if you want.</p>
 <div class="sourceCode" id="cb13"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># All universities</span></span>
 <span><span class="va">unis</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/list_universities.html">list_universities</a></span><span class="op">(</span><span class="op">)</span></span>
@@ -312,7 +357,7 @@ YÖK’s metadata tables and interpret result fields.</p>
 <code class="sourceCode R"><span><span class="co"># Subjects have Turkish and English names</span></span>
 <span><span class="va">subjects</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/list_subjects.html">list_subjects</a></span><span class="op">(</span><span class="op">)</span></span>
 <span><span class="va">subjects</span> <span class="op">|&gt;</span></span>
-<span>  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/filter.html" class="external-link">filter</a></span><span class="op">(</span><span class="fu">stringr</span><span class="fu">::</span><span class="fu"><a href="https://stringr.tidyverse.org/reference/str_detect.html" class="external-link">str_detect</a></span><span class="op">(</span><span class="va">name_tr</span>, <span class="st">"Ekonomi"</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
+<span>  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/filter.html" class="external-link">filter</a></span><span class="op">(</span><span class="fu">stringr</span><span class="fu">::</span><span class="fu"><a href="https://stringr.tidyverse.org/reference/str_detect.html" class="external-link">str_detect</a></span><span class="op">(</span><span class="va">name_tr</span>, <span class="fu">stringr</span><span class="fu">::</span><span class="fu"><a href="https://stringr.tidyverse.org/reference/modifiers.html" class="external-link">fixed</a></span><span class="op">(</span><span class="st">"Ekonomi"</span><span class="op">)</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
 <div class="sourceCode" id="cb15"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># Other list functions (each returns 'name' and 'id' columns)</span></span>
 <span><span class="va">institutes</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/list_institutes.html">list_institutes</a></span><span class="op">(</span><span class="op">)</span></span>
@@ -320,17 +365,55 @@ YÖK’s metadata tables and interpret result fields.</p>
 <span><span class="va">disciplines</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/list_disciplines.html">list_disciplines</a></span><span class="op">(</span><span class="op">)</span></span></code></pre></div>
 </div>
 <div class="section level3">
-<h3 id="filtering-by-subject">Filtering by Subject<a class="anchor" aria-label="anchor" href="#filtering-by-subject"></a>
+<h3 id="filtering-by-institution">Filtering by Institution<a class="anchor" aria-label="anchor" href="#filtering-by-institution"></a>
 </h3>
+<p>You can pass university, institute, or division names as strings.
+<code>tezr</code> resolves them to internal IDs automatically via lookup
+as we mentioned above.</p>
 <div class="sourceCode" id="cb16"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="co"># All theses from Ankara University</span></span>
+<span><span class="va">ankara</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/search_detailed.html">search_detailed</a></span><span class="op">(</span>university <span class="op">=</span> <span class="st">"Ankara Üniversitesi"</span><span class="op">)</span></span></code></pre></div>
+<div class="sourceCode" id="cb17"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="co"># Narrow to a specific division within a university</span></span>
+<span><span class="va">ankara_econ</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/search_detailed.html">search_detailed</a></span><span class="op">(</span></span>
+<span>  university <span class="op">=</span> <span class="st">"Ankara Üniversitesi"</span>,</span>
+<span>  division <span class="op">=</span> <span class="st">"İktisat Ana Bilim Dalı"</span></span>
+<span><span class="op">)</span></span></code></pre></div>
+<div class="sourceCode" id="cb18"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="co"># Filter by institute</span></span>
+<span><span class="va">sosyal_bilimler</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/search_detailed.html">search_detailed</a></span><span class="op">(</span></span>
+<span>  university <span class="op">=</span> <span class="st">"İstanbul Üniversitesi"</span>,</span>
+<span>  institute <span class="op">=</span> <span class="st">"Sosyal Bilimler Enstitüsü"</span></span>
+<span><span class="op">)</span></span></code></pre></div>
+</div>
+<div class="section level3">
+<h3 id="filtering-by-subject-and-discipline">Filtering by Subject and Discipline<a class="anchor" aria-label="anchor" href="#filtering-by-subject-and-discipline"></a>
+</h3>
+<p>Subjects are broad categories (e.g., “Ekonometri”) whereas
+disciplines are specializations (e.g., “İktisat Teorisi”). You can use
+<code><a href="../reference/list_subjects.html">list_subjects()</a></code> and <code><a href="../reference/list_disciplines.html">list_disciplines()</a></code> to
+confirm exact names.</p>
+<div class="sourceCode" id="cb19"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># All econometrics theses</span></span>
 <span><span class="va">econ_all</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/search_detailed.html">search_detailed</a></span><span class="op">(</span>subject <span class="op">=</span> <span class="st">"Ekonometri"</span><span class="op">)</span></span></code></pre></div>
+<div class="sourceCode" id="cb20"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="co"># Narrow to a discipline within a subject</span></span>
+<span><span class="va">theory</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/search_detailed.html">search_detailed</a></span><span class="op">(</span></span>
+<span>  subject <span class="op">=</span> <span class="st">"Ekonomi"</span>,</span>
+<span>  discipline <span class="op">=</span> <span class="st">"İktisat Teorisi"</span></span>
+<span><span class="op">)</span></span></code></pre></div>
+<div class="sourceCode" id="cb21"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="co"># Combine discipline with university</span></span>
+<span><span class="va">boun_theory</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/search_detailed.html">search_detailed</a></span><span class="op">(</span></span>
+<span>  university <span class="op">=</span> <span class="st">"Boğaziçi Üniversitesi"</span>,</span>
+<span>  discipline <span class="op">=</span> <span class="st">"İktisat Teorisi"</span></span>
+<span><span class="op">)</span></span></code></pre></div>
 </div>
 <div class="section level3">
 <h3 id="filtering-by-supervisor">Filtering by Supervisor<a class="anchor" aria-label="anchor" href="#filtering-by-supervisor"></a>
 </h3>
 <p>You can also filter results by supervisor names.</p>
-<div class="sourceCode" id="cb17"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb22"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># Find theses supervised by a specific supervisor</span></span>
 <span><span class="va">supervisor_theses</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/search_detailed.html">search_detailed</a></span><span class="op">(</span>supervisor <span class="op">=</span> <span class="st">"Mustafa Kadir Doğan"</span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="va">supervisor_theses</span><span class="op">)</span></span></code></pre></div>
@@ -338,15 +421,24 @@ YÖK’s metadata tables and interpret result fields.</p>
 <div class="section level3">
 <h3 id="vector-valued-parameters">Vector-Valued Parameters<a class="anchor" aria-label="anchor" href="#vector-valued-parameters"></a>
 </h3>
-<p>The YÖK web portal accepts only one value per keyword field.
-<code>tezr</code> removes this restriction for supported keyword fields
-and selected filters. When you pass multiple values, the package expands
-them into separate API calls, combines the results, and deduplicates by
-<code>thesis_no</code>.</p>
-<div class="sourceCode" id="cb18"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="co"># Search multiple subjects</span></span>
-<span><span class="va">multi_subject</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/search_detailed.html">search_detailed</a></span><span class="op">(</span></span>
-<span>  subject <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"Ekonomi"</span>, <span class="st">"Ekonometri"</span><span class="op">)</span></span>
+<p>The YÖK web portal accepts only one value per filter field.
+<code>tezr</code> removes this restriction. Most
+<code><a href="../reference/search_detailed.html">search_detailed()</a></code> parameters accept character vectors. When
+you pass multiple values, the package expands them into separate API
+calls, combines the results, and deduplicates by <code>thesis_no</code>.
+This makes cross-institutional and cross-disciplinary comparisons
+possible in a single function call.</p>
+<div class="sourceCode" id="cb23"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="co"># Search across multiple universities</span></span>
+<span><span class="va">multi_uni</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/search_detailed.html">search_detailed</a></span><span class="op">(</span></span>
+<span>  university <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"Ankara Üniversitesi"</span>, <span class="st">"İstanbul Üniversitesi"</span><span class="op">)</span>,</span>
+<span>  subject <span class="op">=</span> <span class="st">"Ekonomi"</span></span>
+<span><span class="op">)</span></span>
+<span></span>
+<span><span class="co"># Search multiple disciplines within a subject</span></span>
+<span><span class="va">multi_discipline</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/search_detailed.html">search_detailed</a></span><span class="op">(</span></span>
+<span>  subject <span class="op">=</span> <span class="st">"Ekonomi"</span>,</span>
+<span>  discipline <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"İktisat"</span>, <span class="st">"Maliye"</span>, <span class="st">"Ekonometri"</span><span class="op">)</span></span>
 <span><span class="op">)</span></span>
 <span></span>
 <span><span class="co"># Multiple thesis types</span></span>
@@ -361,9 +453,10 @@ them into separate API calls, combines the results, and deduplicates by
 <span>  language <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"tr"</span>, <span class="st">"en"</span>, <span class="st">"fr"</span><span class="op">)</span></span>
 <span><span class="op">)</span></span>
 <span></span>
-<span><span class="co"># Search multiple subjects with pagination</span></span>
-<span><span class="va">multi_subject_all</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/search_detailed.html">search_detailed</a></span><span class="op">(</span></span>
-<span>  subject <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"Ekonomi"</span>, <span class="st">"Ekonometri"</span><span class="op">)</span>,</span>
+<span><span class="co"># Search across multiple universities with pagination</span></span>
+<span><span class="va">multi_uni_all</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/search_detailed.html">search_detailed</a></span><span class="op">(</span></span>
+<span>  university <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"Ankara Üniversitesi"</span>, <span class="st">"İstanbul Üniversitesi"</span><span class="op">)</span>,</span>
+<span>  subject <span class="op">=</span> <span class="st">"Ekonomi"</span>,</span>
 <span>  max_search_results <span class="op">=</span> <span class="cn">Inf</span>,</span>
 <span>  ignore_cache <span class="op">=</span> <span class="cn">TRUE</span></span>
 <span><span class="op">)</span></span></code></pre></div>
@@ -379,54 +472,55 @@ keywords, supervisor names, page counts, and PDF links, you can use
 <div class="section level3">
 <h3 id="single-thesis">Single Thesis<a class="anchor" aria-label="anchor" href="#single-thesis"></a>
 </h3>
-<p>Pass a search-result row to <code><a href="../reference/detail.html">detail()</a></code> to fetch the full
-record. When the row includes <code>encrypted_no</code>,
-<code><a href="../reference/detail.html">detail()</a></code> uses it automatically to request citation
-metadata.</p>
-<div class="sourceCode" id="cb19"><pre class="downlit sourceCode r">
+<p>You can pass a single <code>detail_id</code> from search results to
+<code><a href="../reference/detail.html">detail()</a></code>. The function returns a one-row tibble.</p>
+<div class="sourceCode" id="cb24"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># Search and get details for the first match</span></span>
-<span><span class="va">econ_phd</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/search_detailed.html">search_detailed</a></span><span class="op">(</span></span>
-<span>  subject <span class="op">=</span> <span class="st">"Ekonometri"</span>,</span>
+<span><span class="va">ankara_econ</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/search_detailed.html">search_detailed</a></span><span class="op">(</span></span>
+<span>  university <span class="op">=</span> <span class="st">"Ankara Üniversitesi"</span>,</span>
+<span>  division <span class="op">=</span> <span class="st">"İktisat Ana Bilim Dalı"</span>,</span>
 <span>  thesis_type <span class="op">=</span> <span class="st">"phd"</span>,</span>
 <span>  year_start <span class="op">=</span> <span class="fl">2024</span>,</span>
 <span>  year_end <span class="op">=</span> <span class="fl">2025</span></span>
 <span><span class="op">)</span></span>
 <span></span>
-<span><span class="va">econ_phd_details</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/detail.html">detail</a></span><span class="op">(</span><span class="va">econ_phd</span><span class="op">[</span><span class="fl">2</span>, <span class="op">]</span><span class="op">)</span></span>
+<span><span class="va">ankara_econ_details</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/detail.html">detail</a></span><span class="op">(</span><span class="va">ankara_econ</span><span class="op">$</span><span class="va">detail_id</span><span class="op">[</span><span class="fl">2</span><span class="op">]</span><span class="op">)</span></span>
 <span></span>
-<span><span class="fu">dplyr</span><span class="fu">::</span><span class="fu"><a href="https://pillar.r-lib.org/reference/glimpse.html" class="external-link">glimpse</a></span><span class="op">(</span><span class="va">econ_phd_details</span><span class="op">)</span></span>
+<span><span class="fu">dplyr</span><span class="fu">::</span><span class="fu"><a href="https://pillar.r-lib.org/reference/glimpse.html" class="external-link">glimpse</a></span><span class="op">(</span><span class="va">ankara_econ_details</span><span class="op">)</span></span>
 <span></span>
 <span><span class="co"># English abstract</span></span>
-<span><span class="va">econ_phd_details</span><span class="op">$</span><span class="va">abstract_translation</span></span></code></pre></div>
+<span><span class="va">ankara_econ_details</span><span class="op">$</span><span class="va">abstract_translation</span></span></code></pre></div>
 </div>
 <div class="section level3">
 <h3 id="batch-retrieval">Batch Retrieval<a class="anchor" aria-label="anchor" href="#batch-retrieval"></a>
 </h3>
-<p>You can also pass all search-result rows to fetch details for
-multiple theses. The function shows text progress updates by default and
-fetches uncached records in parallel (up to 5 active requests).</p>
-<div class="sourceCode" id="cb20"><pre class="downlit sourceCode r">
+<p>You can also pass a vector of <code>detail_id</code> values to fetch
+details for multiple theses. The function shows text progress updates by
+default and fetches uncached records in parallel (up to 5 active
+requests).</p>
+<div class="sourceCode" id="cb25"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># Fetch details for all results</span></span>
-<span><span class="va">econ_phd</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/search_detailed.html">search_detailed</a></span><span class="op">(</span></span>
-<span>  subject <span class="op">=</span> <span class="st">"Ekonometri"</span>,</span>
+<span><span class="va">ankara_econ</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/search_detailed.html">search_detailed</a></span><span class="op">(</span></span>
+<span>  university <span class="op">=</span> <span class="st">"Ankara Üniversitesi"</span>,</span>
+<span>  division <span class="op">=</span> <span class="st">"İktisat Ana Bilim Dalı"</span>,</span>
 <span>  thesis_type <span class="op">=</span> <span class="st">"phd"</span>,</span>
 <span>  year_start <span class="op">=</span> <span class="fl">2025</span>,</span>
 <span>  year_end <span class="op">=</span> <span class="fl">2026</span></span>
 <span><span class="op">)</span></span>
 <span></span>
 <span><span class="co"># Batch retrieval</span></span>
-<span><span class="va">econ_phd_all_details</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/detail.html">detail</a></span><span class="op">(</span><span class="va">econ_phd</span><span class="op">)</span></span></code></pre></div>
+<span><span class="va">ankara_econ_all_details</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/detail.html">detail</a></span><span class="op">(</span><span class="va">ankara_econ</span><span class="op">$</span><span class="va">detail_id</span><span class="op">)</span></span></code></pre></div>
 </div>
 </div>
 <div class="section level2">
 <h2 id="aggregate-statistics">Aggregate Statistics<a class="anchor" aria-label="anchor" href="#aggregate-statistics"></a>
 </h2>
 <p>These functions return summary statistics tables from the NTC.</p>
-<div class="sourceCode" id="cb21"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb26"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># Thesis counts by year</span></span>
 <span><span class="va">year_stats</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/stats_years.html">stats_years</a></span><span class="op">(</span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">tail</a></span><span class="op">(</span><span class="va">year_stats</span><span class="op">)</span></span></code></pre></div>
-<div class="sourceCode" id="cb22"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb27"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># Thesis counts by university</span></span>
 <span><span class="va">uni_stats</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/stats_universities.html">stats_universities</a></span><span class="op">(</span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="va">uni_stats</span><span class="op">)</span></span>
@@ -448,7 +542,7 @@ and reduces server load.</p>
 <div class="section level3">
 <h3 id="viewing-cache-status">Viewing Cache Status<a class="anchor" aria-label="anchor" href="#viewing-cache-status"></a>
 </h3>
-<div class="sourceCode" id="cb23"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb28"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># Shows: enabled status, item counts, and TTL settings</span></span>
 <span><span class="fu"><a href="../reference/cache_info.html">cache_info</a></span><span class="op">(</span><span class="op">)</span></span></code></pre></div>
 <p>The output includes <code>search_count</code>,
@@ -464,7 +558,7 @@ or restart R).</p>
 <p>You can clear specific cache types or everything at once. The
 <code>"lookups"</code> option clears cached university/subject/division
 lists.</p>
-<div class="sourceCode" id="cb24"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb29"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># Clear search results only</span></span>
 <span><span class="fu"><a href="../reference/cache_clear.html">cache_clear</a></span><span class="op">(</span><span class="st">"searches"</span><span class="op">)</span></span>
 <span></span>
@@ -483,7 +577,7 @@ lists.</p>
 <p>You can also adjust time-to-live settings or disable caching
 entirely. TTL values are in seconds. <code>NULL</code> means entries
 persist for the entire session.</p>
-<div class="sourceCode" id="cb25"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb30"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># 2-hour search cache, 1-week detail cache</span></span>
 <span><span class="fu"><a href="../reference/cache_config.html">cache_config</a></span><span class="op">(</span></span>
 <span>  search_ttl <span class="op">=</span> <span class="fl">7200</span>,</span>
@@ -498,11 +592,29 @@ persist for the entire session.</p>
 </div>
 </div>
 <div class="section level2">
+<h2 id="request-configuration">Request Configuration<a class="anchor" aria-label="anchor" href="#request-configuration"></a>
+</h2>
+<p><code>tezr</code> identifies itself with a package-specific user
+agent by default. You can override that value for an institutional
+network policy or a portal compatibility issue.</p>
+<div class="sourceCode" id="cb31"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu"><a href="../reference/request_config.html">request_config</a></span><span class="op">(</span>user_agent <span class="op">=</span> <span class="st">"my-lab-contact@example.edu"</span><span class="op">)</span></span>
+<span><span class="fu"><a href="../reference/request_config.html">request_config</a></span><span class="op">(</span>reset <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></code></pre></div>
+<p>Set <code>request_config(verbose = FALSE)</code> or
+<code>TEZR_VERBOSE=false</code> to silence informational progress
+messages. Warnings and errors are still shown.</p>
+<p>The package applies a two-second request delay, retries requests up
+to three times, refreshes sessions after 50 logical requests or 20
+minutes, and uses in-memory caches for repeated searches, range chunks,
+details, and lookups. Detail requests fetch uncached records in bounded
+parallel batches.</p>
+</div>
+<div class="section level2">
 <h2 id="working-with-results">Working with Results<a class="anchor" aria-label="anchor" href="#working-with-results"></a>
 </h2>
 <p>Search results are returned in tibbles, so they work directly with
 <code>dplyr</code> and other <code>tidyverse</code> tools.</p>
-<div class="sourceCode" id="cb26"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb32"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">climate_change</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/search_basic.html">search_basic</a></span><span class="op">(</span><span class="st">"climate change"</span><span class="op">)</span></span>
 <span></span>
 <span><span class="co"># Count by year</span></span>
@@ -539,13 +651,13 @@ updated. This is the primary fragility risk.</li>
 ranges to work around the 2000-result server cap, but cannot split below
 a single calendar year. If a query matches more than 2000 theses in one
 year, the package retrieves only the first 2000 for that year and issues
-a warning. You should narrow your search with supported filters such as
-thesis type, language, access type, status, subject, or year range.</li>
+a warning. You should narrow your search with additional filters (thesis
+type, university, subject) to avoid this.</li>
 <li>
 <strong>In-memory cache only.</strong> All cached data (searches,
 details, lookups) is stored in R environment objects and lost when the
 session ends. You can save results to disk with
-<code>readr::write_rds()</code> or <code><a href="https://rdrr.io/r/base/readRDS.html" class="external-link">saveRDS()</a></code> for
+<code><a href="https://readr.tidyverse.org/reference/read_rds.html" class="external-link">readr::write_rds()</a></code> or <code><a href="https://rdrr.io/r/base/readRDS.html" class="external-link">saveRDS()</a></code> for
 persistence across sessions.</li>
 <li>
 <strong>SSL verification disabled.</strong> The YÖK server has
@@ -558,13 +670,17 @@ required for the package to function.</li>
 datasets still takes time.</li>
 <li>
 <strong>Vector parameter expansion.</strong>
-<code><a href="../reference/search_detailed.html">search_detailed()</a></code> expands vector-valued supported
-parameters into separate API calls via cartesian product. Passing many
-multi-valued parameters can generate a large number of requests.</li>
+<code><a href="../reference/search_detailed.html">search_detailed()</a></code> expands vector-valued parameters (e.g.,
+multiple universities, subjects) into separate API calls via cartesian
+product. Passing many multi-valued parameters can generate a large
+number of requests (e.g., 10 universities × 5 subjects = 50
+searches).</li>
 <li>
-<strong>Lookup tables.</strong> The <code>list_*()</code> lookup
-functions expose metadata tables from YÖK. These IDs can be passed to
-detailed searches to skip name lookup.</li>
+<strong>Lookup matching.</strong> The <code>list_*()</code> lookup
+functions use exact and substring matching. Typos or minor name
+variations (for example, missing diacritics) will not match. Use
+<code><a href="../reference/list_universities.html">list_universities()</a></code> and related lookup functions to confirm
+exact names before searching.</li>
 <li>
 <strong>Metadata only.</strong> The package retrieves thesis
 metadata. PDF URLs are included in detail records but full-text files
@@ -577,14 +693,13 @@ are not downloaded. You can use URLs to download the PDFs.</li>
 <ul>
 <li>
 <strong>Cache and save results.</strong> Run large queries once and
-save locally with <code>readr::write_rds()</code>,
-<code>readr::write_csv()</code>, or similar functions. Then reload from
+save locally with <code><a href="https://readr.tidyverse.org/reference/read_rds.html" class="external-link">readr::write_rds()</a></code>,
+<code><a href="https://readr.tidyverse.org/reference/write_delim.html" class="external-link">readr::write_csv()</a></code>, or similar functions. Then reload from
 disk in later sessions.</li>
 <li>
 <strong>Filter before paginating.</strong> Add year ranges, thesis
-types, languages, access types, statuses, or supported keyword fields to
-keep result sets manageable before setting
-<code>max_search_results = Inf</code>.</li>
+types, and institutional filters to keep result sets manageable before
+setting <code>max_search_results = Inf</code>.</li>
 <li>
 <strong>Minimize server load.</strong> Use cached results when
 possible. Avoid repeating identical queries.</li>
@@ -594,6 +709,14 @@ inconsistencies (missing fields, encoding issues). Clean and validate
 before analysis.</li>
 </ul>
 </div>
+</div>
+<div class="section level2">
+<h2 id="citation">Citation<a class="anchor" aria-label="anchor" href="#citation"></a>
+</h2>
+<p>Use <code>citation("tezr")</code> for the preferred package citation.
+Also cite the National Thesis Center or Council of Higher Education as
+the source of thesis metadata and include the date you retrieved the
+data.</p>
 </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
     </nav></aside>

@@ -7,15 +7,15 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
 <title>tezr • tezr</title>
 <script src="deps/jquery-3.6.0/jquery-3.6.0.min.js"></script><meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-<link href="deps/bootstrap-5.3.1/bootstrap.min.css" rel="stylesheet">
-<script src="deps/bootstrap-5.3.1/bootstrap.bundle.min.js"></script><link href="deps/Open_Sans-0.4.10/font.css" rel="stylesheet">
+<link href="deps/bootstrap-5.3.8/bootstrap.min.css" rel="stylesheet">
+<script src="deps/bootstrap-5.3.8/bootstrap.bundle.min.js"></script><link href="deps/Open_Sans-0.4.10/font.css" rel="stylesheet">
 <link href="deps/JetBrains_Mono-0.4.10/font.css" rel="stylesheet">
 <link href="deps/Source_Serif_4-0.4.10/font.css" rel="stylesheet">
 <link href="deps/font-awesome-6.5.2/css/all.min.css" rel="stylesheet">
 <link href="deps/font-awesome-6.5.2/css/v4-shims.min.css" rel="stylesheet">
 <script src="deps/headroom-0.11.0/headroom.min.js"></script><script src="deps/headroom-0.11.0/jQuery.headroom.min.js"></script><script src="deps/bootstrap-toc-1.0.1/bootstrap-toc.min.js"></script><script src="deps/clipboard.js-2.0.11/clipboard.min.js"></script><script src="deps/search-1.0.0/autocomplete.jquery.min.js"></script><script src="deps/search-1.0.0/fuse.min.js"></script><script src="deps/search-1.0.0/mark.min.js"></script><!-- pkgdown --><script src="pkgdown.js"></script><meta property="og:title" content="tezr">
-<meta name="description" content="Access the Turkiye's National Thesis Center Database">
-<meta property="og:description" content="Access the Turkiye's National Thesis Center Database">
+<meta name="description" content="Access thesis metadata from Turkiye's National Thesis Center">
+<meta property="og:description" content="Access thesis metadata from Turkiye's National Thesis Center">
 <meta property="og:image" content="https://eremrah.com/tezr/logo.png">
 </head>
 <body>
@@ -26,7 +26,7 @@
 
     <a class="navbar-brand me-2" href="index.html">tezr</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.2.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.1.0.9000</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -64,8 +64,10 @@
 </div>
 <!-- badges: start -->
 
-<p><strong>tezr</strong> provides functions to query Turkiye’s <a href="https://tez.yok.gov.tr" class="external-link">National Thesis Center</a> (Ulusal Tez Merkezi) and extract metadata.</p>
-<p><strong>Disclaimer</strong>: This package is not affiliated with, endorsed by, or connected to YOK (Yükseköğretim Kurulu / Council of Higher Education) or the National Thesis Center. It is an independent tool for academic research purposes.</p>
+<p><code>tezr</code> retrieves, parses, caches, and checks thesis metadata from Turkiye’s <a href="https://tez.yok.gov.tr" class="external-link">National Thesis Center</a> (NTC, Ulusal Tez Merkezi).</p>
+<p>The NTC is the Council of Higher Education’s national portal for graduate thesis records from Turkish universities. It exposes thesis titles, authors, institutions, degree types, languages, subjects, abstracts, advisors, page counts, access status, and detail-page links through a public web interface. The portal contains close to one million records, but it has no documented public API, no bulk export, and a visible-result cap of 2,000 rows per query.</p>
+<p><code>tezr</code> turns that capped web-only archive into a scriptable R workflow. It maps the basic, advanced, and detailed search forms into R functions. It resolves valid university, institute, division, discipline, and subject labels. It retrieves detail pages, parses bilingual metadata into tibbles, deduplicates merged searches, caches repeated queries, paginates large searches by adaptive year ranges, and exposes statistics functions for retrieval checks.</p>
+<p><code>tezr</code> is not affiliated with, endorsed by, or connected to YOK, YÖK, the Council of Higher Education, or the National Thesis Center.</p>
 <div class="section level2">
 <h2 id="installation">Installation<a class="anchor" aria-label="anchor" href="#installation"></a>
 </h2>
@@ -76,110 +78,109 @@
 <div class="section level2">
 <h2 id="quick-start">Quick Start<a class="anchor" aria-label="anchor" href="#quick-start"></a>
 </h2>
+<p>Live examples are not run when this README is built. Set <code>TEZR_LIVE_EXAMPLES=true</code> before rendering the README or pkgdown site if you want to run the portal queries.</p>
 <div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://eremrah.com/tezr">tezr</a></span><span class="op">)</span></span></code></pre></div>
+<code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://eremrah.com/tezr/">tezr</a></span><span class="op">)</span></span></code></pre></div>
 <p>Search results use <code>title_original</code> and <code>title_translation</code>. Detail records use <code>abstract_original</code> and <code>abstract_translation</code>.</p>
-<div class="section level3">
-<h3 id="basic-keyword-search">Basic Keyword Search<a class="anchor" aria-label="anchor" href="#basic-keyword-search"></a>
-</h3>
 <div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">household</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/search_basic.html">search_basic</a></span><span class="op">(</span>keyword <span class="op">=</span> <span class="st">"hanehalkı"</span><span class="op">)</span></span>
-<span><span class="co">#&gt; ℹ Initializing session...</span></span>
-<span><span class="co">#&gt; ℹ Searching for: hanehalkı</span></span>
-<span><span class="co">#&gt; ✔ Found 1040 results</span></span>
-<span><span class="co">#&gt; ✔ Returning 1040 results</span></span>
-<span></span>
-<span><span class="fu">dplyr</span><span class="fu">::</span><span class="fu"><a href="https://pillar.r-lib.org/reference/glimpse.html" class="external-link">glimpse</a></span><span class="op">(</span><span class="va">household</span><span class="op">)</span></span>
-<span><span class="co">#&gt; Rows: 1,040</span></span>
-<span><span class="co">#&gt; Columns: 15</span></span>
-<span><span class="co">#&gt; $ thesis_no         &lt;chr&gt; "1002204", "999418", "1002109", "1001006", "1001935"…</span></span>
-<span><span class="co">#&gt; $ title_original    &lt;chr&gt; "Coğrafi bilgi sistemleri aracılığıyla ulaşım modlar…</span></span>
-<span><span class="co">#&gt; $ title_translation &lt;chr&gt; "Transportation modes through geographic information…</span></span>
-<span><span class="co">#&gt; $ author            &lt;chr&gt; "EMİNE BERFİN ŞAHİN", "GÜNSENİN ALTINKAYNAK", "CANSU…</span></span>
-<span><span class="co">#&gt; $ university        &lt;chr&gt; "YILDIZ TEKNİK ÜNİVERSİTESİ", "PAMUKKALE ÜNİVERSİTES…</span></span>
-<span><span class="co">#&gt; $ year              &lt;int&gt; 2026, 2026, 2026, 2026, 2026, 2026, 2026, 2026, 2026…</span></span>
-<span><span class="co">#&gt; $ thesis_type_tr    &lt;chr&gt; "Yüksek Lisans", "Doktora", "Yüksek Lisans", "Yüksek…</span></span>
-<span><span class="co">#&gt; $ thesis_type_en    &lt;chr&gt; "Master", "Doctorate", "Master", "Master", "Master",…</span></span>
-<span><span class="co">#&gt; $ language_tr       &lt;chr&gt; "Türkçe", "Türkçe", "İngilizce", "İngilizce", "Türkç…</span></span>
-<span><span class="co">#&gt; $ language_en       &lt;chr&gt; "Turkish", "Turkish", "English", "English", "Turkish…</span></span>
-<span><span class="co">#&gt; $ subject_tr        &lt;chr&gt; "Jeodezi ve Fotogrametri; Ulaşım; Şehircilik ve Bölg…</span></span>
-<span><span class="co">#&gt; $ subject_en        &lt;chr&gt; NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, …</span></span>
-<span><span class="co">#&gt; $ detail_id         &lt;chr&gt; "sY_pvMMRcFTFZJBPvsSHDw", "SAPTHPMDjlwDmZOmgUMV4g", …</span></span>
-<span><span class="co">#&gt; $ encrypted_no      &lt;chr&gt; "d-_X3r5CRNDVZ_qEp8nuWA", "5iGLCCiXIg_o7q1Za8MQQQ", …</span></span>
-<span><span class="co">#&gt; $ detail_url        &lt;chr&gt; "https://tez.yok.gov.tr/UlusalTezMerkezi/tezDetay.js…</span></span></code></pre></div>
-</div>
-<div class="section level3">
-<h3 id="advanced-search-with-filters">Advanced Search with Filters<a class="anchor" aria-label="anchor" href="#advanced-search-with-filters"></a>
-</h3>
+<span><span class="fu">dplyr</span><span class="fu">::</span><span class="fu"><a href="https://pillar.r-lib.org/reference/glimpse.html" class="external-link">glimpse</a></span><span class="op">(</span><span class="va">household</span><span class="op">)</span></span></code></pre></div>
 <div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">climate_change</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/search_advanced.html">search_advanced</a></span><span class="op">(</span></span>
 <span>  keyword <span class="op">=</span> <span class="st">"iklim değişikliği"</span>,</span>
 <span>  year_start <span class="op">=</span> <span class="fl">2015</span>,</span>
 <span>  group <span class="op">=</span> <span class="st">"science"</span></span>
-<span><span class="op">)</span></span>
-<span><span class="co">#&gt; ℹ Performing advanced search...</span></span>
-<span><span class="co">#&gt; ✔ Found 204 results</span></span>
-<span><span class="co">#&gt; ✔ Returning 204 results</span></span></code></pre></div>
-</div>
-<div class="section level3">
-<h3 id="detailed-search-with-filters">Detailed Search with Filters<a class="anchor" aria-label="anchor" href="#detailed-search-with-filters"></a>
-</h3>
+<span><span class="op">)</span></span></code></pre></div>
 <div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">phd_theses</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/search_detailed.html">search_detailed</a></span><span class="op">(</span></span>
 <span>  university <span class="op">=</span> <span class="st">"Ankara Üniversitesi"</span>,</span>
 <span>  division <span class="op">=</span> <span class="st">"İktisat Ana Bilim Dalı"</span>,</span>
 <span>  thesis_type <span class="op">=</span> <span class="st">"phd"</span>,</span>
 <span>  year_start <span class="op">=</span> <span class="fl">2020</span></span>
-<span><span class="op">)</span></span>
-<span><span class="co">#&gt; ℹ Found University ID: "3"</span></span>
-<span><span class="co">#&gt; ℹ Found Division ID: "51"</span></span>
-<span><span class="co">#&gt; ℹ Performing detailed search...</span></span>
-<span><span class="co">#&gt; ✔ Found 0 results</span></span>
-<span><span class="co">#&gt; ℹ YOK returned no rows with the university filter. Retrying without that filter and matching the returned rows locally...</span></span>
-<span><span class="co">#&gt; ℹ Performing detailed search...</span></span>
-<span><span class="co">#&gt; ✔ Found 1388 results</span></span>
-<span><span class="co">#&gt; ✔ Returning 1388 results</span></span>
-<span><span class="co">#&gt; ✔ Returning 20 locally filtered results</span></span></code></pre></div>
-</div>
-<div class="section level3">
-<h3 id="get-thesis-details">Get Thesis Details<a class="anchor" aria-label="anchor" href="#get-thesis-details"></a>
-</h3>
+<span><span class="op">)</span></span></code></pre></div>
 <div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">details</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/detail.html">detail</a></span><span class="op">(</span><span class="va">phd_theses</span><span class="op">[</span><span class="fl">1</span>, <span class="op">]</span><span class="op">)</span></span>
-<span><span class="co">#&gt; ℹ Fetching thesis details...</span></span>
-<span><span class="co">#&gt; ✔ Retrieved details for thesis</span></span>
+<code class="sourceCode R"><span><span class="va">details</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/detail.html">detail</a></span><span class="op">(</span><span class="va">phd_theses</span><span class="op">$</span><span class="va">detail_id</span><span class="op">[</span><span class="fl">1</span><span class="op">]</span><span class="op">)</span></span>
 <span></span>
 <span><span class="va">details</span> <span class="op">|&gt;</span></span>
-<span>  <span class="fu">dplyr</span><span class="fu">::</span><span class="fu"><a href="https://dplyr.tidyverse.org/reference/select.html" class="external-link">select</a></span><span class="op">(</span></span>
-<span>    <span class="va">thesis_no</span>,</span>
-<span>    <span class="va">title_original</span>,</span>
-<span>    <span class="va">author</span>,</span>
-<span>    <span class="va">university</span>,</span>
-<span>    <span class="va">year</span>,</span>
-<span>    <span class="fu">dplyr</span><span class="fu">::</span><span class="fu"><a href="https://tidyselect.r-lib.org/reference/starts_with.html" class="external-link">starts_with</a></span><span class="op">(</span><span class="st">"citation_"</span><span class="op">)</span></span>
+<span>  <span class="fu">tidyr</span><span class="fu">::</span><span class="fu"><a href="https://tidyr.tidyverse.org/reference/pivot_longer.html" class="external-link">pivot_longer</a></span><span class="op">(</span></span>
+<span>    cols <span class="op">=</span> <span class="fu">dplyr</span><span class="fu">::</span><span class="fu"><a href="https://tidyselect.r-lib.org/reference/everything.html" class="external-link">everything</a></span><span class="op">(</span><span class="op">)</span>,</span>
+<span>    names_to <span class="op">=</span> <span class="st">"colname"</span>,</span>
+<span>    values_to <span class="op">=</span> <span class="st">"colvalue"</span></span>
 <span>  <span class="op">)</span> <span class="op">|&gt;</span></span>
-<span>  <span class="fu">dplyr</span><span class="fu">::</span><span class="fu"><a href="https://pillar.r-lib.org/reference/glimpse.html" class="external-link">glimpse</a></span><span class="op">(</span>width <span class="op">=</span> <span class="fl">80</span><span class="op">)</span></span>
-<span><span class="co">#&gt; Rows: 1</span></span>
-<span><span class="co">#&gt; Columns: 10</span></span>
-<span><span class="co">#&gt; $ thesis_no        &lt;chr&gt; "955043"</span></span>
-<span><span class="co">#&gt; $ title_original   &lt;chr&gt; "Dijital ekonomide rekabet olgusu: Nedenleri ve sonuç…</span></span>
-<span><span class="co">#&gt; $ author           &lt;chr&gt; "ORÇUN"</span></span>
-<span><span class="co">#&gt; $ university       &lt;chr&gt; "ANKARA ÜNİVERSİTESİ"</span></span>
-<span><span class="co">#&gt; $ year             &lt;chr&gt; "2025"</span></span>
-<span><span class="co">#&gt; $ citation_apa     &lt;chr&gt; "KASAP, O. (2025). &lt;i&gt;Dijital ekonomide rekabet olgus…</span></span>
-<span><span class="co">#&gt; $ citation_ieee    &lt;chr&gt; "O. KASAP, \"Dijital ekonomide rekabet olgusu: Nedenl…</span></span>
-<span><span class="co">#&gt; $ citation_mla     &lt;chr&gt; "KASAP, ORÇUN. &lt;i&gt;Dijital ekonomide rekabet olgusu: N…</span></span>
-<span><span class="co">#&gt; $ citation_chicago &lt;chr&gt; "KASAP, ORÇUN. \"Dijital ekonomide rekabet olgusu: Ne…</span></span>
-<span><span class="co">#&gt; $ citation_harvard &lt;chr&gt; "KASAP, O. (2025) &lt;i&gt;Dijital ekonomide rekabet olgusu…</span></span></code></pre></div>
+<span>  <span class="fu"><a href="https://rdrr.io/r/base/print.html" class="external-link">print</a></span><span class="op">(</span>n <span class="op">=</span> <span class="fl">23</span><span class="op">)</span></span></code></pre></div>
+<p>Save returned objects after large queries so later analysis does not repeat the same portal requests.</p>
+<div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/readRDS.html" class="external-link">saveRDS</a></span><span class="op">(</span><span class="va">climate_change</span>, <span class="st">"climate_change_theses.rds"</span><span class="op">)</span></span>
+<span><span class="fu">readr</span><span class="fu">::</span><span class="fu"><a href="https://readr.tidyverse.org/reference/read_rds.html" class="external-link">write_rds</a></span><span class="op">(</span><span class="va">climate_change</span>, <span class="st">"climate_change_theses.readr.rds"</span><span class="op">)</span></span></code></pre></div>
 </div>
+<div class="section level2">
+<h2 id="scope">Scope<a class="anchor" aria-label="anchor" href="#scope"></a>
+</h2>
+<p>The primary rOpenSci category is data retrieval. The secondary use case is bibliometrics and thesis metadata analysis.</p>
+<p>Adjacent packages such as <a href="https://docs.ropensci.org/rentrez/" class="external-link"><code>rentrez</code></a> and <a href="https://docs.ropensci.org/europepmc/" class="external-link"><code>europepmc</code></a> wrap formal scholarly APIs. <code>tezr</code> differs because the NTC only exposes a web portal and uses structured form fields rather than a query language. <a href="https://www.bibliometrix.org/" class="external-link"><code>bibliometrix</code></a> focuses on bibliometric analysis after data are already available. <code>tezr</code> focuses on retrieval, parsing, completeness checks, and preparation of NTC thesis metadata for analysis. Turkish higher-education data packages, when available, usually target institutional or public statistics sources rather than the NTC thesis-record portal.</p>
+</div>
+<div class="section level2">
+<h2 id="responsible-use">Responsible Use<a class="anchor" aria-label="anchor" href="#responsible-use"></a>
+</h2>
+<p>Use <code>tezr</code> for academic, reproducible research workflows. Respect the NTC portal, avoid unnecessary repeated requests, and cache or save results locally. Do not use the package to bypass access restrictions, to scrape thesis full text at scale, or to redistribute metadata in ways that conflict with the source portal’s terms.</p>
+<p>When publishing results, cite both <code>tezr</code> and the NTC or Council of Higher Education data source. Also document the query terms, filters, retrieval dates, and any completeness warnings returned by <code>tezr</code>.</p>
+<p>The project follows the <a href="https://ropensci.org/code-of-conduct/" class="external-link">rOpenSci Code of Conduct</a>. Do not post private researcher data, access tokens, local cookies, or sensitive institutional details in issues or pull requests.</p>
+</div>
+<div class="section level2">
+<h2 id="request-behavior">Request Behavior<a class="anchor" aria-label="anchor" href="#request-behavior"></a>
+</h2>
+<p><code>tezr</code> sends a package-identifying user agent by default. Override it with <code>request_config(user_agent = "...")</code> or <code>TEZR_USER_AGENT</code> if your institution or the portal requires a different header.</p>
+<div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu"><a href="reference/request_config.html">request_config</a></span><span class="op">(</span>user_agent <span class="op">=</span> <span class="st">"my-lab-contact@example.edu"</span><span class="op">)</span></span>
+<span><span class="fu"><a href="reference/request_config.html">request_config</a></span><span class="op">(</span>reset <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></code></pre></div>
+<p>Set <code>request_config(verbose = FALSE)</code> or <code>TEZR_VERBOSE=false</code> to silence informational progress messages. Warnings and errors are still shown.</p>
+<p>The package applies a two-second request delay, retries requests up to three times through <code>httr2</code>, refreshes sessions after 50 logical requests or 20 minutes, and caches searches, range chunks, details, and lookups in memory. Detail requests use bounded parallel fetching for uncached records.</p>
+</div>
+<div class="section level2">
+<h2 id="more-than-downloading">More Than Downloading<a class="anchor" aria-label="anchor" href="#more-than-downloading"></a>
+</h2>
+<p><code>tezr</code> adds workflow behavior that is not available from the NTC web interface.</p>
+<ul>
+<li>Filtered basic, advanced, and detailed search functions.</li>
+<li>Lookup resolution for valid NTC labels and IDs.</li>
+<li>Adaptive pagination for queries that exceed the 2,000-row portal cap.</li>
+<li>Parsing of bilingual search and detail metadata into rectangular tibbles.</li>
+<li>Deduplication for expanded multi-value detailed searches.</li>
+<li>Completeness attributes that record reported totals, pagination status, and single-year overflow.</li>
+<li>In-memory caching for repeated searches, detail pages, range chunks, and lookup lists.</li>
+<li>Aggregate statistics functions that help compare retrieved records against portal counts.</li>
+</ul>
+</div>
+<div class="section level2">
+<h2 id="limitations">Limitations<a class="anchor" aria-label="anchor" href="#limitations"></a>
+</h2>
+<ul>
+<li>The NTC has no public API. Markup, form fields, cookies, or JavaScript behavior may change without notice.</li>
+<li>Search results are capped at 2,000 rows per portal request.</li>
+<li>Auto-pagination cannot split below a single calendar year. Single-year overflow can still leave results incomplete.</li>
+<li>Metadata quality is uneven. Fields can be missing, duplicated, inconsistently translated, or encoded differently across records.</li>
+<li>The package retrieves metadata and detail-page links. It does not download thesis full text.</li>
+<li>The package depends on live portal availability. Network failures, certificate issues, and server-side blocking can affect retrieval.</li>
+</ul>
+</div>
+<div class="section level2">
+<h2 id="maintenance">Maintenance<a class="anchor" aria-label="anchor" href="#maintenance"></a>
+</h2>
+<p>The package is maintained as active research software. The current public API is intended to be review-ready, but the development version may still make breaking changes in response to rOpenSci review before a stable release. The maintainer commits to at least two years of maintenance after review acceptance, including fixes for NTC markup changes when feasible.</p>
+</div>
+<div class="section level2">
+<h2 id="citation">Citation<a class="anchor" aria-label="anchor" href="#citation"></a>
+</h2>
+<p>Use <code>citation("tezr")</code> for the preferred package citation. Also cite the National Thesis Center or Council of Higher Education as the source of thesis metadata and include the date you retrieved the data.</p>
 </div>
 <div class="section level2">
 <h2 id="learn-more">Learn More<a class="anchor" aria-label="anchor" href="#learn-more"></a>
 </h2>
 <ul>
-<li><strong><a href="https://emraher.github.io/tezr/articles/getting-started.html" class="external-link">Getting Started</a></strong></li>
-<li><strong><a href="https://emraher.github.io/tezr/articles/analysis-examples.html" class="external-link">Analysis Examples</a></strong></li>
-<li><strong><a href="https://emraher.github.io/tezr/reference/index.html" class="external-link">Function Reference</a></strong></li>
+<li><a href="https://eremrah.com/tezr/articles/getting-started.html">Getting Started</a></li>
+<li><a href="https://eremrah.com/tezr/articles/analysis-examples.html">Analysis Examples</a></li>
+<li><a href="https://eremrah.com/tezr/reference/index.html">Function Reference</a></li>
+<li><a href="CONTRIBUTING.html">Contributing</a></li>
 </ul>
 </div>
 </div>
@@ -203,6 +204,7 @@
 <h2 data-toc-skip>Community</h2>
 <ul class="list-unstyled">
 <li><a href="CONTRIBUTING.html">Contributing guide</a></li>
+<li><a href="CODE_OF_CONDUCT.html">Code of conduct</a></li>
 </ul>
 </div>
 
@@ -225,7 +227,10 @@
 <h2 data-toc-skip>Dev status</h2>
 <ul class="list-unstyled">
 <li><a href="https://github.com/emraher/tezr/actions/workflows/R-CMD-check.yaml" class="external-link"><img src="https://github.com/emraher/tezr/actions/workflows/R-CMD-check.yaml/badge.svg" alt="R-CMD-check"></a></li>
-<li><a href="https://lifecycle.r-lib.org/articles/stages.html#experimental" class="external-link"><img src="https://img.shields.io/badge/lifecycle-experimental-orange.svg" alt="Lifecycle: experimental"></a></li>
+<li><a href="https://github.com/emraher/tezr/actions/workflows/pkgcheck.yaml" class="external-link"><img src="https://github.com/emraher/tezr/actions/workflows/pkgcheck.yaml/badge.svg" alt="pkgcheck"></a></li>
+<li><a href="https://app.codecov.io/gh/emraher/tezr?branch=main" class="external-link"><img src="https://codecov.io/gh/emraher/tezr/branch/main/graph/badge.svg" alt="Codecov test coverage"></a></li>
+<li><a href="https://lifecycle.r-lib.org/articles/stages.html#maturing" class="external-link"><img src="https://img.shields.io/badge/lifecycle-maturing-blue.svg" alt="Lifecycle: maturing"></a></li>
+<li><a href="https://www.repostatus.org/#active" class="external-link"><img src="https://www.repostatus.org/badges/latest/active.svg" alt="Project Status: Active"></a></li>
 </ul>
 </div>
 

@@ -30,6 +30,12 @@ cache_config(enable = TRUE, search_ttl = 3600, detail_ttl = NULL)
 
 Invisible NULL
 
+## See also
+
+Other cache functions:
+[`cache_clear()`](https://eremrah.com/tezr/reference/cache_clear.md),
+[`cache_info()`](https://eremrah.com/tezr/reference/cache_info.md)
+
 ## Examples
 
 ``` r

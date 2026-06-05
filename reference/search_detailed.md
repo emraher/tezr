@@ -1,8 +1,8 @@
 # Detailed search of the Turkiye's National Thesis Center
 
-Searches YOK's redesigned detailed form. When total results exceed 2000,
-automatically paginates using year ranges to retrieve more results. Very
-broad single-year ranges can still be capped by the server.
+Searches with detailed field-specific filter options. When total results
+exceed 2000 (server limit), automatically paginates using year ranges to
+retrieve all results.
 
 ## Usage
 
@@ -39,12 +39,13 @@ search_detailed(
 
 - university:
 
-  University name filter. If provided without `university_id`, the ID is
-  looked up automatically.
+  University name (optional). Accepts character vector for multiple
+  universities.
 
 - university_id:
 
-  University ID filter. Use this to skip lookup.
+  University ID (optional). If provided, lookup by `university` is
+  skipped.
 
 - thesis_type:
 
@@ -63,12 +64,13 @@ search_detailed(
 
 - institute:
 
-  Institute name filter. If provided without `institute_id`, the ID is
-  looked up automatically.
+  Institute name (optional). Accepts character vector for multiple
+  institutes.
 
 - institute_id:
 
-  Institute ID filter. Use this to skip lookup.
+  Institute ID (optional). If provided, lookup by `institute` is
+  skipped.
 
 - access_type:
 
@@ -78,22 +80,22 @@ search_detailed(
 
 - group:
 
-  Group filter. One of "all", "science", "social", or "medical".
+  Group filter. One of "all", "science", "social", or "medical". Default
+  is "all".
 
 - thesis_no:
 
-  Thesis number to search for. This uses YOK's detailed form endpoint
-  because the redesigned keyword endpoint is unreliable for thesis
-  numbers.
+  Thesis number to search for (optional). Accepts character vector for
+  multiple thesis numbers.
 
 - division:
 
-  Division name filter. If provided without `division_id`, the ID is
-  looked up automatically.
+  Division name (optional). Accepts character vector for multiple
+  divisions.
 
 - division_id:
 
-  Division ID filter. Use this to skip lookup.
+  Division ID (optional). If provided, lookup by `division` is skipped.
 
 - status:
 
@@ -107,12 +109,13 @@ search_detailed(
 
 - discipline:
 
-  Discipline name filter. If provided without `discipline_id`, the ID is
-  looked up automatically.
+  Discipline name (optional). Accepts character vector for multiple
+  disciplines.
 
 - discipline_id:
 
-  Discipline ID filter. Use this to skip lookup.
+  Discipline ID (optional). If provided, lookup by `discipline` is
+  skipped.
 
 - language:
 
@@ -146,9 +149,8 @@ search_detailed(
 - max_search_results:
 
   Maximum results to return. Default is 2000 (server limit per query).
-  Use higher values or `Inf` to paginate beyond the first server batch
-  when year-range splitting can narrow each request below the server
-  cap.
+  Use higher values or `Inf` to get all available results via automatic
+  pagination.
 
 - ignore_cache:
 
@@ -187,17 +189,25 @@ A tibble containing thesis records with columns:
 
 ## Details
 
-The detailed form accepts field-specific and institutional filters in
-the same request, including `title`, `author`, `supervisor`, `subject`,
-`keyword`, `abstract`, `thesis_no`, `university`, `institute`,
-`division`, `discipline`, and `group`. Vector-valued fields are expanded
-into separate requests, and the results are combined and deduplicated by
-thesis number.
+The YOK web portal accepts only a single value per filter field. This
+function extends beyond the portal by accepting vector-valued parameters
+for most fields. Multiple values are expanded into separate API calls,
+and the results are combined and deduplicated by thesis number.
+
+When the total result count exceeds 2000 and no year range is specified,
+the function automatically uses 1959-present as the year range and
+paginates to retrieve all results.
+
+## See also
+
+Other search functions:
+[`search_advanced()`](https://eremrah.com/tezr/reference/search_advanced.md),
+[`search_basic()`](https://eremrah.com/tezr/reference/search_basic.md)
 
 ## Examples
 
 ``` r
-if (FALSE) { # \dontrun{
+if (FALSE) { # interactive()
 # Field-specific search with year filter
 climate <- search_detailed(
   title = "iklim değişikliği",
@@ -205,27 +215,43 @@ climate <- search_detailed(
   year_end = 2024
 )
 
-# Title search with a thesis type filter
+# Title search with university filter
 ml_theses <- search_detailed(
   title = "makine öğrenmesi",
+  university = "Orta Doğu Teknik Üniversitesi",
   thesis_type = "phd"
 )
 
-# Search by subject and year range
+# Search by university and division
 search_results <- search_detailed(
-  subject = "Ekonometri",
+  university = "Ankara Üniversitesi",
+  division = "İktisat Ana Bilim Dalı",
   year_start = 2020,
   year_end = 2023
 )
 
-# Paginate a broad subject search
+# Get ALL results for a subject (auto-paginates if > 2000)
 all_econ <- search_detailed(subject = "Ekonometri", max_search_results = Inf)
 
 # Search for a specific supervisor's theses
 search_results <- search_detailed(supervisor = "Hasan Şahin")
 
-# Search for a specific thesis number
-search_results <- search_detailed(thesis_no = "12345")
+# Search across multiple universities (automatically expands)
+search_results <- search_detailed(
+  university = c("Ankara Üniversitesi", "İstanbul Üniversitesi"),
+  subject = "Ekonomi"
+)
+
+# Search multiple disciplines within a subject
+search_results <- search_detailed(
+  subject = "Ekonomi",
+  discipline = c("İktisat", "Maliye", "Ekonometri")
+)
+
+# Search for multiple specific thesis numbers
+search_results <- search_detailed(
+  thesis_no = c("123456", "234567", "345678")
+)
 
 # Search for multiple titles
 search_results <- search_detailed(
@@ -253,7 +279,8 @@ search_results <- search_detailed(
 # Complex multi-parameter search
 search_results <- search_detailed(
   author = c("Ahmet Yılmaz", "Mehmet Demir"),
+  university = c("Ankara Üniversitesi", "İstanbul Üniversitesi"),
   year_start = 2020
 )
-} # }
+}
 ```
