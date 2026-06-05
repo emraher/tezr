@@ -24,3 +24,9 @@ cached items and configuration settings.
 \examples{
 cache_info()
 }
+\seealso{
+Other cache functions: 
+\code{\link{cache_clear}()},
+\code{\link{cache_config}()}
+}
+\concept{cache functions}

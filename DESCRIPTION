@@ -1,15 +1,16 @@
 Package: tezr
-Title: Access the Turkiye's National Thesis Center Database
-Version: 0.2.0
+Title: Access Thesis Metadata from Turkiye's National Thesis Center
+Version: 0.1.0.9000
 Authors@R:
     person("Emrah", "Er", , "eer@eremrah.com", role = c("aut", "cre"))
-Description: Access the Turkiye's National Thesis Center (Ulusal Tez Merkezi)
-    database at <https://tez.yok.gov.tr>. Search, retrieve, and analyze
-    dissertation metadata from Turkish universities. Supports basic and
-    advanced search, thesis details retrieval, lookup tables, and aggregate
-    statistics.
+Description: Retrieve, parse, cache, and analyze thesis metadata from the
+    Council of Higher Education's National Thesis Center (Ulusal Tez Merkezi)
+    at <https://tez.yok.gov.tr>. Supports basic, advanced, and detailed
+    search. Also supports thesis detail retrieval, lookup tables, adaptive
+    pagination for capped search results, and aggregate statistics for
+    retrieval checks.
 License: MIT + file LICENSE
-URL: https://eremrah.com/tezr, https://github.com/emraher/tezr
+URL: https://eremrah.com/tezr/, https://github.com/emraher/tezr
 BugReports: https://github.com/emraher/tezr/issues
 Encoding: UTF-8
 Roxygen: list(markdown = TRUE)
@@ -18,7 +19,6 @@ Depends:
     R (>= 4.1.0)
 Imports:
     httr2,
-    xml2,
     rvest,
     dplyr,
     tibble,
@@ -26,7 +26,6 @@ Imports:
     purrr,
     stringr,
     stringi,
-    jsonlite,
     cli,
     rlang
 Suggests:
@@ -34,7 +33,8 @@ Suggests:
     withr,
     knitr,
     rmarkdown,
-    ggplot2
+    ggplot2,
+    readr
 Config/testthat/edition: 3
 Config/Needs/website: emraher/eerdown
 VignetteBuilder: knitr

@@ -10,9 +10,27 @@ mock_search_results_html <- '
 <p>Tarama sonucunda 42 kayıt bulundu.</p>
 <script>
 var rows = [];
-var doc = {userId: "<span onclick=\\"tezDetay(\'abc123\',\'xyz789\')\\">942835</span>", name: "AHMET YILMAZ", age: "2023", weight: "Yapay Zeka ile <b>Veri</b> Analizi", important: "Doktora", someDate: "Bilgisayar Muhendisligi=Computer Engineering", uni: "Istanbul Teknik Universitesi", height: "Turkce"};
+var doc = {
+userId: "<span onclick=\\"tezDetay(\'abc123\',\'xyz789\')\\">942835</span>",
+name: "AHMET YILMAZ",
+age: "2023",
+weight: "Yapay Zeka ile <b>Veri</b> Analizi",
+important: "Doktora",
+someDate: "Bilgisayar Muhendisligi=Computer Engineering",
+uni: "Istanbul Teknik Universitesi",
+height: "Turkce"
+};
 rows.push(doc);
-var doc = {userId: "<span onclick=\\"tezDetay(\'def456\',\'uvw123\')\\">123456</span>", name: "MEHMET DEMIR", age: "2022", weight: "Makine Ogrenmesi Uygulamalari", important: "Yuksek Lisans", someDate: "Yazilim Muhendisligi=Software Engineering", uni: "Ankara Universitesi", height: "Ingilizce"};
+var doc = {
+userId: "<span onclick=\\"tezDetay(\'def456\',\'uvw123\')\\">123456</span>",
+name: "MEHMET DEMIR",
+age: "2022",
+weight: "Makine Ogrenmesi Uygulamalari",
+important: "Yuksek Lisans",
+someDate: "Yazilim Muhendisligi=Software Engineering",
+uni: "Ankara Universitesi",
+height: "Ingilizce"
+};
 rows.push(doc);
 </script>
 </div>
@@ -36,12 +54,24 @@ mock_detail_html <- '
 <tr class="renkp">
 <td>942835</td>
 <td><a href="pdf/12345.pdf">PDF \u0130ndir</a></td>
-<td>Yapay Zeka ile Veri Analizi / Artificial Intelligence Data Analysis Yazar: AHMET YILMAZ Dani\u015Fman: Prof. Dr. MEHMET HOCA Yer Bilgisi: Istanbul Teknik Universitesi / Fen Bilimleri Enstitusu / Bilgisayar Muhendisligi Konu: Yapay Zeka Dizin: yapay zeka, veri analizi, makine ogrenmesi</td>
+<td>
+Yapay Zeka ile Veri Analizi / Artificial Intelligence Data Analysis
+Yazar: AHMET YILMAZ Dani\u015Fman: Prof. Dr. MEHMET HOCA
+Yer Bilgisi: Istanbul Teknik Universitesi / Fen Bilimleri Enstitusu /
+Bilgisayar Muhendisligi Konu: Yapay Zeka Dizin: yapay zeka,
+veri analizi, makine ogrenmesi
+</td>
 <td>2023 210 s. Turkce Onaylandi</td>
 </tr>
 </table>
-<td id="td0">Bu tez, yapay zeka yontemlerini kullanarak veri analizi yapmaktadir. Anahtar Sozcukler: yapay zeka, veri, analiz</td>
-<td id="td1">This thesis uses artificial intelligence methods for data analysis. Keywords: artificial intelligence, data, analysis</td>
+<td id="td0">
+Bu tez, yapay zeka yontemlerini kullanarak veri analizi yapmaktadir.
+Anahtar Sozcukler: yapay zeka, veri, analiz
+</td>
+<td id="td1">
+This thesis uses artificial intelligence methods for data analysis.
+Keywords: artificial intelligence, data, analysis
+</td>
 </body>
 </html>
 '
@@ -62,7 +92,12 @@ mock_detail_html_coadvisor <- '
 <tr class="renkp">
 <td>944372</td>
 <td><a href="pdf/99999.pdf">PDF \u0130ndir</a></td>
-<td>Test Thesis / Test Thesis En Yazar: BAYRAM CERIT Dani\u015Fman: PROF. DR. MELEK ACAR ; DO\u00C7. DR. \u0130BRAH\u0130M \u00D6ZMEN Yer Bilgisi: Selcuk Universitesi / Sosyal Bilimler Enstitusu / Isletme ABD Konu: Ekonomi = Economics Dizin:</td>
+<td>
+Test Thesis / Test Thesis En Yazar: BAYRAM CERIT
+Dani\u015Fman: PROF. DR. MELEK ACAR ; DO\u00C7. DR. \u0130BRAH\u0130M \u00D6ZMEN
+Yer Bilgisi: Selcuk Universitesi / Sosyal Bilimler Enstitusu /
+Isletme ABD Konu: Ekonomi = Economics Dizin:
+</td>
 <td>2025 145 s. Turkce Onaylandi</td>
 </tr>
 </table>
@@ -89,12 +124,22 @@ mock_detail_html_english_swapped <- '
 <tr class="renkp">
 <td>123999</td>
 <td><a href="pdf/99999.pdf">PDF \u0130ndir</a></td>
-<td>Three essays in dynamic macroeconomics / Dinamik makroekonomi \u00FCzerine \u00FC\u00E7 makale Author: TEST AUTHOR Advisor: TEST ADVISOR Where: Test University / Institute / Economics</td>
+<td>
+Three essays in dynamic macroeconomics / Dinamik makroekonomi \u00FCzerine
+\u00FC\u00E7 makale Author: TEST AUTHOR Advisor: TEST ADVISOR
+Where: Test University / Institute / Economics
+</td>
 <td>2024 180 s. Ingilizce Onaylandi</td>
 </tr>
 </table>
-<td id="td0">This thesis consists of three essays in dynamic macroeconomics. Keywords: macroeconomics, essays</td>
-<td id="td1">Bu tez dinamik makroekonomi \u00FCzerine \u00FC\u00E7 makaleden olu\u015Fur. Anahtar Sozcukler: makroekonomi, makaleler</td>
+<td id="td0">
+This thesis consists of three essays in dynamic macroeconomics.
+Keywords: macroeconomics, essays
+</td>
+<td id="td1">
+Bu tez dinamik makroekonomi \u00FCzerine \u00FC\u00E7 makaleden olu\u015Fur.
+Anahtar Sozcukler: makroekonomi, makaleler
+</td>
 </body>
 </html>
 '
@@ -106,7 +151,11 @@ mock_detail_html_fallback <- "
 <head><title>Tez Detay</title></head>
 <body>
 <table>
-<tr><td>Konu</td><td>:</td><td>Ekonomi=Economics; Ekonometri=Econometrics</td></tr>
+<tr>
+<td>Konu</td>
+<td>:</td>
+<td>Ekonomi=Economics; Ekonometri=Econometrics</td>
+</tr>
 </table>
 </body>
 </html>
@@ -123,118 +172,113 @@ mock_empty_results_html <- "
 </html>
 "
 
-# Mock HTML for the redesigned 2026 result-card structure.
-mock_result_cards_html <- '
-<!DOCTYPE html>
-<html>
-<body>
-<div class="result-limit-warning">
-Tarama sonucunda 2.345 kayıt bulundu. 2.000 tanesi görüntülenmektedir.
-</div>
-<div class="result-card" data-kayitno="abc123" data-tezno="enc456" data-index="0">
-  <div class="card-title">Yapay zeka ile veri analizi</div>
-  <div class="card-info" style="font-style: italic;">Data analysis with artificial intelligence</div>
-  <div class="card-info"><strong>Tez No:</strong> 1003627</div>
-</div>
-<div class="result-card" data-kayitno="def789" data-tezno="enc999" data-index="1">
-  <div class="card-title">Makine ogrenmesi uygulamalari</div>
-  <div class="card-info"><strong>Tez No:</strong> 1003628</div>
-</div>
-<script>
-const referenceData = {
-  "0": {"meta": {"author": "AYSE YILMAZ", "year": "2026", "subject": "Bilgisayar Muhendisligi=Computer Engineering", "type": "Doktora", "lang": "Turkce", "yer": "MARMARA UNIVERSITESI / "}},
-  "1": {"meta": {"author": "MEHMET DEMIR", "year": "2025", "subject": "Yazilim Muhendisligi=Software Engineering", "type": "Yuksek Lisans", "lang": "Ingilizce", "yer": "ANKARA UNIVERSITESI / Fen Bilimleri Enstitusu / "}},
-};
-</script>
-</body>
-</html>
-'
-
 test_that("parse_results_table extracts records from JavaScript objects", {
   html <- rvest::read_html(mock_search_results_html)
   results <- parse_results_table(html)
 
   expect_s3_class(results, "tbl_df")
-  expect_equal(nrow(results), 2)
+  expect_identical(nrow(results), 2L)
 
   # Check first record
-  expect_equal(results$thesis_no[1], "942835")
-  expect_equal(results$author[1], "AHMET YILMAZ")
-  expect_equal(results$year[1], 2023L)
-  expect_equal(results$thesis_type_tr[1], "Doktora")
-  expect_equal(results$subject_tr[1], "Bilgisayar Muhendisligi")
-  expect_equal(results$subject_en[1], "Computer Engineering")
-  expect_equal(results$detail_id[1], "abc123")
+  expect_identical(results$thesis_no[1], "942835")
+  expect_identical(results$author[1], "AHMET YILMAZ")
+  expect_identical(results$year[1], 2023L)
+  expect_identical(results$thesis_type_tr[1], "Doktora")
+  expect_identical(results$subject_tr[1], "Bilgisayar Muhendisligi")
+  expect_identical(results$subject_en[1], "Computer Engineering")
+  expect_identical(results$detail_id[1], compose_detail_id("abc123", "xyz789"))
 
   # Check second record
-  expect_equal(results$thesis_no[2], "123456")
-  expect_equal(results$author[2], "MEHMET DEMIR")
-  expect_equal(results$year[2], 2022L)
-  expect_equal(results$subject_tr[2], "Yazilim Muhendisligi")
-  expect_equal(results$subject_en[2], "Software Engineering")
+  expect_identical(results$thesis_no[2], "123456")
+  expect_identical(results$author[2], "MEHMET DEMIR")
+  expect_identical(results$year[2], 2022L)
+  expect_identical(results$subject_tr[2], "Yazilim Muhendisligi")
+  expect_identical(results$subject_en[2], "Software Engineering")
+  expect_identical(results$detail_id[2], compose_detail_id("def456", "uvw123"))
 })
 
-test_that("parse_results_table extracts redesigned result cards", {
-  html <- rvest::read_html(mock_result_cards_html)
-  parsed_results <- parse_results_table(html)
-
-  expect_s3_class(parsed_results, "tbl_df")
-  expect_equal(nrow(parsed_results), 2)
-  expect_equal(parsed_results$thesis_no, c("1003627", "1003628"))
-  expect_equal(parsed_results$detail_id, c("abc123", "def789"))
-  expect_equal(parsed_results$encrypted_no, c("enc456", "enc999"))
-  expect_equal(parsed_results$author, c("AYSE YILMAZ", "MEHMET DEMIR"))
-  expect_equal(parsed_results$year, c(2026L, 2025L))
-  expect_equal(
-    parsed_results$title_translation[1],
-    "Data analysis with artificial intelligence"
+test_that("parse_results_table extracts records from modern result cards", {
+  html <- rvest::read_html(
+    paste0(
+      "<html><body>",
+      "<div id='results-body'>",
+      "<div class='result-card' data-index='0' ",
+      "data-kayitno='kayit-abc' data-tezno='tez-xyz'>",
+      "<div class='card-title'>Türkçe başlık</div>",
+      "<div class='card-info' style='font-style: italic'>English title</div>",
+      "<div class='card-info'><strong>Tez No:</strong> 1006368</div>",
+      "</div>",
+      "<div class='result-card' data-index='1' ",
+      "data-kayitno='kayit-def' data-tezno='tez-uvw'>",
+      "<div class='card-title'>Second title</div>",
+      "<div class='card-info'><strong>Thesis No:</strong> 1001374</div>",
+      "</div>",
+      "</div>",
+      "<script>",
+      "const referenceData = {",
+      "\"0\": {\"meta\": {",
+      "\"author\": \"HASAN BURAK ÇALIYURT\",",
+      "\"year\": \"2026\",",
+      "\"subject\": \"Ekonometri;Ekonomi\",",
+      "\"type\": \"Doktora\",",
+      "\"lang\": \"Türkçe\",",
+      "\"yer\": \"İSTANBUL ÜNİVERSİTESİ / ",
+      "SOSYAL BİLİMLER ENSTİTÜSÜ / İKTİSAT\",",
+      "\"title\": \"Türkçe başlık\"",
+      "}},",
+      "\"1\": {\"meta\": {",
+      "\"author\": \"UĞUR SEVER\",",
+      "\"year\": \"2026\",",
+      "\"subject\": \"Ekonometri\",",
+      "\"type\": \"Yüksek Lisans\",",
+      "\"lang\": \"Türkçe\",",
+      "\"yer\": \"BAYBURT ÜNİVERSİTESİ / LİSANSÜSTÜ EĞİTİM ENSTİTÜSÜ\",",
+      "\"title\": \"Second title\"",
+      "}}",
+      "};",
+      "</script>",
+      "</body></html>"
+    )
   )
-  expect_true(grepl("id=abc123", parsed_results$detail_url[1], fixed = TRUE))
-  expect_true(grepl("no=enc456", parsed_results$detail_url[1], fixed = TRUE))
+
+  results <- parse_results_table(html)
+
+  expect_s3_class(results, "tbl_df")
+  expect_identical(nrow(results), 2L)
+  expect_identical(results$thesis_no, c("1006368", "1001374"))
+  expect_identical(results$title_original[1], "Türkçe başlık")
+  expect_identical(results$title_translation[1], "English title")
+  expect_identical(results$author[1], "HASAN BURAK ÇALIYURT")
+  expect_identical(results$university[1], "İSTANBUL ÜNİVERSİTESİ")
+  expect_identical(results$year[1], 2026L)
+  expect_identical(results$thesis_type_tr[1], "Doktora")
+  expect_identical(results$thesis_type_en[1], "Doctorate")
+  expect_identical(results$language_tr[1], "Türkçe")
+  expect_identical(results$language_en[1], "Turkish")
+  expect_identical(results$subject_tr[1], "Ekonometri; Ekonomi")
+  expect_true(is.na(results$subject_en[1]))
+  expect_identical(
+    results$detail_id[1],
+    compose_detail_id("kayit-abc", "tez-xyz")
+  )
+  expect_identical(results$title_original[2], "Second title")
+  expect_identical(results$title_translation[2], NA_character_)
+  expect_identical(results$author[2], "UĞUR SEVER")
+  expect_identical(results$university[2], "BAYBURT ÜNİVERSİTESİ")
+  expect_identical(results$year[2], 2026L)
+  expect_identical(results$thesis_type_tr[2], "Yüksek Lisans")
+  expect_identical(results$thesis_type_en[2], "Master")
+  expect_identical(results$language_tr[2], "Türkçe")
+  expect_identical(results$language_en[2], "Turkish")
+  expect_identical(results$subject_tr[2], "Ekonometri")
+  expect_true(is.na(results$subject_en[2]))
+  expect_identical(
+    results$detail_id[2],
+    compose_detail_id("kayit-def", "tez-uvw")
+  )
 })
 
-test_that("parse_results_table extracts English result-card thesis numbers", {
-  html <- rvest::read_html(gsub(
-    "Tez No",
-    "Thesis No",
-    mock_result_cards_html,
-    fixed = TRUE
-  ))
-  parsed_results <- parse_results_table(html)
-
-  expect_equal(parsed_results$thesis_no, c("1003627", "1003628"))
-})
-
-test_that("extract_reference_data handles large redesigned metadata blocks", {
-  entries <- vapply(
-    seq_len(2000),
-    function(index) {
-      sprintf(
-        '"%d": {"meta": {"author": "AUTHOR %d", "year": "2026", "subject": "Ekonomi {hane}=Household } text", "type": "Doktora", "lang": "Turkce", "yer": "TEST UNIVERSITY / "}}',
-        index - 1L,
-        index
-      )
-    },
-    character(1)
-  )
-
-  html_text <- paste0(
-    "<script>const referenceData = {\n",
-    paste(entries, collapse = ",\n"),
-    "\n};</script><div>other page content</div>"
-  )
-
-  reference_data <- extract_reference_data(html_text)
-
-  expect_length(reference_data, 2000)
-  expect_equal(reference_data[["0"]]$meta$author, "AUTHOR 1")
-  expect_equal(
-    reference_data[["1999"]]$meta$subject,
-    "Ekonomi {hane}=Household } text"
-  )
-})
-
-test_that("parse_results_table handles closing brace characters inside field values", {
+test_that("parse_results_table handles braces in field values", {
   html <- rvest::read_html(
     '
 <!DOCTYPE html>
@@ -243,9 +287,27 @@ test_that("parse_results_table handles closing brace characters inside field val
 <p>Tarama sonucunda 2 kayit bulundu.</p>
 <script>
 var rows = [];
-var doc = {userId: "<span onclick=\\"tezDetay(\'brace001\',\'token1\')\\">371511</span>", name: "ISTEM FER", age: "2011", weight: "Modeling climate change effects}{on forecasts", important: "Doktora", someDate: "Ekonomi=Economics", uni: "Test University", height: "Turkce"};
+var doc = {
+userId: "<span onclick=\\"tezDetay(\'brace001\',\'token1\')\\">371511</span>",
+name: "ISTEM FER",
+age: "2011",
+weight: "Modeling climate change effects}{on forecasts",
+important: "Doktora",
+someDate: "Ekonomi=Economics",
+uni: "Test University",
+height: "Turkce"
+};
 rows.push(doc);
-var doc = {userId: "<span onclick=\\"tezDetay(\'brace002\',\'token2\')\\">371512</span>", name: "SECOND AUTHOR", age: "2012", weight: "Second title", important: "Yuksek Lisans", someDate: "Iklim=Climate", uni: "Another University", height: "Ingilizce"};
+var doc = {
+userId: "<span onclick=\\"tezDetay(\'brace002\',\'token2\')\\">371512</span>",
+name: "SECOND AUTHOR",
+age: "2012",
+weight: "Second title",
+important: "Yuksek Lisans",
+someDate: "Iklim=Climate",
+uni: "Another University",
+height: "Ingilizce"
+};
 rows.push(doc);
 </script>
 </body>
@@ -255,26 +317,82 @@ rows.push(doc);
 
   results <- parse_results_table(html)
 
-  expect_equal(nrow(results), 2)
-  expect_equal(sort(results$thesis_no), c("371511", "371512"))
+  expect_identical(nrow(results), 2L)
+  expect_identical(sort(results$thesis_no), c("371511", "371512"))
 })
 
-test_that("extract_js_doc_blocks captures full doc blocks and strips rows.push suffix", {
+test_that("extract_js_doc_blocks captures blocks and strips rows.push suffix", {
   html_text <- '
 <script>
 var rows = [];
-var doc = {userId: "<span onclick=\\"tezDetay(\'brace001\',\'token1\')\\">371511</span>", name: "ISTEM FER", age: "2011", weight: "Modeling climate change effects}{on forecasts"};
+var doc = {
+userId: "<span onclick=\\"tezDetay(\'brace001\',\'token1\')\\">371511</span>",
+name: "ISTEM FER",
+age: "2011",
+weight: "Modeling climate change effects}{on forecasts"
+};
 rows.push(doc);
-var doc = {userId: "<span onclick=\\"tezDetay(\'brace002\',\'token2\')\\">371512</span>", name: "SECOND AUTHOR", age: "2012", weight: "Second title"};
+var doc = {
+userId: "<span onclick=\\"tezDetay(\'brace002\',\'token2\')\\">371512</span>",
+name: "SECOND AUTHOR",
+age: "2012",
+weight: "Second title"
+};
 rows.push(doc);
 </script>
 '
 
   doc_blocks <- extract_js_doc_blocks(html_text)
 
-  expect_equal(length(doc_blocks), 2)
+  expect_length(doc_blocks, 2L)
   expect_true(all(grepl("^var doc = \\{", doc_blocks)))
-  expect_false(any(grepl("rows\\.push\\(doc\\)", doc_blocks)))
+  expect_false(any(grepl("rows.push(doc)", doc_blocks, fixed = TRUE)))
+})
+
+test_that("detail id helpers preserve legacy and paired identifiers", {
+  expect_identical(compose_detail_id("old-id", NA_character_), "old-id")
+  expect_identical(compose_detail_id("old-id", ""), "old-id")
+
+  paired <- compose_detail_id("kayit-abc", "tez-xyz")
+  expect_identical(paired, "kayit-abc|tez-xyz")
+
+  decoded <- split_detail_id(paired)
+  expect_identical(decoded$id, "kayit-abc")
+  expect_identical(decoded$no, "tez-xyz")
+
+  legacy <- split_detail_id("old-id")
+  expect_identical(legacy$id, "old-id")
+  expect_identical(legacy$no, NA_character_)
+})
+
+test_that("modern result helpers handle empty fallback paths", {
+  expect_identical(
+    compose_detail_id(NA_character_, "encrypted-no"),
+    NA_character_
+  )
+  expect_identical(
+    split_detail_id(NA_character_),
+    list(id = NA_character_, no = NA_character_)
+  )
+  expect_identical(
+    parse_js_quoted_fields("not a JavaScript object"),
+    stats::setNames(character(), character())
+  )
+  expect_identical(extract_modern_reference_data("<html></html>"), list())
+  expect_identical(
+    extract_modern_reference_data(
+      'const referenceData = {"key": {"meta": {"author": "A"}}};'
+    ),
+    list()
+  )
+
+  html <- rvest::read_html(
+    "<html><body><div class='result-card'></div></body></html>"
+  )
+
+  expect_identical(nrow(parse_modern_result_cards(html)), 0L)
+  expect_identical(parse_modern_university(NA_character_), NA_character_)
+  expect_identical(normalize_modern_subject(NA_character_), NA_character_)
 })
 
 test_that("parse_results_table returns empty tibble for no results", {
@@ -282,24 +400,41 @@ test_that("parse_results_table returns empty tibble for no results", {
   results <- parse_results_table(html)
 
   expect_s3_class(results, "tbl_df")
-  expect_equal(nrow(results), 0)
+  expect_identical(nrow(results), 0L)
   expect_true("thesis_no" %in% names(results))
   expect_true("detail_id" %in% names(results))
+})
+
+test_that("parse_results_table returns empty when doc blocks are unparseable", {
+  html <- rvest::read_html(
+    paste0(
+      "<html><script>",
+      "var doc = { name: \"No user\" }; rows.push(doc);",
+      "</script></html>"
+    )
+  )
+  results <- parse_results_table(html)
+
+  expect_s3_class(results, "tbl_df")
+  expect_identical(nrow(results), 0L)
 })
 
 test_that("parse_detail_page extracts co-advisor when present", {
   html <- rvest::read_html(mock_detail_html_coadvisor)
   details <- parse_detail_page(html)
 
-  expect_equal(details$advisor, "PROF. DR. MELEK ACAR")
-  expect_equal(details$co_advisor, "DO\u00C7. DR. \u0130BRAH\u0130M \u00D6ZMEN")
+  expect_identical(details$advisor, "PROF. DR. MELEK ACAR")
+  expect_identical(
+    details$co_advisor,
+    "DO\u00C7. DR. \u0130BRAH\u0130M \u00D6ZMEN"
+  )
 })
 
 test_that("parse_detail_page returns NA co_advisor when absent", {
   html <- rvest::read_html(mock_detail_html)
   details <- parse_detail_page(html)
 
-  expect_equal(details$advisor, "Prof. Dr. MEHMET HOCA")
+  expect_identical(details$advisor, "Prof. Dr. MEHMET HOCA")
   expect_true(is.na(details$co_advisor))
 })
 
@@ -307,24 +442,82 @@ test_that("parse_detail_page fallback preserves subjects", {
   html <- rvest::read_html(mock_detail_html_fallback)
   details <- parse_detail_page(html)
 
-  expect_equal(details$subject_tr, "Ekonomi; Ekonometri")
-  expect_equal(details$subject_en, "Economics; Econometrics")
+  expect_identical(details$subject_tr, "Ekonomi; Ekonometri")
+  expect_identical(details$subject_en, "Economics; Econometrics")
+})
+
+test_that("detail PDF links handle optional link and href nodes", {
+  no_link <- rvest::read_html("<td>PDF yok</td>") |>
+    rvest::html_element("td")
+  no_href <- rvest::read_html("<td><a>PDF</a></td>") |>
+    rvest::html_element("td")
+
+  expect_true(is.na(detail_pdf_link(NULL)))
+  expect_true(is.na(detail_pdf_link(no_link)))
+  expect_true(is.na(detail_pdf_link(no_href)))
+})
+
+test_that("extract_detail_field handles table and label layouts", {
+  html <- rvest::read_html(
+    paste0(
+      "<html><body>",
+      "<table>",
+      "<tr><td>Author</td><td>Direct Value</td></tr>",
+      "<tr><td>Subject</td><td>:</td><td>Second Value</td></tr>",
+      "</table>",
+      "<div><span class='label'>Language</span>",
+      "<span>Label Sibling</span></div>",
+      "</body></html>"
+    )
+  )
+
+  expect_identical(extract_detail_field(html, "Author"), "Direct Value")
+  expect_identical(extract_detail_field(html, "Subject"), "Second Value")
+  expect_identical(extract_detail_field(html, "Language"), "Label Sibling")
+  expect_true(is.na(extract_detail_field(html, "Missing")))
+
+  missing_second_sibling <- rvest::read_html(
+    paste0(
+      "<html><body><table>",
+      "<tr><td>Subject</td><td>:</td></tr>",
+      "</table></body></html>"
+    )
+  )
+  expect_true(is.na(extract_detail_field(missing_second_sibling, "Subject")))
+})
+
+test_that("original-language matching covers known script families", {
+  expect_true(matches_original_language("Türkçe özet", "Turkish"))
+  expect_true(matches_original_language("English abstract", "English"))
+  expect_true(matches_original_language("التفكر والتأمل", "Arabic"))
+  expect_true(matches_original_language("Кириллический текст", "Kirghiz"))
+  expect_true(matches_original_language("Кириллический текст", "Russian"))
+  expect_true(matches_original_language("Кириллический текст", "Kazakh"))
+  expect_false(matches_original_language("", "English"))
+  expect_false(matches_original_language("plain text", "Unknown"))
+  expect_identical(
+    original_language_candidate("Türkçe özet", "Turkish"),
+    "Türkçe özet"
+  )
 })
 
 test_that("parse_location_info extracts university, institute, division", {
-  metadata <- "Yer Bilgisi: Istanbul Universitesi / Sosyal Bilimler Enstitusu / Iktisat"
+  metadata <- paste0(
+    "Yer Bilgisi: Istanbul Universitesi / Sosyal Bilimler Enstitusu / ",
+    "Iktisat"
+  )
   result <- parse_location_info(metadata)
 
-  expect_equal(result$university, "Istanbul Universitesi")
-  expect_equal(result$institute, "Sosyal Bilimler Enstitusu")
-  expect_equal(result$division, "Iktisat")
+  expect_identical(result$university, "Istanbul Universitesi")
+  expect_identical(result$institute, "Sosyal Bilimler Enstitusu")
+  expect_identical(result$division, "Iktisat")
 })
 
 test_that("empty_results_tibble has correct structure", {
   empty <- empty_results_tibble()
 
   expect_s3_class(empty, "tbl_df")
-  expect_equal(nrow(empty), 0)
+  expect_identical(nrow(empty), 0L)
   expected_cols <- c(
     "thesis_no",
     "title_original",
@@ -343,7 +536,7 @@ test_that("empty_results_tibble has correct structure", {
   expect_true(all(expected_cols %in% names(empty)))
 })
 
-test_that("parse_js_doc_fields extracts keyed values and get_doc_field returns cleaned values", {
+test_that("parse_js_doc_fields extracts keyed values and cleans field values", {
   doc_str <- paste0(
     "var doc = {",
     "name: \"test\\\\'s value\", ",
@@ -354,10 +547,21 @@ test_that("parse_js_doc_fields extracts keyed values and get_doc_field returns c
 
   parsed_fields <- parse_js_doc_fields(doc_str)
 
-  expect_equal(get_doc_field(parsed_fields, "name"), "test's value")
-  expect_equal(get_doc_field(parsed_fields, "age"), "2024")
-  expect_equal(get_doc_field(parsed_fields, "weight"), "line1 line2")
+  expect_identical(get_doc_field(parsed_fields, "name"), "test's value")
+  expect_identical(get_doc_field(parsed_fields, "age"), "2024")
+  expect_identical(get_doc_field(parsed_fields, "weight"), "line1 line2")
   expect_true(is.na(get_doc_field(parsed_fields, "missing_field")))
+})
+
+test_that("JavaScript parsing helpers handle empty or missing values", {
+  expect_length(parse_js_doc_fields("var doc = {};"), 0L)
+  expect_identical(normalize_js_field_values(character()), character())
+  expect_identical(strip_html_tags_if_present(character()), character())
+
+  title <- parse_title_fields_fast(NA_character_)
+  expect_true(is.na(title$primary))
+  expect_true(is.na(title$secondary))
+  expect_null(parse_js_doc("var doc = { name: \"No user\" };"))
 })
 
 test_that("normalize_js_field_values only cleans values that need decoding", {
@@ -370,10 +574,10 @@ test_that("normalize_js_field_values only cleans values that need decoding", {
 
   normalized_values <- normalize_js_field_values(raw_values)
 
-  expect_equal(normalized_values[1], "plain")
-  expect_equal(normalized_values[2], "has spaces")
-  expect_equal(normalized_values[3], "line1 line2")
-  expect_equal(normalized_values[4], "quote\"test")
+  expect_identical(normalized_values[1], "plain")
+  expect_identical(normalized_values[2], "has spaces")
+  expect_identical(normalized_values[3], "line1 line2")
+  expect_identical(normalized_values[4], "quote\"test")
 })
 
 test_that("strip_html_tags_if_present strips only values containing tags", {
@@ -381,23 +585,23 @@ test_that("strip_html_tags_if_present strips only values containing tags", {
 
   stripped_values <- strip_html_tags_if_present(title_values)
 
-  expect_equal(stripped_values[1], "Plain Text")
-  expect_equal(stripped_values[2], "Tagged Title")
+  expect_identical(stripped_values[1], "Plain Text")
+  expect_identical(stripped_values[2], "Tagged Title")
 })
 
 test_that("parse_title_fields_fast strips tags and splits bilingual titles", {
   title_raw <- "Turkce <b>Baslik</b><br/>English <i>Title</i>"
   parsed_title <- parse_title_fields_fast(title_raw)
 
-  expect_equal(parsed_title$primary, "Turkce Baslik")
-  expect_equal(parsed_title$secondary, "English Title")
+  expect_identical(parsed_title$primary, "Turkce Baslik")
+  expect_identical(parsed_title$secondary, "English Title")
 })
 
-test_that("parse_title_fields_fast returns NA secondary when title has one part", {
+test_that("parse_title_fields_fast returns NA secondary for single title", {
   title_raw <- "Tek Baslik"
   parsed_title <- parse_title_fields_fast(title_raw)
 
-  expect_equal(parsed_title$primary, "Tek Baslik")
+  expect_identical(parsed_title$primary, "Tek Baslik")
   expect_true(is.na(parsed_title$secondary))
 })
 
@@ -405,36 +609,34 @@ test_that("parse_title_fields_fast returns NA secondary when title has one part"
 test_that("extract_total_count extracts count from page text", {
   html <- rvest::read_html(mock_search_results_html)
   count <- extract_total_count(html)
-  expect_equal(count, 42L)
-})
-
-test_that("extract_total_count handles redesigned dotted thousands text", {
-  html <- rvest::read_html(mock_result_cards_html)
-  count <- extract_total_count(html)
-  expect_equal(count, 2345L)
-})
-
-test_that("extract_total_count handles English records-found text", {
-  html <- rvest::read_html("<html><body>1.404 records found.</body></html>")
-  count <- extract_total_count(html)
-  expect_equal(count, 1404L)
+  expect_identical(count, 42L)
 })
 
 test_that("extract_total_count returns 0 for missing count", {
   html <- rvest::read_html("<html><body>No results info</body></html>")
   count <- extract_total_count(html)
-  expect_equal(count, 0L)
+  expect_identical(count, 0L)
+})
+
+test_that("extract_total_count returns 0 for unparseable counts", {
+  html <- rvest::read_html(
+    "<html><body>999999999999999999999 kayıt bulundu</body></html>"
+  )
+
+  count <- extract_total_count(html)
+
+  expect_identical(count, 0L)
 })
 
 test_that("split_titles separates primary and secondary titles", {
   result <- split_titles("Turkce Baslik / English Title")
-  expect_equal(result$primary, "Turkce Baslik")
-  expect_equal(result$secondary, "English Title")
+  expect_identical(result$primary, "Turkce Baslik")
+  expect_identical(result$secondary, "English Title")
 })
 
 test_that("split_titles handles single title", {
   result <- split_titles("Only Turkish Title")
-  expect_equal(result$primary, "Only Turkish Title")
+  expect_identical(result$primary, "Only Turkish Title")
   expect_true(is.na(result$secondary))
 })
 
@@ -452,58 +654,61 @@ test_that("split_titles handles multilingual theses correctly", {
   arabic_result <- split_titles(
     "التفكر والتأمل عند الصوفية / Tasavvuf ve zen Budizmi"
   )
-  expect_equal(arabic_result$primary, "التفكر والتأمل عند الصوفية")
-  expect_equal(arabic_result$secondary, "Tasavvuf ve zen Budizmi")
+  expect_identical(arabic_result$primary, "التفكر والتأمل عند الصوفية")
+  expect_identical(arabic_result$secondary, "Tasavvuf ve zen Budizmi")
 
   # Chinese thesis: primary=Chinese, secondary=Turkish translation
   chinese_result <- split_titles(
     "老子與古蘭經的比較研究 / Laozi ve Kuran karşılaştırması"
   )
-  expect_equal(chinese_result$primary, "老子與古蘭經的比較研究")
-  expect_equal(chinese_result$secondary, "Laozi ve Kuran karşılaştırması")
+  expect_identical(chinese_result$primary, "老子與古蘭經的比較研究")
+  expect_identical(chinese_result$secondary, "Laozi ve Kuran karşılaştırması")
 
   # Russian thesis: primary=Russian (Cyrillic), secondary=Turkish translation
   russian_result <- split_titles(
     "Лингво-стилистические особенности / Tuzak kelimelerin özellikleri"
   )
-  expect_equal(russian_result$primary, "Лингво-стилистические особенности")
-  expect_equal(russian_result$secondary, "Tuzak kelimelerin özellikleri")
+  expect_identical(russian_result$primary, "Лингво-стилистические особенности")
+  expect_identical(russian_result$secondary, "Tuzak kelimelerin özellikleri")
 
   # English thesis: primary=English, secondary=Turkish translation
   english_result <- split_titles(
     "The Malaysian Islamic authorities / Malezya dini kurumları"
   )
-  expect_equal(english_result$primary, "The Malaysian Islamic authorities")
-  expect_equal(english_result$secondary, "Malezya dini kurumları")
+  expect_identical(english_result$primary, "The Malaysian Islamic authorities")
+  expect_identical(english_result$secondary, "Malezya dini kurumları")
 
-  # Japanese thesis: primary=Japanese (Hiragana/Kanji), secondary=Turkish translation
+  # Japanese thesis: primary=Japanese, secondary=Turkish translation.
   japanese_result <- split_titles(
     "依頼と誘いに対する断り / Reddetme stratejileri"
   )
-  expect_equal(japanese_result$primary, "依頼と誘いに対する断り")
-  expect_equal(japanese_result$secondary, "Reddetme stratejileri")
+  expect_identical(japanese_result$primary, "依頼と誘いに対する断り")
+  expect_identical(japanese_result$secondary, "Reddetme stratejileri")
 
   # Greek thesis: primary=Greek (Greek alphabet), secondary=Turkish translation
   greek_result <- split_titles(
     "H kως κατα την βυζαντινη / Bizans döneminde Kos adası"
   )
-  expect_equal(greek_result$primary, "H kως κατα την βυζαντινη")
-  expect_equal(greek_result$secondary, "Bizans döneminde Kos adası")
+  expect_identical(greek_result$primary, "H kως κατα την βυζαντινη")
+  expect_identical(greek_result$secondary, "Bizans döneminde Kos adası")
 
   # Korean thesis: primary=Korean (Hangul script), secondary=Turkish translation
   korean_hangul_result <- split_titles(
     "터키 인 학습자를 위한 한국어 양태부사 / Türk öğrenciler için korece"
   )
-  expect_equal(
+  expect_identical(
     korean_hangul_result$primary,
     "터키 인 학습자를 위한 한국어 양태부사"
   )
-  expect_equal(korean_hangul_result$secondary, "Türk öğrenciler için korece")
+  expect_identical(
+    korean_hangul_result$secondary,
+    "Türk öğrenciler için korece"
+  )
 
   # Turkish thesis: primary=Turkish, secondary=English translation
   turkish_result <- split_titles("Türkiye'de hanehalkı / Household in Turkiye")
-  expect_equal(turkish_result$primary, "Türkiye'de hanehalkı")
-  expect_equal(turkish_result$secondary, "Household in Turkiye")
+  expect_identical(turkish_result$primary, "Türkiye'de hanehalkı")
+  expect_identical(turkish_result$secondary, "Household in Turkiye")
 })
 
 test_that("split_titles handles thesis without translation", {
@@ -512,7 +717,7 @@ test_that("split_titles handles thesis without translation", {
   japanese_single <- split_titles(
     "依頼と誘いに対する断りにおけるトルコ人日本語学習者の特徴"
   )
-  expect_equal(
+  expect_identical(
     japanese_single$primary,
     "依頼と誘いに対する断りにおけるトルコ人日本語学習者の特徴"
   )
@@ -522,7 +727,7 @@ test_that("split_titles handles thesis without translation", {
   greek_single <- split_titles(
     "H kως κατα την βυζαντινη περιοδο και την ιπποτοκρατια"
   )
-  expect_equal(
+  expect_identical(
     greek_single$primary,
     "H kως κατα την βυζαντινη περιοδο και την ιπποτοκρατια"
   )
@@ -533,7 +738,7 @@ test_that("split_titles handles thesis without translation", {
   korean_english <- split_titles(
     "The US strategy for Korea and ROK-US mutual defense treaty"
   )
-  expect_equal(
+  expect_identical(
     korean_english$primary,
     "The US strategy for Korea and ROK-US mutual defense treaty"
   )
@@ -544,7 +749,7 @@ test_that("split_titles handles thesis without translation", {
   korean_turkish <- split_titles(
     "Kompleks tedavi açısından incelenen Kore Şaman efsaneleri"
   )
-  expect_equal(
+  expect_identical(
     korean_turkish$primary,
     "Kompleks tedavi açısından incelenen Kore Şaman efsaneleri"
   )
@@ -555,7 +760,7 @@ test_that("split_titles handles thesis without translation", {
   english_turkish <- split_titles(
     "Korece öğrenen Türk öğrenciler için Korece duygu kelimeleri"
   )
-  expect_equal(
+  expect_identical(
     english_turkish$primary,
     "Korece öğrenen Türk öğrenciler için Korece duygu kelimeleri"
   )
@@ -563,35 +768,39 @@ test_that("split_titles handles thesis without translation", {
 })
 
 test_that("split_titles keeps slash-separated single-language titles intact", {
-  result <- split_titles(
-    "Aggregation and welfare analysis with mixed continuous/discrete choice models"
+  title <- paste0(
+    "Aggregation and welfare analysis with mixed ",
+    "continuous/discrete choice models"
   )
+  result <- split_titles(title)
 
-  expect_equal(
+  expect_identical(
     result$primary,
-    "Aggregation and welfare analysis with mixed continuous/discrete choice models"
+    title
   )
   expect_true(is.na(result$secondary))
 })
 
 test_that("split_titles removes dangling trailing slash from single title", {
-  result <- split_titles(
-    "Aggregation and welfare analysis with mixed continuous/discrete choice models /"
+  title <- paste0(
+    "Aggregation and welfare analysis with mixed ",
+    "continuous/discrete choice models"
   )
+  result <- split_titles(paste0(title, " /"))
 
-  expect_equal(
+  expect_identical(
     result$primary,
-    "Aggregation and welfare analysis with mixed continuous/discrete choice models"
+    title
   )
   expect_true(is.na(result$secondary))
 })
 
-test_that("parse_detail_page adds original and translation aliases for titles and abstracts", {
+test_that("parse_detail_page adds original and translation aliases", {
   html <- rvest::read_html(mock_detail_html)
   details <- parse_detail_page(html)
 
-  expect_equal(details$title_original, "Yapay Zeka ile Veri Analizi")
-  expect_equal(
+  expect_identical(details$title_original, "Yapay Zeka ile Veri Analizi")
+  expect_identical(
     details$title_translation,
     "Artificial Intelligence Data Analysis"
   )
@@ -599,7 +808,7 @@ test_that("parse_detail_page adds original and translation aliases for titles an
   expect_true(grepl("^This thesis", details$abstract_translation))
 })
 
-test_that("parse_detail_page maps English thesis abstracts correctly when td blocks are swapped", {
+test_that("parse_detail_page maps swapped English abstracts", {
   html <- rvest::read_html(mock_detail_html_english_swapped)
   details <- parse_detail_page(html)
 
@@ -611,21 +820,21 @@ test_that("split_bilingual_subjects separates Turkish and English subjects", {
   result <- split_bilingual_subjects(
     "Bilgisayar Muhendisligi=Computer Engineering"
   )
-  expect_equal(result$subject_tr, "Bilgisayar Muhendisligi")
-  expect_equal(result$subject_en, "Computer Engineering")
+  expect_identical(result$subject_tr, "Bilgisayar Muhendisligi")
+  expect_identical(result$subject_en, "Computer Engineering")
 })
 
 test_that("split_bilingual_subjects handles multiple subjects", {
   result <- split_bilingual_subjects(
     "Ekonomi=Economics; Ekonometri=Econometrics"
   )
-  expect_equal(result$subject_tr, "Ekonomi; Ekonometri")
-  expect_equal(result$subject_en, "Economics; Econometrics")
+  expect_identical(result$subject_tr, "Ekonomi; Ekonometri")
+  expect_identical(result$subject_en, "Economics; Econometrics")
 })
 
-test_that("split_bilingual_subjects handles subject without English translation", {
+test_that("split_bilingual_subjects handles subject without English", {
   result <- split_bilingual_subjects("Ekonomi")
-  expect_equal(result$subject_tr, "Ekonomi")
+  expect_identical(result$subject_tr, "Ekonomi")
   expect_true(is.na(result$subject_en))
 })
 
@@ -642,21 +851,24 @@ test_that("parse_bilingual_entries splits bilingual pairs", {
   result <- parse_bilingual_entries(
     "Ekonomi=Economics; Ekonometri = Econometrics"
   )
-  expect_equal(result$tr, c("Ekonomi", "Ekonometri"))
-  expect_equal(result$en, c("Economics", "Econometrics"))
+  expect_identical(result$tr, c("Ekonomi", "Ekonometri"))
+  expect_identical(result$en, c("Economics", "Econometrics"))
 })
 
 test_that("split_advisors separates advisor and co-advisor", {
   result <- split_advisors(
     "PROF. DR. MELEK ACAR ; DO\u00C7. DR. \u0130BRAH\u0130M \u00D6ZMEN"
   )
-  expect_equal(result$advisor, "PROF. DR. MELEK ACAR")
-  expect_equal(result$co_advisor, "DO\u00C7. DR. \u0130BRAH\u0130M \u00D6ZMEN")
+  expect_identical(result$advisor, "PROF. DR. MELEK ACAR")
+  expect_identical(
+    result$co_advisor,
+    "DO\u00C7. DR. \u0130BRAH\u0130M \u00D6ZMEN"
+  )
 })
 
 test_that("split_advisors handles single advisor", {
   result <- split_advisors("PROF. DR. HASAN \u015EAH\u0130N")
-  expect_equal(result$advisor, "PROF. DR. HASAN \u015EAH\u0130N")
+  expect_identical(result$advisor, "PROF. DR. HASAN \u015EAH\u0130N")
   expect_true(is.na(result$co_advisor))
 })
 
@@ -668,26 +880,30 @@ test_that("split_advisors handles NA and empty input", {
   result <- split_advisors("")
   expect_true(is.na(result$advisor))
   expect_true(is.na(result$co_advisor))
+
+  result <- split_advisors(";")
+  expect_true(is.na(result$advisor))
+  expect_true(is.na(result$co_advisor))
 })
 
 test_that("split_advisors handles multiple co-advisors", {
   result <- split_advisors("A ; B ; C")
-  expect_equal(result$advisor, "A")
-  expect_equal(result$co_advisor, "B; C")
+  expect_identical(result$advisor, "A")
+  expect_identical(result$co_advisor, "B; C")
 })
 
 test_that("extract_td_text returns both td blocks", {
   html <- rvest::read_html(mock_detail_html)
   blocks <- extract_td_text(html)
 
-  expect_equal(
+  expect_identical(
     blocks$tr,
     paste0(
       "Bu tez, yapay zeka yontemlerini kullanarak veri analizi yapmaktadir. ",
       "Anahtar Sozcukler: yapay zeka, veri, analiz"
     )
   )
-  expect_equal(
+  expect_identical(
     blocks$en,
     paste0(
       "This thesis uses artificial intelligence methods for data analysis. ",
@@ -696,27 +912,44 @@ test_that("extract_td_text returns both td blocks", {
   )
 })
 
+test_that("derive_keyword_fields maps Turkish and English keyword blocks", {
+  result <- derive_keyword_fields(
+    "This thesis abstract. Keywords: analysis and results",
+    "Türkçe özet. Anahtar Sozcukler: Türkçe anahtar"
+  )
+
+  expect_identical(result$keywords_tr, "Türkçe anahtar")
+  expect_identical(result$keywords_en, "analysis and results")
+
+  result <- derive_keyword_fields(
+    "Türkçe özet. Anahtar Sozcukler: Türkçe anahtar",
+    "This thesis abstract. Keywords: analysis and results"
+  )
+  expect_identical(result$keywords_tr, "Türkçe anahtar")
+  expect_identical(result$keywords_en, "analysis and results")
+})
+
 test_that("extract_stat_year extracts year from stats text", {
-  expect_equal(extract_stat_year("2023 210 s. Turkce"), "2023")
-  expect_equal(extract_stat_year("Onaylandi 1999"), "1999")
+  expect_identical(extract_stat_year("2023 210 s. Turkce"), "2023")
+  expect_identical(extract_stat_year("Onaylandi 1999"), "1999")
   expect_true(is.na(extract_stat_year("no year here")))
 })
 
 test_that("extract_stat_pages extracts page count", {
-  expect_equal(extract_stat_pages("2023 210 s. Turkce"), "210")
-  expect_equal(extract_stat_pages("150 s."), "150")
+  expect_identical(extract_stat_pages("2023 210 s. Turkce"), "210")
+  expect_identical(extract_stat_pages("150 s."), "150")
   expect_true(is.na(extract_stat_pages("no pages")))
 })
 
 test_that("extract_stat_language extracts language", {
   # Function returns list with tr and en fields
   result <- extract_stat_language("2023 210 s. T\u00FCrk\u00E7e")
-  expect_equal(result$tr, "T\u00FCrk\u00E7e")
-  expect_equal(result$en, "Turkish")
+  expect_identical(result$tr, "T\u00FCrk\u00E7e")
+  expect_identical(result$en, "Turkish")
 
   result <- extract_stat_language("\u0130ngilizce")
-  expect_equal(result$tr, "\u0130ngilizce")
-  expect_equal(result$en, "English")
+  expect_identical(result$tr, "\u0130ngilizce")
+  expect_identical(result$en, "English")
 
   result <- extract_stat_language("Unknown lang")
   expect_true(is.na(result$tr))
@@ -740,13 +973,13 @@ test_that("extract_bilingual_lookup accepts cache_key and keeps behavior", {
     cache_key = "parse_test_lang_cache"
   )
 
-  expect_equal(first_match$tr, "T\u00FCrk\u00E7e")
-  expect_equal(first_match$en, "Turkish")
-  expect_equal(second_match$tr, "\u0130ngilizce")
-  expect_equal(second_match$en, "English")
+  expect_identical(first_match$tr, "T\u00FCrk\u00E7e")
+  expect_identical(first_match$en, "Turkish")
+  expect_identical(second_match$tr, "\u0130ngilizce")
+  expect_identical(second_match$en, "English")
 })
 
-test_that("extract_bilingual_lookup caches repeated text results by cache key", {
+test_that("extract_bilingual_lookup caches text results by key", {
   reference_data <- tibble::tibble(
     label_tr = c("T\u00FCrk\u00E7e", "\u0130ngilizce"),
     label_en = c("Turkish", "English")
@@ -778,27 +1011,62 @@ test_that("extract_bilingual_lookup caches repeated text results by cache key", 
     envir = bilingual_lookup_result_cache,
     inherits = FALSE
   ))
-  expect_equal(first_match$tr, second_match$tr)
-  expect_equal(first_match$en, second_match$en)
+  expect_identical(first_match$tr, second_match$tr)
+  expect_identical(first_match$en, second_match$en)
 })
 
-test_that("coalesce operator handles NULL, NA, and empty strings", {
-  `%|na|%` <- get("%|na|%", envir = asNamespace("tezr"))
-  expect_equal(NULL %|na|% "default", "default")
-  expect_equal(NA %|na|% "default", "default")
-  expect_equal("" %|na|% "default", "default")
-  expect_equal("value" %|na|% "default", "value")
-  expect_equal(0 %|na|% "default", 0)
+test_that("bilingual lookup cache helpers handle invalid keys", {
+  reference_data <- tibble::tibble(
+    label_tr = "Türkçe",
+    label_en = "Turkish"
+  )
+
+  metadata <- get_bilingual_lookup_metadata(reference_data, cache_key = NULL)
+  result_cache <- get_bilingual_lookup_result_cache(NULL, "Türkçe")
+
+  expect_identical(metadata$label_tr, "Türkçe")
+  expect_null(result_cache$key)
+  expect_null(result_cache$result)
 })
 
-test_that("extract_keywords_from_index with mixed bilingual/monolingual entries", {
+test_that("clearing bilingual lookup cache removes result entries by prefix", {
+  result_key <- build_bilingual_lookup_result_key(
+    "parse_clear_cache",
+    "sample text"
+  )
+  bilingual_lookup_result_cache[[result_key]] <- list(
+    tr = "Türkçe",
+    en = "Turkish"
+  )
+
+  clear_bilingual_lookup_result_cache("parse_clear_cache")
+
+  expect_false(exists(
+    result_key,
+    envir = bilingual_lookup_result_cache,
+    inherits = FALSE
+  ))
+  expect_invisible(clear_bilingual_lookup_result_cache(NULL))
+})
+
+test_that("coalesce_missing handles NULL, NA, and empty strings", {
+  coalesce_missing <- get("coalesce_missing", envir = asNamespace("tezr"))
+
+  expect_identical(coalesce_missing(NULL, "default"), "default")
+  expect_identical(coalesce_missing(NA, "default"), "default")
+  expect_identical(coalesce_missing("", "default"), "default")
+  expect_identical(coalesce_missing("value", "default"), "value")
+  expect_identical(coalesce_missing(0, "default"), 0)
+})
+
+test_that("extract_keywords_from_index handles mixed bilingual entries", {
   # Mixed: some entries have English translations, some do not
   mixed_index <- "yapay zeka=artificial intelligence; veri analizi"
   result <- extract_keywords_from_index(mixed_index)
 
   # Only bilingual entries (with =) are included
-  expect_equal(result$tr, "yapay zeka")
-  expect_equal(result$en, "artificial intelligence")
+  expect_identical(result$tr, "yapay zeka")
+  expect_identical(result$en, "artificial intelligence")
 })
 
 test_that("extract_keywords_from_index returns NA for empty input", {
@@ -811,12 +1079,24 @@ test_that("extract_keywords_from_index returns NA for empty input", {
   expect_true(is.na(result2$en))
 })
 
+test_that("extract_keywords returns parsed keywords from td text", {
+  html <- rvest::read_html("<html><body></body></html>")
+  td_text <- list(
+    tr = "Özet metni. Anahtar Sozcukler: enerji, üretim",
+    en = NA_character_
+  )
+
+  result <- extract_keywords(html, "tr", td_text = td_text)
+
+  expect_identical(result, "enerji, üretim")
+})
+
 test_that("merge_keywords deduplicates case-insensitively", {
   result <- merge_keywords("Yapay Zeka; veri", "yapay zeka; analiz")
 
-  keywords <- strsplit(result, "; ")[[1]]
+  keywords <- strsplit(result, "; ", fixed = TRUE)[[1]]
   # Should have 3 unique keywords (Yapay Zeka, veri, analiz)
-  expect_equal(length(keywords), 3)
+  expect_length(keywords, 3L)
   # Original case preserved for first occurrence
   expect_true("Yapay Zeka" %in% keywords)
 })
@@ -835,13 +1115,13 @@ test_that("extract_access_status returns open when pdf_link present", {
     html,
     pdf_link = "http://example.com/thesis.pdf"
   )
-  expect_equal(result, "open")
+  expect_identical(result, "open")
 })
 
 test_that("extract_access_status returns restricted for restricted text", {
   html <- rvest::read_html("<html><body>\u0130zinsiz</body></html>")
   result <- extract_access_status(html, pdf_link = NULL)
-  expect_equal(result, "restricted")
+  expect_identical(result, "restricted")
 })
 
 test_that("extract_access_status returns NA for unknown", {

@@ -1,14 +1,14 @@
 test_that("field codes are correct", {
-  expect_equal(search_field_codes$title, 1L)
-  expect_equal(search_field_codes$author, 2L)
-  expect_equal(search_field_codes$supervisor, 3L)
-  expect_equal(search_field_codes$all, 7L)
+  expect_identical(search_field_codes$title, 1L)
+  expect_identical(search_field_codes$author, 2L)
+  expect_identical(search_field_codes$supervisor, 3L)
+  expect_identical(search_field_codes$all, 7L)
 })
 
 test_that("thesis type codes are correct", {
-  expect_equal(thesis_type_codes$all, 0L)
-  expect_equal(thesis_type_codes$masters, 1L)
-  expect_equal(thesis_type_codes$phd, 2L)
+  expect_identical(thesis_type_codes$all, 0L)
+  expect_identical(thesis_type_codes$masters, 1L)
+  expect_identical(thesis_type_codes$phd, 2L)
 })
 
 test_that("build_basic_search_form creates correct structure", {
@@ -20,15 +20,14 @@ test_that("build_basic_search_form creates correct structure", {
   )
 
   expect_type(form, "list")
-  expect_equal(form$keyword, "test")
-  expect_equal(form$nevi, 1L)
-  expect_equal(form$Tur, 2L)
-  expect_equal(form$izin, 1L)
-  expect_equal(form$islem, 4L)
-  expect_equal(form$tip, match_type_codes$contains)
+  expect_identical(form$neden, "test")
+  expect_identical(form$nevi, 1L)
+  expect_identical(form$tur, 2L)
+  expect_identical(form$izin, 1L)
+  expect_identical(form$islem, 1L)
 })
 
-test_that("build_advanced_search_form produces correct field count and values", {
+test_that("build_advanced_search_form has expected fields", {
   form <- build_advanced_search_form(
     keyword = "test keyword",
     search_field = "title",
@@ -38,12 +37,12 @@ test_that("build_advanced_search_form produces correct field count and values", 
   )
 
   expect_type(form, "list")
-  expect_equal(form$keyword, "test keyword")
-  expect_equal(form$nevi, 1L)
-  expect_equal(form$Tur, 2L)
-  expect_equal(form$izin, 1L)
-  expect_equal(form$Durum, 1L) # in_preparation = 1
-  expect_equal(form$islem, 4L)
+  expect_identical(form$keyword, "test keyword")
+  expect_identical(form$nevi, 1L)
+  expect_identical(form$Tur, 2L)
+  expect_identical(form$izin, 1L)
+  expect_identical(form$Durum, 1L) # in_preparation = 1
+  expect_identical(form$islem, 4L)
   # Should have all expected fields
   expect_true(all(
     c("keyword", "nevi", "Tur", "izin", "Durum", "islem") %in% names(form)
@@ -58,7 +57,7 @@ test_that("build_advanced_search_form respects match_type parameter", {
     access_type = "all",
     match_type = "exact"
   )
-  expect_equal(form_exact$tip, 1L)
+  expect_identical(form_exact$tip, 1L)
 
   form_contains <- build_advanced_search_form(
     keyword = "test",
@@ -67,24 +66,25 @@ test_that("build_advanced_search_form respects match_type parameter", {
     access_type = "all",
     match_type = "contains"
   )
-  expect_equal(form_contains$tip, 2L)
+  expect_identical(form_contains$tip, 2L)
 })
 
-test_that("build_advanced_search_form includes supported university and group filters", {
+test_that("build_advanced_search_form handles university/institute IDs", {
   form <- build_advanced_search_form(
     keyword = "test",
     search_field = "all",
     thesis_type = "all",
     access_type = "all",
-    group = "science",
-    university_id = "123"
+    university = "Test Uni",
+    university_id = "123",
+    institute = "Test Inst",
+    institute_id = 456
   )
 
-  expect_equal(form$EnstituGrubu, group_codes$science)
-  expect_equal(form$Universite, 123L)
-  expect_equal(form$source, "TR")
-  expect_false("ensad" %in% names(form))
-  expect_false("Enstitu" %in% names(form))
+  expect_identical(form$uniad, "Test Uni")
+  expect_identical(form$Universite, 123L)
+  expect_identical(form$ensad, "Test Inst")
+  expect_identical(form$Enstitu, 456L)
 })
 
 test_that("build_detailed_search_form respects status parameter", {
@@ -92,66 +92,51 @@ test_that("build_detailed_search_form respects status parameter", {
     author = "test",
     status = "approved"
   )
-  expect_equal(form_approved$Durum, 3L)
+  expect_identical(form_approved$Durum, 3L)
 
   form_prep <- build_detailed_search_form(
     author = "test",
     status = "in_preparation"
   )
-  expect_equal(form_prep$Durum, 1L)
+  expect_identical(form_prep$Durum, 1L)
 
   form_all <- build_detailed_search_form(author = "test", status = "all")
-  expect_equal(form_all$Durum, 0L)
+  expect_identical(form_all$Durum, 0L)
 })
 
 test_that("clean_text works correctly", {
-  expect_equal(clean_text("  hello  world  "), "hello world")
-  expect_equal(clean_text("test"), "test")
-  expect_equal(clean_text("line1\tline2"), "line1 line2")
+  expect_identical(clean_text(character()), character())
+  expect_identical(clean_text("  hello  world  "), "hello world")
+  expect_identical(clean_text("test"), "test")
+  expect_identical(clean_text("line1\tline2"), "line1 line2")
 })
 
 test_that("clean_advisor_name strips various Turkish academic titles", {
-  expect_equal(clean_advisor_name("Prof. Dr. Ahmet Yılmaz"), "AHMET YILMAZ")
-  expect_equal(clean_advisor_name("Dr. Mehmet Demir"), "MEHMET DEMİR")
+  expect_identical(clean_advisor_name("Prof. Dr. Ahmet Yılmaz"), "AHMET YILMAZ")
+  expect_identical(clean_advisor_name("Dr. Mehmet Demir"), "MEHMET DEMİR")
 })
 
 test_that("clean_advisor_name handles NULL and empty input", {
-  expect_equal(clean_advisor_name(NULL), "")
-  expect_equal(clean_advisor_name(""), "")
+  expect_identical(clean_advisor_name(NULL), "")
+  expect_identical(clean_advisor_name(""), "")
 })
 
 test_that("validate_year works correctly", {
   expect_null(validate_year(NULL))
-  expect_equal(validate_year(2020), 2020L)
-  expect_equal(validate_year("2020"), 2020L)
+  expect_identical(validate_year(2020), 2020L)
+  expect_identical(validate_year("2020"), 2020L)
   expect_error(validate_year(c(2020, 2021)), "single")
-  expect_error(validate_year(2020.5), "valid year")
-  expect_error(validate_year("2020.5"), "valid year")
+  expect_error(validate_year("bad"), "valid year")
   expect_error(validate_year(1800))
   expect_error(validate_year(2200))
 })
 
 test_that("validate_year at boundary values", {
-  expect_equal(validate_year(1959), 1959L)
+  expect_identical(validate_year(1959), 1959L)
   current_year <- as.integer(format(Sys.Date(), "%Y"))
-  expect_equal(validate_year(current_year), current_year)
+  expect_identical(validate_year(current_year), current_year)
   expect_error(validate_year(1958), "between 1959")
   expect_error(validate_year(current_year + 1), "between 1959")
-})
-
-test_that("validate_max_search_results rejects invalid values cleanly", {
-  expect_equal(validate_max_search_results(1), 1L)
-  expect_equal(validate_max_search_results(Inf), Inf)
-  expect_error(validate_max_search_results(0), "max_search_results")
-  expect_error(validate_max_search_results(1.5), "max_search_results")
-  expect_error(validate_max_search_results("many"), "max_search_results")
-  expect_error(validate_max_search_results(1e20), "max_search_results")
-})
-
-test_that("validate_optional_id rejects decimal values", {
-  expect_equal(validate_optional_id("123", "university_id"), 123L)
-  expect_error(validate_optional_id(123.5, "university_id"), "university_id")
-  expect_error(validate_optional_id("123.5", "university_id"), "university_id")
 })
 
 test_that("search forms resolve language labels", {
@@ -167,8 +152,8 @@ test_that("search forms resolve language labels", {
   )
   detailed_en <- build_detailed_search_form(language = "English")
 
-  expect_equal(basic_tr$Dil, tr_id)
-  expect_equal(detailed_en$Dil, en_id)
+  expect_identical(basic_tr$Dil, tr_id)
+  expect_identical(detailed_en$Dil, en_id)
   expect_error(
     build_basic_search_form(
       keyword = "test",
@@ -183,13 +168,9 @@ test_that("search forms resolve language labels", {
 
 test_that("resolve_language_id handles ids and labels", {
   tr_id <- as.integer(languages$value[languages$label_en == "Turkish"][1])
-  expect_equal(resolve_language_id(tr_id), tr_id)
-  expect_equal(resolve_language_id(as.character(tr_id)), tr_id)
-  expect_equal(resolve_language_id("tr"), tr_id)
-  expect_error(resolve_language_id(1.5), "language")
-  expect_error(resolve_language_id("1.5"), "language")
-  expect_error(resolve_language_id(""), "language")
-  expect_error(resolve_language_id(NA_character_), "language")
+  expect_identical(resolve_language_id(tr_id), tr_id)
+  expect_identical(resolve_language_id(as.character(tr_id)), tr_id)
+  expect_identical(resolve_language_id("tr"), tr_id)
   expect_error(resolve_language_id("klingon"), "language")
 })
 
@@ -197,14 +178,15 @@ test_that("resolve_language_id accepts ISO 639 codes for all languages", {
   fr_id <- as.integer(languages$value[languages$label_en == "French"][1])
   de_id <- as.integer(languages$value[languages$label_en == "German"][1])
   ja_id <- as.integer(languages$value[languages$label_en == "Japanese"][1])
-  expect_equal(resolve_language_id("fr"), fr_id)
-  expect_equal(resolve_language_id("de"), de_id)
-  expect_equal(resolve_language_id("ja"), ja_id)
+  expect_identical(resolve_language_id("fr"), fr_id)
+  expect_identical(resolve_language_id("de"), de_id)
+  expect_identical(resolve_language_id("ja"), ja_id)
 })
 
 test_that("normalize_language_label strips Turkish diacritics", {
-  expect_equal(normalize_language_label("İngilizce"), "ingilizce")
-  expect_equal(normalize_language_label("Türkçe"), "turkce")
+  expect_identical(normalize_language_label("İngilizce"), "ingilizce")
+  expect_identical(normalize_language_label("Türkçe"), "turkce")
+  expect_true(is.na(normalize_language_label(NULL)))
 })
 
 test_that("coerce_search_fields normalizes years and language", {
@@ -215,21 +197,21 @@ test_that("coerce_search_fields normalizes years and language", {
     language = "tr"
   )
 
-  expect_equal(coerced$year_start, 2020L)
-  expect_equal(coerced$year_end, 2021L)
-  expect_equal(coerced$language_id, tr_id)
+  expect_identical(coerced$year_start, 2020L)
+  expect_identical(coerced$year_end, 2021L)
+  expect_identical(coerced$language_id, tr_id)
 })
 
-test_that("coerce_search_fields fills in missing year_start when year_end provided", {
+test_that("coerce_search_fields fills missing year_start", {
   coerced <- coerce_search_fields(year_start = NULL, year_end = 2020)
-  expect_equal(coerced$year_start, 1959L)
-  expect_equal(coerced$year_end, 2020L)
+  expect_identical(coerced$year_start, 1959L)
+  expect_identical(coerced$year_end, 2020L)
 })
 
-test_that("coerce_search_fields fills in missing year_end when year_start provided", {
+test_that("coerce_search_fields fills missing year_end", {
   coerced <- coerce_search_fields(year_start = 2020, year_end = NULL)
-  expect_equal(coerced$year_start, 2020L)
-  expect_equal(coerced$year_end, as.integer(format(Sys.Date(), "%Y")))
+  expect_identical(coerced$year_start, 2020L)
+  expect_identical(coerced$year_end, as.integer(format(Sys.Date(), "%Y")))
 })
 
 test_that("build_detailed_search_form handles IDs correctly", {
@@ -243,22 +225,81 @@ test_that("build_detailed_search_form handles IDs correctly", {
     discipline = "Test Discipline",
     discipline_id = "101112",
     subject = "Test Subject",
+    subject_id = "131415",
     group = "social"
   )
 
-  expect_equal(form$uniad, "Test Uni")
-  expect_equal(form$Universite, 123L)
-  expect_equal(form$ensad, "Test Inst")
-  expect_equal(form$Enstitu, 456L)
-  expect_equal(form$selected_institute, "on")
-  expect_equal(form$abdad, "Test Division")
-  expect_equal(form$ABD, 789L)
-  expect_equal(form$bilim, "Test Discipline")
-  expect_equal(form$BilimDali, 101112L)
-  expect_equal(form$Konu, "Test Subject")
-  expect_equal(form$EnstituGrubu, group_codes$social)
+  expect_identical(form$uniad, "Test Uni")
+  expect_identical(form$Universite, 123L)
+  expect_identical(form$ensad, "Test Inst")
+  expect_identical(form$Enstitu, 456L)
+  expect_identical(form$abdad, "Test Division")
+  expect_identical(form$ABD, 789L)
+  expect_identical(form$bilim, "Test Discipline")
+  expect_identical(form$BilimDali, 101112L)
+  expect_identical(form$Konu, "Test Subject")
+  expect_identical(form$EnstituGrubu, group_codes$social)
   # Status default is approved = 3
-  expect_equal(form$Durum, 3L)
+  expect_identical(form$Durum, 3L)
+})
+
+test_that("form field helpers coerce optional values", {
+  expect_identical(form_text(NULL), "")
+  expect_identical(form_text("abc"), "abc")
+  expect_identical(form_text(123, as.character), "123")
+
+  expect_identical(form_int(NULL), 0L)
+  expect_identical(form_int("123"), 123L)
+})
+
+test_that("language helper paths validate ids and aliases", {
+  tr_id <- as.integer(languages$value[languages$label_en == "Turkish"][1])
+
+  expect_identical(resolve_numeric_language_id(tr_id), tr_id)
+  expect_error(resolve_numeric_language_id("not-an-id"), "valid language id")
+  expect_error(resolve_numeric_language_id(999999), "valid language id")
+  expect_error(
+    testthat::with_mocked_bindings(
+      match_language_label_id("turkish"),
+      languages = tibble::tibble(
+        label_tr = "Türkçe",
+        label_en = "Turkish",
+        value = NA_character_
+      ),
+      .package = "tezr"
+    ),
+    "valid language id"
+  )
+  expect_null(resolve_character_language_id(""))
+  expect_null(testthat::with_mocked_bindings(
+    resolve_character_language_id("English"),
+    normalize_language_label = function(...) NA_character_,
+    .package = "tezr"
+  ))
+  expect_identical(resolve_character_language_id(as.character(tr_id)), tr_id)
+  expect_identical(resolve_language_alias("tr"), "turkish")
+  expect_identical(resolve_language_alias("turkish"), "turkish")
+  expect_null(resolve_language_id(NULL))
+  expect_error(resolve_language_id(c("tr", "en")), "single value")
+  expect_error(resolve_language_id(TRUE), "numeric id or character label")
+})
+
+test_that("optional label validation trims and rejects empty values", {
+  expect_identical(
+    validate_optional_label("  Ankara  ", "university"),
+    "Ankara"
+  )
+  expect_null(validate_optional_label(NULL, "university"))
+  expect_error(validate_optional_label("", "university"), "non-empty")
+  expect_error(validate_optional_label(c("a", "b"), "university"), "non-empty")
+})
+
+test_that("bilingual and cache validators handle empty values", {
+  parsed <- parse_bilingual_entries(" ; ")
+  expect_identical(parsed$tr, character())
+  expect_identical(parsed$en, character())
+
+  expect_error(validate_ignore_cache(NA), "TRUE or FALSE")
 })
 
 test_that("sysdata only includes used tables", {

@@ -13,7 +13,14 @@ A tibble containing total thesis counts per type.
 Get thesis statistics by type
 }
 \examples{
-\dontrun{
+\dontshow{if (interactive()) withAutoprint(\{ # examplesIf}
 stats <- stats_types()
+\dontshow{\}) # examplesIf}
 }
+\seealso{
+Other statistics functions: 
+\code{\link{stats_subjects}()},
+\code{\link{stats_universities}()},
+\code{\link{stats_years}()}
 }
+\concept{statistics functions}

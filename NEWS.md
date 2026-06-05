@@ -1,20 +1,19 @@
-# tezr 0.2.0
+# tezr 0.1.0.9000
 
-This release restores compatibility with the redesigned YOK thesis search pages.
+## rOpenSci review preparation
 
-## Search
-
-* `search_basic()`, `search_advanced()`, and `search_detailed()` now work with the redesigned YOK search results.
-* Large search results parse much faster, including searches that return the full 2000-result server batch.
-* Switching between keyword and detailed searches in one R session no longer returns stale results from the previous search.
-* University filters in `search_detailed()` are more reliable for year- and thesis-type-filtered searches.
-* `list_recent_theses()` lists theses added in the last 15 days or during the current publication year.
-
-## Detail retrieval
-
-* `detail()` now accepts search-result rows directly. Use `detail(results[1, ])` for one thesis or `detail(results)` for batch retrieval.
-* `detail()` returns APA, IEEE, MLA, Chicago, and Harvard citation fields when YOK provides them.
-* `detail()` retries batch requests sequentially when the live site rejects a parallel detail request.
+* Added `request_config()` for user-agent overrides and package-level verbosity
+  control.
+* Switched the default user agent from a browser-like header to a
+  package-identifying header.
+* Guarded README and vignette live examples behind `TEZR_LIVE_EXAMPLES=true`.
+* Expanded README, vignette, and contribution guidance for responsible use,
+  source limitations, citation, maintenance, and live-test behavior.
+* Added rOpenSci `pkgcheck` GitHub Actions coverage and repository Code of
+  Conduct guidance.
+* `search_basic()`, `search_advanced()`, `search_detailed()`, and `detail()`
+  now handle the redesigned National Thesis Center result-card markup and
+  paired encoded detail identifiers.
 
 # tezr 0.1.0
 
@@ -30,8 +29,8 @@ Initial release.
   (university, division, subject, discipline, supervisor). Accepts vector-valued
   parameters with automatic expansion and deduplication.
 * Automatic pagination via adaptive year-range splitting when results exceed
-  the 2000-result server limit. Set `max_search_results = Inf` to paginate
-  beyond the first server batch when year ranges can be split below the cap.
+  the 2000-result server limit. Set `max_search_results = Inf` to retrieve all
+  matching records.
 
 ## Detail retrieval
 

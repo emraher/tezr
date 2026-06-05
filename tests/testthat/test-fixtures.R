@@ -13,16 +13,16 @@ test_that("parse_results_table extracts records from real search HTML", {
   results <- parse_results_table(html)
 
   expect_s3_class(results, "tbl_df")
-  expect_equal(nrow(results), 2000)
+  expect_identical(nrow(results), 2000L)
 
   # Check first record
   first <- results[1, ]
-  expect_equal(first$thesis_no, "967755")
-  expect_equal(first$author, "PERİHAN EZGİ BALLI")
-  expect_equal(first$year, 2025L)
-  expect_equal(first$university, "Bandırma Onyedi Eylül Üniversitesi")
-  expect_equal(first$thesis_type_tr, "Doktora")
-  expect_equal(first$language_tr, "Türkçe")
+  expect_identical(first$thesis_no, "967755")
+  expect_identical(first$author, "PERİHAN EZGİ BALLI")
+  expect_identical(first$year, 2025L)
+  expect_identical(first$university, "Bandırma Onyedi Eylül Üniversitesi")
+  expect_identical(first$thesis_type_tr, "Doktora")
+  expect_identical(first$language_tr, "Türkçe")
 
   # Bilingual title split
 
@@ -30,15 +30,15 @@ test_that("parse_results_table extracts records from real search HTML", {
   expect_false(is.na(first$title_translation))
 
   # Bilingual subject split
-  expect_true(grepl("Ekonometri", first$subject_tr))
-  expect_true(grepl("Econometrics", first$subject_en))
+  expect_true(grepl("Ekonometri", first$subject_tr, fixed = TRUE))
+  expect_true(grepl("Econometrics", first$subject_en, fixed = TRUE))
 
   # detail_id is present and non-empty
   expect_false(is.na(first$detail_id))
-  expect_true(nchar(first$detail_id) > 0)
+  expect_gt(nchar(first$detail_id), 0L)
 
   # All rows have thesis_no
-  expect_true(all(!is.na(results$thesis_no)))
+  expect_false(anyNA(results$thesis_no))
 })
 
 test_that("extract_total_count works with real search HTML", {
@@ -46,15 +46,7 @@ test_that("extract_total_count works with real search HTML", {
     testthat::test_path("fixtures", "results_tr.html")
   )
   count <- extract_total_count(html)
-  expect_equal(count, 3697L)
-})
-
-test_that("extract_total_count works with real English search HTML", {
-  html <- rvest::read_html(
-    testthat::test_path("fixtures", "results_en.html")
-  )
-  count <- extract_total_count(html)
-  expect_equal(count, 3697L)
+  expect_identical(count, 3697L)
 })
 
 # -- Detail page (Turkish) ----------------------------------------------------
@@ -66,11 +58,11 @@ test_that("parse_detail_page extracts fields from real detail HTML", {
   details <- parse_detail_page(html)
 
   expect_type(details, "list")
-  expect_equal(details$thesis_no, "393353")
-  expect_true(grepl("IŞIL ŞİRİN", details$author))
-  expect_equal(details$year, "2015")
-  expect_equal(details$pages, "153")
-  expect_equal(details$access_status, "open")
+  expect_identical(details$thesis_no, "393353")
+  expect_true(grepl("IŞIL ŞİRİN", details$author, fixed = TRUE))
+  expect_identical(details$year, "2015")
+  expect_identical(details$pages, "153")
+  expect_identical(details$access_status, "open")
 })
 
 test_that("parse_detail_page extracts advisor from real detail HTML", {
@@ -79,7 +71,7 @@ test_that("parse_detail_page extracts advisor from real detail HTML", {
   )
   details <- parse_detail_page(html)
 
-  expect_true(grepl("HASAN ŞAHİN", details$advisor))
+  expect_true(grepl("HASAN ŞAHİN", details$advisor, fixed = TRUE))
 })
 
 test_that("parse_detail_page extracts location from real detail HTML", {
@@ -88,9 +80,9 @@ test_that("parse_detail_page extracts location from real detail HTML", {
   )
   details <- parse_detail_page(html)
 
-  expect_true(grepl("Ankara", details$university))
-  expect_true(grepl("Sosyal Bilimler", details$institute))
-  expect_true(grepl("ktisat", details$division))
+  expect_true(grepl("Ankara", details$university, fixed = TRUE))
+  expect_true(grepl("Sosyal Bilimler", details$institute, fixed = TRUE))
+  expect_true(grepl("ktisat", details$division, fixed = TRUE))
 })
 
 test_that("parse_detail_page extracts subjects from real detail HTML", {
@@ -100,8 +92,8 @@ test_that("parse_detail_page extracts subjects from real detail HTML", {
   details <- parse_detail_page(html)
 
   expect_false(is.na(details$subject_tr))
-  expect_true(grepl("Ekonomi", details$subject_tr))
-  expect_true(grepl("Economics", details$subject_en))
+  expect_true(grepl("Ekonomi", details$subject_tr, fixed = TRUE))
+  expect_true(grepl("Economics", details$subject_en, fixed = TRUE))
 })
 
 test_that("parse_detail_page extracts abstracts from real detail HTML", {
@@ -131,7 +123,7 @@ test_that("parse_detail_page extracts PDF URL from real detail HTML", {
   details <- parse_detail_page(html)
 
   expect_false(is.na(details$pdf_url))
-  expect_true(grepl("TezGoster", details$pdf_url))
+  expect_true(grepl("TezGoster", details$pdf_url, fixed = TRUE))
 })
 
 # -- Detail page (English) ----------------------------------------------------

@@ -2,7 +2,7 @@ url: https://eremrah.com/tezr/
 
 home:
   title: tezr
-  description: Access the Turkiye's National Thesis Center Database
+  description: Access thesis metadata from Turkiye's National Thesis Center
 
 template:
   package: eerdown
@@ -19,7 +19,6 @@ reference:
       - search_basic
       - search_advanced
       - search_detailed
-      - list_recent_theses
 
   - title: Detail Functions
     desc: Retrieve detailed information about theses
@@ -49,3 +48,8 @@ reference:
       - cache_clear
       - cache_config
       - cache_info
+
+  - title: Request Configuration
+    desc: Configure request headers and package verbosity
+    contents:
+      - request_config

@@ -28,9 +28,18 @@ mock_stats_html <- function(islem = 1) {
       <table><tr><td>ignore</td></tr></table>
       <table>
         <tr><td colspan='5'>Tez Istatistikleri</td></tr>
-        <tr><td>Universite</td><td>YL</td><td>DR</td><td>TU</td><td>Toplam</td></tr>
-        <tr><td>Ankara Uni</td><td>100</td><td>50</td><td>10</td><td>160</td></tr>
-        <tr><td>Istanbul Uni</td><td>200</td><td>80</td><td>20</td><td>300</td></tr>
+        <tr>
+          <td>Universite</td><td>YL</td><td>DR</td>
+          <td>TU</td><td>Toplam</td>
+        </tr>
+        <tr>
+          <td>Ankara Uni</td><td>100</td><td>50</td>
+          <td>10</td><td>160</td>
+        </tr>
+        <tr>
+          <td>Istanbul Uni</td><td>200</td><td>80</td>
+          <td>20</td><td>300</td>
+        </tr>
       </table>
       </body></html>
     "
@@ -56,9 +65,18 @@ mock_stats_html <- function(islem = 1) {
       <table><tr><td>ignore</td></tr></table>
       <table>
         <tr><td colspan='6'>Tez Istatistikleri</td></tr>
-        <tr><td>Konu</td><td>X2</td><td>X3</td><td>YL</td><td>DR</td><td>Toplam</td></tr>
-        <tr><td>Fizik</td><td>a</td><td>b</td><td>40</td><td>20</td><td>60</td></tr>
-        <tr><td>Kimya</td><td>c</td><td>d</td><td>30</td><td>10</td><td>40</td></tr>
+        <tr>
+          <td>Konu</td><td>X2</td><td>X3</td>
+          <td>YL</td><td>DR</td><td>Toplam</td>
+        </tr>
+        <tr>
+          <td>Fizik</td><td>a</td><td>b</td>
+          <td>40</td><td>20</td><td>60</td>
+        </tr>
+        <tr>
+          <td>Kimya</td><td>c</td><td>d</td>
+          <td>30</td><td>10</td><td>40</td>
+        </tr>
       </table>
       </body></html>
     "
@@ -120,7 +138,7 @@ test_that("fetch_and_parse_stats errors when zero tables found", {
 
 # ---- Empty / minimal tables ----
 
-test_that("fetch_and_parse_stats returns empty tibble when table has only header rows", {
+test_that("fetch_and_parse_stats returns empty tibble for header-only table", {
   header_only <- rvest::read_html(
     "
     <html><body>
@@ -135,11 +153,11 @@ test_that("fetch_and_parse_stats returns empty tibble when table has only header
   with_fake_stats_html(header_only, {
     result <- fetch_and_parse_stats(1)
     expect_s3_class(result, "tbl_df")
-    expect_equal(nrow(result), 0)
+    expect_identical(nrow(result), 0L)
   })
 })
 
-test_that("fetch_and_parse_stats returns empty tibble for single data row that is all-NA", {
+test_that("fetch_and_parse_stats returns empty tibble for all-NA data row", {
   all_blank <- rvest::read_html(
     "
     <html><body>
@@ -155,8 +173,18 @@ test_that("fetch_and_parse_stats returns empty tibble for single data row that i
   with_fake_stats_html(all_blank, {
     result <- fetch_and_parse_stats(1)
     expect_s3_class(result, "tbl_df")
-    expect_equal(nrow(result), 0)
+    expect_identical(nrow(result), 0L)
   })
+})
+
+test_that("clean_stats_rows keeps zero-column rows", {
+  stats_rows <- tibble::new_tibble(list(), nrow = 2L)
+
+  result <- clean_stats_rows(stats_rows)
+
+  expect_s3_class(result, "tbl_df")
+  expect_identical(nrow(result), 2L)
+  expect_identical(ncol(result), 0L)
 })
 
 # ---- Column coercion ----
@@ -174,9 +202,9 @@ test_that("university stats coerces numeric columns to integer", {
 test_that("university stats preserves correct values after coercion", {
   with_fake_stats_html(mock_stats_html(1), {
     result <- fetch_and_parse_stats(1)
-    expect_equal(result$yl, c(100L, 200L))
-    expect_equal(result$dr, c(50L, 80L))
-    expect_equal(result$toplam, c(160L, 300L))
+    expect_identical(result$yl, c(100L, 200L))
+    expect_identical(result$dr, c(50L, 80L))
+    expect_identical(result$toplam, c(160L, 300L))
   })
 })
 
@@ -184,7 +212,7 @@ test_that("year stats coerces year column to integer", {
   with_fake_stats_html(mock_stats_html(2), {
     result <- fetch_and_parse_stats(2)
     expect_type(result$yil, "integer")
-    expect_equal(result$yil, c(2020L, 2021L))
+    expect_identical(result$yil, c(2020L, 2021L))
   })
 })
 
@@ -193,7 +221,7 @@ test_that("type stats (islem=4) coerces all columns to numeric", {
     result <- fetch_and_parse_stats(4)
     expect_type(result$tur, "double")
     expect_type(result$toplam, "double")
-    expect_equal(result$toplam, c(5000, 3000))
+    expect_identical(result$toplam, c(5000, 3000))
   })
 })
 
@@ -252,7 +280,7 @@ test_that("cells with only whitespace become NA", {
   )
   with_fake_stats_html(whitespace_cells, {
     result <- fetch_and_parse_stats(1)
-    expect_equal(nrow(result), 1)
+    expect_identical(nrow(result), 1L)
     expect_true(is.na(result$count2))
   })
 })
@@ -274,8 +302,8 @@ test_that("rows with all empty cells are filtered out", {
   )
   with_fake_stats_html(mixed_rows, {
     result <- fetch_and_parse_stats(1)
-    expect_equal(nrow(result), 2)
-    expect_equal(result$name, c("Real", "Also Real"))
+    expect_identical(nrow(result), 2L)
+    expect_identical(result$name, c("Real", "Also Real"))
   })
 })
 
@@ -287,7 +315,7 @@ test_that("stats_universities renames universite to university", {
     expect_s3_class(result, "tbl_df")
     expect_true("university" %in% names(result))
     expect_false("universite" %in% names(result))
-    expect_equal(nrow(result), 2)
+    expect_identical(nrow(result), 2L)
   })
 })
 
@@ -297,7 +325,7 @@ test_that("stats_years renames yil to year", {
     expect_s3_class(result, "tbl_df")
     expect_true("year" %in% names(result))
     expect_false("yil" %in% names(result))
-    expect_equal(result$year, c(2020L, 2021L))
+    expect_identical(result$year, c(2020L, 2021L))
   })
 })
 
@@ -309,7 +337,7 @@ test_that("stats_subjects drops columns 2-3 and renames konu to subject", {
     expect_false("konu" %in% names(result))
     expect_false("x2" %in% names(result))
     expect_false("x3" %in% names(result))
-    expect_equal(result$subject, c("Fizik", "Kimya"))
+    expect_identical(result$subject, c("Fizik", "Kimya"))
   })
 })
 
@@ -318,7 +346,7 @@ test_that("stats_types returns all-numeric tibble", {
     result <- stats_types()
     expect_s3_class(result, "tbl_df")
     expect_true(all(vapply(result, is.numeric, logical(1))))
-    expect_equal(nrow(result), 2)
+    expect_identical(nrow(result), 2L)
   })
 })
 
@@ -339,9 +367,9 @@ test_that("extra nested tags inside table cells are handled", {
   )
   with_fake_stats_html(nested_tags, {
     result <- fetch_and_parse_stats(1)
-    expect_equal(nrow(result), 1)
-    expect_equal(result$name, "Bold Uni")
-    expect_equal(result$a, 55L)
+    expect_identical(nrow(result), 1L)
+    expect_identical(result$name, "Bold Uni")
+    expect_identical(result$a, 55L)
   })
 })
 
@@ -363,8 +391,8 @@ test_that("table with many empty filler rows returns only real data", {
   )
   with_fake_stats_html(filler_rows, {
     result <- fetch_and_parse_stats(1)
-    expect_equal(nrow(result), 1)
-    expect_equal(result$key, "Actual")
+    expect_identical(nrow(result), 1L)
+    expect_identical(result$key, "Actual")
   })
 })
 
@@ -383,8 +411,8 @@ test_that("single data row table works correctly", {
   )
   with_fake_stats_html(single_row, {
     result <- fetch_and_parse_stats(1)
-    expect_equal(nrow(result), 1)
-    expect_equal(result$name, "Only")
-    expect_equal(result$count, 1L)
+    expect_identical(nrow(result), 1L)
+    expect_identical(result$name, "Only")
+    expect_identical(result$count, 1L)
   })
 })

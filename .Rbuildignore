@@ -3,11 +3,13 @@
 ^\.Rproj\.user$
 
 # Package-development metadata
+^\.git$
 ^\.github$
 ^\.lintr$
 ^codecov\.yml$
 ^cran-comments\.md$
 ^CONTRIBUTING\.md$
+^CODE_OF_CONDUCT\.md$
 ^LICENSE\.md$
 ^CITATION\.cff$
 
@@ -20,7 +22,6 @@
 ^_pkgdown\.yml$
 ^docs$
 ^pkgdown$
-^README\.html$
 ^README\.Rmd$
 ^README_cache$
 ^README_files$
@@ -41,6 +42,7 @@
 ^\.positai$
 
 # Miscellaneous local artifacts
+^plan\.md$
 ^todo\.md$
 ^texput\.log$
 ^doc$

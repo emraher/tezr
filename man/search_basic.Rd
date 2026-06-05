@@ -19,9 +19,8 @@ search_basic(
 \item{keyword}{Character. The search term(s).}
 
 \item{search_field}{Character. The field to search in. One of "title",
-"author", "supervisor", "subject", "index", "abstract", or "all".
-Default is "all". The legacy \code{"thesis_no"} value is not supported by
-YOK's keyword endpoint. Use \code{search_detailed(thesis_no = ...)} instead.}
+"author", "supervisor", "subject", "index", "abstract", "all", or
+"thesis_no". Default is "all".}
 
 \item{access_type}{Character. Access type filter. One of "all", "open", or
 "restricted". Default is "all".}
@@ -35,8 +34,8 @@ limit per query). Set to \code{Inf} to automatically delegate to
 \code{\link{search_advanced}} for pagination when results exceed
 2000.}
 
-\item{ignore_cache}{Logical. If \code{TRUE}, bypass cached search/range results and
-fetch fresh data from the server.}
+\item{ignore_cache}{Logical. If \code{TRUE}, bypass cached search/range results
+and fetch fresh data from the server.}
 }
 \value{
 A tibble containing thesis records with columns:
@@ -64,22 +63,32 @@ and returns matching thesis records.
 Basic search returns up to 2000 results per query (YOK server limit). When
 results exceed 2000 and \code{max_search_results > 2000}, the search
 delegates to \code{\link{search_advanced}} which paginates via
-year-range splitting to retrieve more results. Single-year ranges can still
-be capped by the server. With the default \code{max_search_results = 2000},
-a warning is issued suggesting \code{max_search_results = Inf}.
+year-range splitting to retrieve all results. With the default
+\code{max_search_results = 2000}, a warning is issued suggesting
+\code{max_search_results = Inf}.
 }
 \examples{
-\dontrun{
+\dontshow{if (interactive()) withAutoprint(\{ # examplesIf}
 # Search for theses (returns up to 2000 results)
 search_results <- search_basic("hanehalkı")
 
 # Search for PhD theses by a specific author
-search_results <- search_basic("Nilay Ünsal", search_field = "author", thesis_type = "masters")
+search_results <- search_basic(
+  "Nilay Ünsal",
+  search_field = "author",
+  thesis_type = "masters"
+)
 
 # Search for open access theses
 search_results <- search_basic("tarım", access_type = "open")
 
-# Paginate beyond the first server batch when possible
+# Get all results (auto-delegates to advanced search for pagination)
 all_results <- search_basic("hanehalkı", max_search_results = Inf)
+\dontshow{\}) # examplesIf}
 }
+\seealso{
+Other search functions: 
+\code{\link{search_advanced}()},
+\code{\link{search_detailed}()}
 }
+\concept{search functions}

@@ -13,7 +13,14 @@ A tibble containing thesis counts per year and type.
 Get thesis statistics by year
 }
 \examples{
-\dontrun{
+\dontshow{if (interactive()) withAutoprint(\{ # examplesIf}
 stats <- stats_years()
+\dontshow{\}) # examplesIf}
 }
+\seealso{
+Other statistics functions: 
+\code{\link{stats_subjects}()},
+\code{\link{stats_types}()},
+\code{\link{stats_universities}()}
 }
+\concept{statistics functions}

@@ -32,3 +32,9 @@ cache_config(enable = TRUE, search_ttl = 1800)
 # Cache details forever (until session ends)
 cache_config(detail_ttl = NULL)
 }
+\seealso{
+Other cache functions: 
+\code{\link{cache_clear}()},
+\code{\link{cache_info}()}
+}
+\concept{cache functions}

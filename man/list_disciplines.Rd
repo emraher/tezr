@@ -14,11 +14,20 @@ A tibble with two columns:
 }
 }
 \description{
-Returns all disciplines (Bilim Dalı values) in the National Thesis Center database.
+Returns all disciplines (Bilim Dalı values) in the National Thesis Center
+database.
 Turkish: Bilim Dalı
 }
 \examples{
-\dontrun{
+\dontshow{if (interactive()) withAutoprint(\{ # examplesIf}
 disciplines <- list_disciplines()
+\dontshow{\}) # examplesIf}
 }
+\seealso{
+Other lookup functions: 
+\code{\link{list_divisions}()},
+\code{\link{list_institutes}()},
+\code{\link{list_subjects}()},
+\code{\link{list_universities}()}
 }
+\concept{lookup functions}

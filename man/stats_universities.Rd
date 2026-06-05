@@ -13,7 +13,14 @@ A tibble containing thesis counts per university and type.
 Get thesis statistics by university
 }
 \examples{
-\dontrun{
+\dontshow{if (interactive()) withAutoprint(\{ # examplesIf}
 stats <- stats_universities()
+\dontshow{\}) # examplesIf}
 }
+\seealso{
+Other statistics functions: 
+\code{\link{stats_subjects}()},
+\code{\link{stats_types}()},
+\code{\link{stats_years}()}
 }
+\concept{statistics functions}

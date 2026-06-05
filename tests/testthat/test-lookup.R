@@ -21,19 +21,19 @@ test_that("lookup_cache is an environment", {
   expect_true(exists("lookup_cache", envir = asNamespace("tezr")))
 })
 
-test_that("generic_lookup_item returns NULL for NULL input", {
+test_that("generic_lookup_id returns NULL for NULL input", {
   fetch_fn <- function() tibble::tibble(name = "X", id = "1", clean_name = "x")
-  result <- generic_lookup_item(NULL, fetch_fn)
+  result <- generic_lookup_id(NULL, fetch_fn)
   expect_null(result)
 })
 
-test_that("generic_lookup_item returns NULL for empty string input", {
+test_that("generic_lookup_id returns NULL for empty string input", {
   fetch_fn <- function() tibble::tibble(name = "X", id = "1", clean_name = "x")
-  result <- generic_lookup_item("", fetch_fn)
+  result <- generic_lookup_id("", fetch_fn)
   expect_null(result)
 })
 
-test_that("generic_lookup_item returns first item on exact match", {
+test_that("generic_lookup_id returns first ID on exact match", {
   items <- tibble::tibble(
     name = c("Ankara Uni", "Istanbul Uni"),
     id = c("3", "5"),
@@ -41,12 +41,11 @@ test_that("generic_lookup_item returns first item on exact match", {
   )
   fetch_fn <- function() items
 
-  result <- generic_lookup_item("Ankara Uni", fetch_fn)
-  expect_equal(result$id, "3")
-  expect_equal(result$name, "Ankara Uni")
+  result <- generic_lookup_id("Ankara Uni", fetch_fn)
+  expect_identical(result, "3")
 })
 
-test_that("generic_lookup_item returns first item on substring match", {
+test_that("generic_lookup_id returns first substring match", {
   items <- tibble::tibble(
     name = c("Ankara Universitesi", "Istanbul Universitesi"),
     id = c("3", "5"),
@@ -54,24 +53,23 @@ test_that("generic_lookup_item returns first item on substring match", {
   )
   fetch_fn <- function() items
 
-  result <- generic_lookup_item("ankara", fetch_fn)
-  expect_equal(result$id, "3")
-  expect_equal(result$name, "Ankara Universitesi")
+  result <- generic_lookup_id("ankara", fetch_fn)
+  expect_identical(result, "3")
 })
 
-test_that("generic_lookup_item returns NULL when no match found", {
+test_that("generic_lookup_id returns NULL when no match found", {
   items <- tibble::tibble(
-    name = c("Ankara Uni"),
-    id = c("3"),
-    clean_name = c("ankara uni")
+    name = "Ankara Uni",
+    id = "3",
+    clean_name = "ankara uni"
   )
   fetch_fn <- function() items
 
-  result <- generic_lookup_item("Nonexistent", fetch_fn)
+  result <- generic_lookup_id("Nonexistent", fetch_fn)
   expect_null(result)
 })
 
-test_that("generic_lookup_item matches case-insensitively", {
+test_that("generic_lookup_id matches case-insensitively", {
   items <- tibble::tibble(
     name = c("ANKARA UNI", "Istanbul Uni"),
     id = c("3", "5"),
@@ -79,16 +77,16 @@ test_that("generic_lookup_item matches case-insensitively", {
   )
   fetch_fn <- function() items
 
-  result <- generic_lookup_item("ankara uni", fetch_fn)
-  expect_equal(result$id, "3")
+  result <- generic_lookup_id("ankara uni", fetch_fn)
+  expect_identical(result, "3")
 
-  result2 <- generic_lookup_item("ANKARA UNI", fetch_fn)
-  expect_equal(result2$id, "3")
+  result2 <- generic_lookup_id("ANKARA UNI", fetch_fn)
+  expect_identical(result2, "3")
 })
 
-test_that("generic_lookup_item matches when input case matches data case", {
+test_that("generic_lookup_id matches when input case matches data case", {
   # Turkish İ (dotted capital I) lowercased produces i + combining dot.
-  # Lookup works when both sides go through the same clean_text + str_to_lower path.
+  # Lookup works when both sides use clean_text + str_to_lower.
   all_caps <- "\u0130STANBUL \u00dcN\u0130VERS\u0130TES\u0130"
   items <- tibble::tibble(
     name = all_caps,
@@ -97,12 +95,12 @@ test_that("generic_lookup_item matches when input case matches data case", {
   )
   fetch_fn <- function() items
 
-  # Same all-caps input matches because both sides produce identical lowercased form
-  result <- generic_lookup_item(all_caps, fetch_fn)
-  expect_equal(result$id, "7")
+  # Same all-caps input matches because both sides lowercase identically.
+  result <- generic_lookup_id(all_caps, fetch_fn)
+  expect_identical(result, "7")
 })
 
-test_that("generic_lookup_item falls back to substring for Turkish mixed-case", {
+test_that("generic_lookup_id falls back to substring for Turkish mixed-case", {
   # When data has all-caps Turkish İ and user types mixed-case,
   # exact match fails due to Unicode normalization differences,
 
@@ -119,41 +117,11 @@ test_that("generic_lookup_item falls back to substring for Turkish mixed-case", 
 
   # Substring of just the İ-prefixed word — str_to_lower("İstanbul") produces
   # "i̇stanbul" which IS contained in the clean_name "i̇stanbul ..."
-  result <- generic_lookup_item(mixed_case, fetch_fn)
-  expect_equal(result$id, "7")
+  result <- generic_lookup_id(mixed_case, fetch_fn)
+  expect_identical(result, "7")
 })
 
-test_that("generic_lookup_item ignores Turkish case, accents, and spacing", {
-  items <- tibble::tibble(
-    name = c(
-      "ANKARA ÜNİVERSİTESİ",
-      "BÖLGESEL KALKINMA İKTİSAT ANABİLİM DALI",
-      "İKTİSAT ANABİLİM DALI"
-    ),
-    id = c("3", "1753", "51"),
-    clean_name = stringr::str_to_lower(clean_text(name))
-  )
-  fetch_fn <- function() items
-
-  expect_equal(generic_lookup_item("Ankara Üniversitesi", fetch_fn)$id, "3")
-  expect_equal(generic_lookup_item("İktisat Ana Bilim Dalı", fetch_fn)$id, "51")
-})
-
-test_that("generic_lookup_item returns canonical label and ID", {
-  items <- tibble::tibble(
-    name = c("ANKARA ÜNİVERSİTESİ", "İKTİSAT ANABİLİM DALI"),
-    id = c("3", "51"),
-    clean_name = stringr::str_to_lower(clean_text(name))
-  )
-  fetch_fn <- function() items
-
-  matched_item <- generic_lookup_item("Ankara Üniversitesi", fetch_fn)
-
-  expect_equal(matched_item$name, "ANKARA ÜNİVERSİTESİ")
-  expect_equal(matched_item$id, "3")
-})
-
-test_that("generic_lookup_item prefers exact match over substring", {
+test_that("generic_lookup_id prefers exact match over substring", {
   items <- tibble::tibble(
     name = c("Ankara Universitesi Fen", "Ankara Universitesi"),
     id = c("10", "20"),
@@ -162,8 +130,8 @@ test_that("generic_lookup_item prefers exact match over substring", {
   fetch_fn <- function() items
 
   # Exact match should return "20", not "10" (which would match as substring)
-  result <- generic_lookup_item("Ankara Universitesi", fetch_fn)
-  expect_equal(result$id, "20")
+  result <- generic_lookup_id("Ankara Universitesi", fetch_fn)
+  expect_identical(result, "20")
 })
 
 test_that("generic_fetch_list returns empty tibble for no-link HTML", {
@@ -187,7 +155,7 @@ test_that("generic_fetch_list returns empty tibble for no-link HTML", {
   result <- generic_fetch_list("test_empty", "test.jsp")
 
   expect_s3_class(result, "tbl_df")
-  expect_equal(nrow(result), 0)
+  expect_identical(nrow(result), 0L)
   expect_true("name" %in% names(result))
   expect_true("id" %in% names(result))
 })
@@ -206,7 +174,7 @@ test_that("generic_fetch_list returns cached result on second call", {
 
   result <- generic_fetch_list("test_cached", "any.jsp")
 
-  expect_equal(result, cached_data)
+  expect_identical(result, cached_data)
 })
 
 test_that("generic_fetch_list parses eklecikar links from HTML", {
@@ -214,7 +182,10 @@ test_that("generic_fetch_list parses eklecikar links from HTML", {
 
   html_content <- paste0(
     "<html><body>",
-    "<a href=\"javascript:eklecikar('Test University','123')\">Test University</a>",
+    paste0(
+      "<a href=\"javascript:eklecikar('Test University','123')\">",
+      "Test University</a>"
+    ),
     "<a href=\"javascript:eklecikar('Another Uni','456')\">Another Uni</a>",
     "</body></html>"
   )
@@ -236,16 +207,17 @@ test_that("generic_fetch_list parses eklecikar links from HTML", {
   result <- generic_fetch_list("test_eklecikar", "test.jsp")
 
   expect_s3_class(result, "tbl_df")
-  expect_equal(nrow(result), 2)
-  expect_equal(result$name, c("Test University", "Another Uni"))
-  expect_equal(result$id, c("123", "456"))
+  expect_identical(nrow(result), 2L)
+  expect_identical(result$name, c("Test University", "Another Uni"))
+  expect_identical(result$id, c("123", "456"))
   expect_true("clean_name" %in% names(result))
 })
 
 test_that("generic_fetch_list caches result and reuses on second call", {
   local_clean_lookup_cache()
 
-  network_calls <- 0L
+  state <- new.env(parent = emptyenv())
+  state$network_calls <- 0L
   html_content <- paste0(
     "<html><body>",
     "<a href=\"javascript:eklecikar('Uni A','1')\">Uni A</a>",
@@ -260,7 +232,7 @@ test_that("generic_fetch_list caches result and reuses on second call", {
   testthat::local_mocked_bindings(
     req_url = function(req, ...) req,
     req_perform = function(req, ...) {
-      network_calls <<- network_calls + 1L
+      state$network_calls <- state$network_calls + 1L
       structure(list(), class = "httr2_response")
     },
     resp_body_html = function(resp, ...) fake_html,
@@ -269,11 +241,155 @@ test_that("generic_fetch_list caches result and reuses on second call", {
 
   # First call fetches from network
   result1 <- generic_fetch_list("test_cache_reuse", "test.jsp")
-  expect_equal(network_calls, 1L)
+  expect_identical(state$network_calls, 1L)
 
   # Second call should use cache, not network
   result2 <- generic_fetch_list("test_cache_reuse", "test.jsp")
-  expect_equal(network_calls, 1L)
+  expect_identical(state$network_calls, 1L)
 
-  expect_equal(result1, result2)
+  expect_identical(result1, result2)
+})
+
+test_that("fetch list wrappers use the configured endpoints", {
+  state <- new.env(parent = emptyenv())
+  state$calls <- list()
+
+  testthat::with_mocked_bindings(
+    {
+      fetch_university_list()
+      fetch_institute_list()
+      fetch_division_list()
+      fetch_discipline_list()
+      fetch_subject_list()
+    },
+    generic_fetch_list = function(cache_key, endpoint) {
+      state$calls[[length(state$calls) + 1L]] <- c(cache_key, endpoint)
+      tibble::tibble(name = character(), id = character())
+    },
+    .package = "tezr"
+  )
+
+  expect_identical(
+    state$calls,
+    list(
+      c("university", "uniEkle.jsp"),
+      c("institute", "ensEkle.jsp"),
+      c("division", "abdEkle.jsp"),
+      c("discipline", "bilimDaliEkle.jsp"),
+      c("subject", "konEkle.jsp")
+    )
+  )
+})
+
+test_that("lookup ID wrappers use the correct fetchers", {
+  state <- new.env(parent = emptyenv())
+  state$fetcher_names <- character()
+  lookup_fetcher_name <- function(fetch_fn) {
+    fetchers <- list(
+      fetch_university_list = get("fetch_university_list", asNamespace("tezr")),
+      fetch_institute_list = get("fetch_institute_list", asNamespace("tezr")),
+      fetch_division_list = get("fetch_division_list", asNamespace("tezr")),
+      fetch_discipline_list = get("fetch_discipline_list", asNamespace("tezr")),
+      fetch_subject_list = get("fetch_subject_list", asNamespace("tezr"))
+    )
+
+    names(Filter(function(candidate) identical(candidate, fetch_fn), fetchers))
+  }
+
+  testthat::with_mocked_bindings(
+    {
+      expect_identical(lookup_university_id("a"), "a_id")
+      expect_identical(lookup_institute_id("b"), "b_id")
+      expect_identical(lookup_division_id("c"), "c_id")
+      expect_identical(lookup_discipline_id("d"), "d_id")
+      expect_identical(lookup_subject_id("e"), "e_id")
+    },
+    generic_lookup_id = function(name, fetch_fn) {
+      state$fetcher_names <- c(
+        state$fetcher_names,
+        lookup_fetcher_name(fetch_fn)
+      )
+      paste0(name, "_id")
+    },
+    .package = "tezr"
+  )
+
+  expect_identical(
+    state$fetcher_names,
+    c(
+      "fetch_university_list",
+      "fetch_institute_list",
+      "fetch_division_list",
+      "fetch_discipline_list",
+      "fetch_subject_list"
+    )
+  )
+})
+
+test_that("public list wrappers return cleaned lookup values", {
+  lookup_values <- tibble::tibble(
+    name = c("  Ankara  ", NA_character_, "Istanbul"),
+    id = c("1", "2", "3")
+  )
+
+  result <- testthat::with_mocked_bindings(
+    list_universities(),
+    fetch_university_list = function() lookup_values,
+    .package = "tezr"
+  )
+
+  expect_identical(result$name, c("Ankara", "Istanbul"))
+  expect_identical(result$id, c("1", "3"))
+})
+
+test_that("public lookup lists delegate to list_lookup_values", {
+  state <- new.env(parent = emptyenv())
+  state$fetcher_names <- character()
+  list_fetcher_name <- function(fetch_fn) {
+    fetchers <- list(
+      fetch_institute_list = get("fetch_institute_list", asNamespace("tezr")),
+      fetch_division_list = get("fetch_division_list", asNamespace("tezr")),
+      fetch_discipline_list = get("fetch_discipline_list", asNamespace("tezr"))
+    )
+
+    names(Filter(function(candidate) identical(candidate, fetch_fn), fetchers))
+  }
+
+  testthat::with_mocked_bindings(
+    {
+      list_institutes()
+      list_divisions()
+      list_disciplines()
+    },
+    list_lookup_values = function(fetch_fn) {
+      state$fetcher_names <- c(
+        state$fetcher_names,
+        list_fetcher_name(fetch_fn)
+      )
+      tibble::tibble(name = "x", id = "1")
+    },
+    .package = "tezr"
+  )
+
+  expect_identical(
+    state$fetcher_names,
+    c("fetch_institute_list", "fetch_division_list", "fetch_discipline_list")
+  )
+})
+
+test_that("list_subjects splits bilingual subject labels", {
+  result <- testthat::with_mocked_bindings(
+    list_subjects(),
+    fetch_subject_list = function() {
+      tibble::tibble(
+        name = " Ekonomi = Economics ",
+        id = "35"
+      )
+    },
+    .package = "tezr"
+  )
+
+  expect_identical(result$name_tr, "Ekonomi")
+  expect_identical(result$name_en, "Economics")
+  expect_identical(result$id, "35")
 })

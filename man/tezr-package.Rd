@@ -4,16 +4,46 @@
 \name{tezr-package}
 \alias{tezr}
 \alias{tezr-package}
-\title{tezr: Access the Turkiye's National Thesis Center Database}
+\title{Retrieve Thesis Metadata from Turkiye's National Thesis Center}
 \description{
-\if{html}{\figure{logo.png}{options: style='float: right' alt='logo' width='120'}}
-
-Access the Turkiye's National Thesis Center (Ulusal Tez Merkezi) database at \url{https://tez.yok.gov.tr}. Search, retrieve, and analyze dissertation metadata from Turkish universities. Supports basic and advanced search, thesis details retrieval, lookup tables, and aggregate statistics.
+\code{tezr} retrieves, parses, caches, and checks thesis metadata from Turkiye's
+National Thesis Center (Ulusal Tez Merkezi), the Council of Higher
+Education's public web portal for graduate thesis records.
 }
+\section{Responsible use}{
+
+Use the package for academic, reproducible research workflows. Cache or save
+large results locally, avoid repeated identical requests, and respect the
+NTC portal's access controls and terms. Do not use the package to bypass
+access restrictions or to scrape thesis full text at scale.
+}
+
+\section{Request behavior}{
+
+Requests use a package-identifying user agent by default. Override it with
+\code{request_config(user_agent = "...")} or the \code{TEZR_USER_AGENT} environment
+variable if needed. Set \code{request_config(verbose = FALSE)} or
+\code{TEZR_VERBOSE=false} to silence informational progress messages. Warnings
+and errors are still shown.
+
+The package applies a two-second request delay, retries requests up to three
+times, refreshes sessions after 50 logical requests or 20 minutes, and caches
+searches, range chunks, details, and lookups in memory.
+Search and detail parsing support both the legacy WATable response and the
+redesigned card-based response observed on the portal in June 2026.
+}
+
+\section{Citation}{
+
+Use \code{citation("tezr")} for the preferred package citation. Also cite the
+National Thesis Center or Council of Higher Education as the source of thesis
+metadata and include the retrieval date.
+}
+
 \seealso{
 Useful links:
 \itemize{
-  \item \url{https://eremrah.com/tezr}
+  \item \url{https://eremrah.com/tezr/}
   \item \url{https://github.com/emraher/tezr}
   \item Report bugs at \url{https://github.com/emraher/tezr/issues}
 }

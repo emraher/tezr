@@ -14,11 +14,20 @@ A tibble with two columns:
 }
 }
 \description{
-Returns all divisions (Anabilim Dalı values) in the National Thesis Center database.
+Returns all divisions (Anabilim Dalı values) in the National Thesis Center
+database.
 Turkish: Anabilim Dalı (ABD)
 }
 \examples{
-\dontrun{
+\dontshow{if (interactive()) withAutoprint(\{ # examplesIf}
 divisions <- list_divisions()
+\dontshow{\}) # examplesIf}
 }
+\seealso{
+Other lookup functions: 
+\code{\link{list_disciplines}()},
+\code{\link{list_institutes}()},
+\code{\link{list_subjects}()},
+\code{\link{list_universities}()}
 }
+\concept{lookup functions}

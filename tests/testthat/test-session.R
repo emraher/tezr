@@ -8,12 +8,6 @@ local_clean_session <- function(env = parent.frame()) {
   old_cookies <- tezr_env$cookies
   old_request_count <- tezr_env$request_count
   old_session_start <- tezr_env$session_start
-  old_has_last_search_mode <- exists(
-    "last_search_mode",
-    envir = tezr_env,
-    inherits = FALSE
-  )
-  old_last_search_mode <- tezr_env$last_search_mode
 
   withr::defer(
     {
@@ -21,13 +15,6 @@ local_clean_session <- function(env = parent.frame()) {
       tezr_env$cookies <- old_cookies
       tezr_env$request_count <- old_request_count
       tezr_env$session_start <- old_session_start
-      if (old_has_last_search_mode) {
-        tezr_env$last_search_mode <- old_last_search_mode
-      } else if (
-        exists("last_search_mode", envir = tezr_env, inherits = FALSE)
-      ) {
-        rm(list = "last_search_mode", envir = tezr_env)
-      }
     },
     envir = env
   )
@@ -45,63 +32,170 @@ test_that("default_request_headers includes required fields", {
   expect_true("Content-Type" %in% names(headers))
 })
 
+test_that("default user agent identifies the package", {
+  withr::local_options(list(tezr.user_agent = NULL))
+  withr::local_envvar(TEZR_USER_AGENT = NA)
+
+  headers <- default_request_headers()
+
+  expect_match(headers["User-Agent"], "^tezr/")
+  expect_false(grepl("Mozilla", headers["User-Agent"], fixed = TRUE))
+  expect_match(headers["User-Agent"], "github.com/emraher/tezr")
+  expect_match(headers["User-Agent"], "mailto:eer@eremrah.com")
+})
+
+test_that("default user agent identifies GitHub Actions runs", {
+  withr::local_options(list(tezr.user_agent = NULL))
+  withr::local_envvar(
+    GITHUB_ACTIONS = "true",
+    TEZR_USER_AGENT = NA
+  )
+
+  expect_match(request_user_agent(), "GitHub Actions")
+})
+
+test_that("user agent can be overridden by environment and option", {
+  withr::local_options(list(tezr.user_agent = NULL))
+  withr::local_envvar(TEZR_USER_AGENT = "env-agent")
+
+  expect_identical(request_user_agent(), "env-agent")
+
+  withr::local_options(list(tezr.user_agent = "option-agent"))
+  expect_identical(request_user_agent(), "option-agent")
+})
+
+test_that("request_config sets and resets request options", {
+  withr::local_options(list(tezr.user_agent = NULL, tezr.verbose = NULL))
+  withr::local_envvar(
+    TEZR_USER_AGENT = NA,
+    TEZR_VERBOSE = NA
+  )
+
+  request_config(user_agent = "custom-agent", verbose = FALSE)
+
+  expect_identical(request_user_agent(), "custom-agent")
+  expect_false(tezr_verbose())
+
+  request_config(reset = TRUE)
+
+  expect_match(request_user_agent(), "^tezr/")
+  expect_true(tezr_verbose())
+})
+
+test_that("request_config validates request option values", {
+  expect_error(request_config(user_agent = ""), "user_agent")
+  expect_error(request_config(verbose = NA), "verbose")
+  expect_error(request_config(reset = NA), "reset")
+})
+
+test_that("verbosity can be controlled by option and environment variable", {
+  withr::local_options(list(tezr.verbose = NULL))
+  withr::local_envvar(TEZR_VERBOSE = "false")
+  expect_false(tezr_verbose())
+
+  withr::local_options(list(tezr.verbose = TRUE))
+  expect_true(tezr_verbose())
+})
+
+test_that("tezr_verbose rejects invalid option values", {
+  withr::local_options(list(tezr.verbose = "yes"))
+
+  expect_error(tezr_verbose(), "tezr.verbose")
+})
+
+test_that("environment logical parser handles true and fallback values", {
+  expect_true(parse_env_logical("yes", FALSE))
+  expect_false(parse_env_logical("off", TRUE))
+  expect_true(parse_env_logical("not-a-bool", TRUE))
+  expect_false(parse_env_logical("", FALSE))
+})
+
+test_that("informational messages respect verbosity", {
+  withr::local_options(list(tezr.verbose = FALSE))
+
+  state <- new.env(parent = emptyenv())
+  state$info_called <- FALSE
+  state$success_called <- FALSE
+  testthat::local_mocked_bindings(
+    cli_alert_info = function(...) {
+      state$info_called <- TRUE
+      invisible(NULL)
+    },
+    cli_alert_success = function(...) {
+      state$success_called <- TRUE
+      invisible(NULL)
+    },
+    .package = "cli"
+  )
+
+  tezr_inform("hidden")
+  tezr_success("hidden")
+
+  expect_false(state$info_called)
+  expect_false(state$success_called)
+})
+
 test_that("create_session applies default headers", {
   local_clean_session()
-  called <- FALSE
+  state <- new.env(parent = emptyenv())
+  state$called <- FALSE
   orig <- default_request_headers
 
   testthat::local_mocked_bindings(
     default_request_headers = function() {
-      called <<- TRUE
+      state$called <- TRUE
       orig()
     },
     .package = "tezr"
   )
 
   create_session()
-  expect_true(called)
+  expect_true(state$called)
 })
 
 test_that("create_session applies rate limit by default", {
   local_clean_session()
-  rate_limit_called <- FALSE
+  state <- new.env(parent = emptyenv())
+  state$rate_limit_called <- FALSE
 
   testthat::local_mocked_bindings(
     rate_limit = function(...) {
-      rate_limit_called <<- TRUE
+      state$rate_limit_called <- TRUE
       invisible(NULL)
     },
     .package = "tezr"
   )
 
   create_session()
-  expect_true(rate_limit_called)
+  expect_true(state$rate_limit_called)
 })
 
 test_that("create_session can skip rate limiting", {
   local_clean_session()
-  rate_limit_called <- FALSE
+  state <- new.env(parent = emptyenv())
+  state$rate_limit_called <- FALSE
 
   testthat::local_mocked_bindings(
     rate_limit = function(...) {
-      rate_limit_called <<- TRUE
+      state$rate_limit_called <- TRUE
       invisible(NULL)
     },
     .package = "tezr"
   )
 
   create_session(apply_rate_limit = FALSE)
-  expect_false(rate_limit_called)
+  expect_false(state$rate_limit_called)
 })
 
 test_that("init_session applies default headers", {
   local_clean_session()
-  called <- FALSE
+  state <- new.env(parent = emptyenv())
+  state$called <- FALSE
   orig <- default_request_headers
 
   testthat::local_mocked_bindings(
     default_request_headers = function() {
-      called <<- TRUE
+      state$called <- TRUE
       orig()
     },
     .package = "tezr"
@@ -116,36 +210,16 @@ test_that("init_session applies default headers", {
 
   init_session()
 
-  expect_true(called)
-})
-
-test_that("init_session applies retry policy", {
-  local_clean_session()
-  retry_called <- FALSE
-
-  testthat::local_mocked_bindings(
-    req_retry = function(req, ...) {
-      retry_called <<- TRUE
-      req
-    },
-    req_perform = function(req, ...) {
-      structure(list(), class = "httr2_response")
-    },
-    resp_header = function(...) NULL,
-    .package = "httr2"
-  )
-
-  init_session()
-
-  expect_true(retry_called)
+  expect_true(state$called)
 })
 
 test_that("rate_limit sleeps the correct remaining time", {
   local_clean_session()
 
-  sleep_value <- NULL
+  state <- new.env(parent = emptyenv())
+  state$sleep_value <- NULL
   testthat::local_mocked_bindings(
-    Sys.sleep = function(x) sleep_value <<- x,
+    Sys.sleep = function(x) state$sleep_value <- x,
     .package = "base"
   )
 
@@ -157,16 +231,18 @@ test_that("rate_limit sleeps the correct remaining time", {
   rate_limit(delay = 2)
 
   # Should have slept ~1.5 seconds (2 - 0.5)
-  expect_true(!is.null(sleep_value))
-  expect_true(sleep_value > 1.0 && sleep_value <= 2.0)
+  expect_false(is.null(state$sleep_value))
+  expect_gt(state$sleep_value, 1.0)
+  expect_lte(state$sleep_value, 2.0)
 })
 
 test_that("rate_limit does not sleep when enough time elapsed", {
   local_clean_session()
 
-  sleep_called <- FALSE
+  state <- new.env(parent = emptyenv())
+  state$sleep_called <- FALSE
   testthat::local_mocked_bindings(
-    Sys.sleep = function(x) sleep_called <<- TRUE,
+    Sys.sleep = function(x) state$sleep_called <- TRUE,
     .package = "base"
   )
 
@@ -177,15 +253,16 @@ test_that("rate_limit does not sleep when enough time elapsed", {
 
   rate_limit(delay = 2)
 
-  expect_false(sleep_called)
+  expect_false(state$sleep_called)
 })
 
 test_that("rate_limit does not sleep on first call", {
   local_clean_session()
 
-  sleep_called <- FALSE
+  state <- new.env(parent = emptyenv())
+  state$sleep_called <- FALSE
   testthat::local_mocked_bindings(
-    Sys.sleep = function(x) sleep_called <<- TRUE,
+    Sys.sleep = function(x) state$sleep_called <- TRUE,
     .package = "base"
   )
 
@@ -196,7 +273,7 @@ test_that("rate_limit does not sleep on first call", {
 
   rate_limit(delay = 2)
 
-  expect_false(sleep_called)
+  expect_false(state$sleep_called)
 })
 
 test_that("init_session stores cookies from response header", {
@@ -213,7 +290,7 @@ test_that("init_session stores cookies from response header", {
   tezr_env <- get("tezr_env", envir = asNamespace("tezr"))
   init_session()
 
-  expect_equal(tezr_env$cookies, "JSESSIONID=abc123")
+  expect_identical(tezr_env$cookies, "JSESSIONID=abc123")
 })
 
 test_that("init_session handles missing Set-Cookie header", {
@@ -236,25 +313,6 @@ test_that("init_session handles missing Set-Cookie header", {
   expect_null(tezr_env$cookies)
 })
 
-test_that("init_session clears previous search mode", {
-  local_clean_session()
-
-  testthat::local_mocked_bindings(
-    req_perform = function(req, ...) {
-      structure(list(), class = "httr2_response")
-    },
-    resp_header = function(...) NULL,
-    .package = "httr2"
-  )
-
-  tezr_env <- get("tezr_env", envir = asNamespace("tezr"))
-  tezr_env$last_search_mode <- "4"
-
-  init_session()
-
-  expect_false(exists("last_search_mode", envir = tezr_env, inherits = FALSE))
-})
-
 test_that("has_session returns FALSE before init, TRUE after", {
   local_clean_session()
 
@@ -273,19 +331,20 @@ test_that("refresh_session_if_needed explains refresh reason", {
   tezr_env$request_count <- 50L
   tezr_env$session_start <- Sys.time()
 
-  refresh_called <- FALSE
-  info_messages <- character()
+  state <- new.env(parent = emptyenv())
+  state$refresh_called <- FALSE
+  state$info_messages <- character()
 
   testthat::local_mocked_bindings(
     init_session = function(...) {
-      refresh_called <<- TRUE
+      state$refresh_called <- TRUE
       invisible(TRUE)
     },
     .package = "tezr"
   )
   testthat::local_mocked_bindings(
     cli_alert_info = function(text, ...) {
-      info_messages <<- c(info_messages, paste(text, collapse = " "))
+      state$info_messages <- c(state$info_messages, paste(text, collapse = " "))
       invisible(NULL)
     },
     .package = "cli"
@@ -293,6 +352,44 @@ test_that("refresh_session_if_needed explains refresh reason", {
 
   refresh_session_if_needed()
 
-  expect_true(refresh_called)
-  expect_true(any(grepl("request count", info_messages, ignore.case = TRUE)))
+  expect_true(state$refresh_called)
+  expect_true(any(grepl(
+    "request count",
+    state$info_messages,
+    ignore.case = TRUE
+  )))
+})
+
+test_that("refresh_session_if_needed reports age-only and combined staleness", {
+  local_clean_session()
+  tezr_env <- get("tezr_env", envir = asNamespace("tezr"))
+  state <- new.env(parent = emptyenv())
+  state$info_messages <- character()
+
+  testthat::local_mocked_bindings(
+    init_session = function(...) invisible(TRUE),
+    .package = "tezr"
+  )
+  testthat::local_mocked_bindings(
+    cli_alert_info = function(text, ...) {
+      state$info_messages <- c(state$info_messages, paste(text, collapse = " "))
+      invisible(NULL)
+    },
+    .package = "cli"
+  )
+
+  tezr_env$request_count <- 0L
+  tezr_env$session_start <- Sys.time() - (21 * 60)
+  refresh_session_if_needed()
+
+  tezr_env$request_count <- 50L
+  tezr_env$session_start <- Sys.time() - (21 * 60)
+  refresh_session_if_needed()
+
+  expect_true(any(grepl("session age", state$info_messages, fixed = TRUE)))
+  expect_true(any(grepl(
+    "request count and session age",
+    state$info_messages,
+    fixed = TRUE
+  )))
 })

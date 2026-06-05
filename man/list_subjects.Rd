@@ -19,7 +19,15 @@ Returns all subjects in the National Thesis Center database.
 Turkish: Konu
 }
 \examples{
-\dontrun{
+\dontshow{if (interactive()) withAutoprint(\{ # examplesIf}
 subjects <- list_subjects()
+\dontshow{\}) # examplesIf}
 }
+\seealso{
+Other lookup functions: 
+\code{\link{list_disciplines}()},
+\code{\link{list_divisions}()},
+\code{\link{list_institutes}()},
+\code{\link{list_universities}()}
 }
+\concept{lookup functions}

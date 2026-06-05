@@ -121,88 +121,26 @@ normalize_language_label <- function(text) {
   )
 }
 
-#' Validate optional language IDs or labels
+#' Validate a numeric language ID against the API language table
 #' @noRd
-validate_language_values <- function(language, allow_multiple = FALSE) {
-  if (is.null(language)) {
-    return(NULL)
+resolve_numeric_language_id <- function(language) {
+  language_id <- suppressWarnings(as.integer(language))
+  if (is.na(language_id)) {
+    cli::cli_abort("{.arg language} must be a valid language id")
   }
 
-  if (
-    length(language) == 0L ||
-      any(is.na(language)) ||
-      (!isTRUE(allow_multiple) && length(language) != 1L)
-  ) {
-    cli::cli_abort("{.arg language} must be a valid language id or label")
+  valid_ids <- suppressWarnings(as.integer(languages$value))
+  if (!language_id %in% valid_ids) {
+    cli::cli_abort("{.arg language} must be a valid language id")
   }
 
-  if (is.numeric(language)) {
-    is_whole <- vapply(
-      language,
-      is_whole_number_value,
-      logical(1)
-    )
-    if (!all(is_whole)) {
-      cli::cli_abort("{.arg language} must be a valid language id or label")
-    }
-    return(language)
-  }
-
-  if (!is.character(language)) {
-    cli::cli_abort("{.arg language} must be a numeric id or character label")
-  }
-
-  cleaned <- clean_text(language)
-  if (any(!nzchar(cleaned))) {
-    cli::cli_abort("{.arg language} must be a valid language id or label")
-  }
-
-  cleaned
+  return(language_id)
 }
 
-#' Test whether a scalar value is written as a whole positive integer
+#' ISO language aliases accepted by the YOK language resolver
 #' @noRd
-is_whole_number_value <- function(value) {
-  if (length(value) != 1L || is.na(value)) {
-    return(FALSE)
-  }
-
-  value_text <- clean_text(as.character(value))
-  !is.na(value_text) && grepl("^[0-9]+$", value_text)
-}
-
-#' Convert a language name, abbreviation, or numeric ID to its API integer ID
-#' @noRd
-resolve_language_id <- function(language) {
-  language <- validate_language_values(language, allow_multiple = FALSE)
-
-  if (is.null(language)) {
-    return(NULL)
-  }
-
-  if (is.numeric(language)) {
-    language_id <- suppressWarnings(as.integer(clean_text(as.character(language))))
-    if (is.na(language_id)) {
-      cli::cli_abort("{.arg language} must be a valid language id")
-    }
-
-    valid_ids <- suppressWarnings(as.integer(languages$value))
-    if (!language_id %in% valid_ids) {
-      cli::cli_abort("{.arg language} must be a valid language id")
-    }
-
-    return(language_id)
-  }
-
-  lang <- clean_text(language)
-  target <- normalize_language_label(lang)
-
-  if (stringr::str_detect(target, "^\\d+$")) {
-    return(resolve_language_id(as.integer(target)))
-  }
-
-  # ISO 639-1 two-letter codes for all languages in the YOK database
-  iso_codes <- c(
+language_iso_codes <- function() {
+  c(
     tr = "turkish",
     en = "english",
     ar = "arabic",
@@ -243,11 +181,22 @@ resolve_language_id <- function(language) {
     ady = "adyghe",
     zza = "zaza"
   )
+}
 
+#' Expand a language alias into the normalized YOK language label
+#' @noRd
+resolve_language_alias <- function(target) {
+  iso_codes <- language_iso_codes()
   if (target %in% names(iso_codes)) {
-    target <- iso_codes[[target]]
+    return(iso_codes[[target]])
   }
 
+  target
+}
+
+#' Match a normalized language label against the API language table
+#' @noRd
+match_language_label_id <- function(target) {
   labels_tr <- normalize_language_label(languages$label_tr)
   labels_en <- normalize_language_label(languages$label_en)
 
@@ -262,6 +211,49 @@ resolve_language_id <- function(language) {
   }
 
   return(language_id)
+}
+
+#' Resolve a character language label or alias into an API integer ID
+#' @noRd
+resolve_character_language_id <- function(language) {
+  lang <- clean_text(language)
+  if (is.na(lang) || nchar(lang) == 0) {
+    return(NULL)
+  }
+
+  target <- normalize_language_label(lang)
+  if (is.na(target) || nchar(target) == 0) {
+    return(NULL)
+  }
+
+  if (stringr::str_detect(target, "^\\d+$")) {
+    return(resolve_numeric_language_id(as.integer(target)))
+  }
+
+  target <- resolve_language_alias(target)
+  match_language_label_id(target)
+}
+
+#' Convert a language name, abbreviation, or numeric ID to its API integer ID
+#' @noRd
+resolve_language_id <- function(language) {
+  if (is.null(language)) {
+    return(NULL)
+  }
+
+  if (length(language) != 1) {
+    cli::cli_abort("{.arg language} must be a single value")
+  }
+
+  if (is.numeric(language)) {
+    return(resolve_numeric_language_id(language))
+  }
+
+  if (!is.character(language)) {
+    cli::cli_abort("{.arg language} must be a numeric id or character label")
+  }
+
+  resolve_character_language_id(language)
 }
 
 #' Validate and default year_start, year_end, and language for search queries
@@ -305,11 +297,7 @@ validate_year <- function(year, param_name = "year") {
     cli::cli_abort("{.arg {param_name}} must be a single year")
   }
 
-  if (!is_whole_number_value(year)) {
-    cli::cli_abort("{.arg {param_name}} must be a valid year")
-  }
-
-  year_int <- suppressWarnings(as.integer(clean_text(as.character(year))))
+  year_int <- suppressWarnings(as.integer(year))
 
   if (is.na(year_int)) {
     cli::cli_abort("{.arg {param_name}} must be a valid year")
@@ -329,50 +317,21 @@ validate_year <- function(year, param_name = "year") {
 #' Validate an optional scalar label argument
 #' @noRd
 validate_optional_label <- function(value, arg_name) {
-  validate_text_values(value, arg_name, allow_multiple = FALSE)
-}
-
-#' Validate optional non-empty character values
-#' @noRd
-validate_text_values <- function(
-  value,
-  arg_name,
-  allow_multiple = TRUE,
-  coerce = FALSE
-) {
   if (is.null(value)) {
     return(NULL)
   }
-
-  if (isTRUE(coerce)) {
-    value <- as.character(value)
-  }
-
-  invalid_shape <- !is.character(value) ||
-    length(value) == 0L ||
-    any(is.na(value)) ||
-    (!isTRUE(allow_multiple) && length(value) != 1L)
-
-  if (invalid_shape) {
-    if (isTRUE(allow_multiple)) {
-      cli::cli_abort("{.arg {arg_name}} must contain non-empty character values")
-    }
+  if (!is.character(value) || length(value) != 1) {
     cli::cli_abort(
       "{.arg {arg_name}} must be a single non-empty character string"
     )
   }
-
   cleaned <- clean_text(value)
-  if (any(!nzchar(cleaned))) {
-    if (isTRUE(allow_multiple)) {
-      cli::cli_abort("{.arg {arg_name}} must contain non-empty character values")
-    }
+  if (nchar(cleaned) == 0) {
     cli::cli_abort(
       "{.arg {arg_name}} must be a single non-empty character string"
     )
   }
-
-  cleaned
+  return(cleaned)
 }
 
 #' Validate an optional scalar positive integer ID
@@ -384,11 +343,7 @@ validate_optional_id <- function(value, arg_name) {
   if (length(value) != 1) {
     cli::cli_abort("{.arg {arg_name}} must be a single positive integer")
   }
-  if (!is_whole_number_value(value)) {
-    cli::cli_abort("{.arg {arg_name}} must be a single positive integer")
-  }
-
-  id <- suppressWarnings(as.integer(clean_text(as.character(value))))
+  id <- suppressWarnings(as.integer(value))
   if (is.na(id) || id <= 0L) {
     cli::cli_abort("{.arg {arg_name}} must be a single positive integer")
   }
@@ -408,42 +363,11 @@ validate_ignore_cache <- function(ignore_cache) {
   invisible(ignore_cache)
 }
 
-#' Validate a scalar positive result limit or Inf
-#' @noRd
-validate_max_search_results <- function(max_search_results) {
-  if (
-    !is.numeric(max_search_results) ||
-      length(max_search_results) != 1 ||
-      is.na(max_search_results) ||
-      max_search_results <= 0
-  ) {
-    cli::cli_abort(
-      "{.arg max_search_results} must be a single positive integer or {.val Inf}"
-    )
-  }
-
-  if (is.infinite(max_search_results)) {
-    return(max_search_results)
-  }
-
-  if (
-    max_search_results > .Machine$integer.max ||
-      max_search_results != as.integer(max_search_results)
-  ) {
-    cli::cli_abort(
-      "{.arg max_search_results} must be a single positive integer or {.val Inf}"
-    )
-  }
-
-  as.integer(max_search_results)
-}
-
 #' Coalesce NULL, NA, and empty string values
 #'
 #' Stricter than rlang::`%||%` — also replaces NA and empty strings.
-#' Named differently to avoid shadowing rlang::`%||%`.
 #' @noRd
-`%|na|%` <- function(x, y) {
+coalesce_missing <- function(x, y) {
   if (is.null(x) || is.na(x) || (is.character(x) && nchar(x) == 0)) {
     return(y)
   }

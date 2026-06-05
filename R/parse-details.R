@@ -1,141 +1,292 @@
 #' Parse a thesis detail HTML page into a named list of metadata fields
 #' @noRd
 parse_detail_page <- function(html) {
-  # The page uses a horizontal table structure:
-  # Row 1 (renkbas): Tez No | Indirme | Tez Kunye | Durumu
-  # Row 2 (renkp): [Number] | [PDF Link] | [Metadata Block] | [Stats Block]
+  rows <- detail_horizontal_rows(html)
+  if (has_horizontal_detail_rows(rows)) {
+    return(parse_horizontal_detail_page(
+      html,
+      rows$header_row,
+      rows$value_row
+    ))
+  }
 
-  # Try to find the horizontal table rows
-  header_row <- rvest::html_element(html, "tr.renkbas")
-  value_row <- rvest::html_element(html, "tr.renkp")
+  parse_vertical_detail_page(html)
+}
 
-  if (!is.na(header_row) && !is.na(value_row)) {
-    headers <- header_row |>
-      rvest::html_elements("td") |>
-      rvest::html_text() |>
-      clean_text()
-    values <- value_row |> rvest::html_elements("td")
+#' Return horizontal table rows from a detail page
+#' @noRd
+detail_horizontal_rows <- function(html) {
+  list(
+    header_row = rvest::html_element(html, "tr.renkbas"),
+    value_row = rvest::html_element(html, "tr.renkp")
+  )
+}
 
-    # Map headers to column indices
-    col_map <- seq_along(headers)
-    names(col_map) <- headers
+#' Return whether horizontal detail rows are present
+#' @noRd
+has_horizontal_detail_rows <- function(rows) {
+  !is.na(rows$header_row) && !is.na(rows$value_row)
+}
 
-    # Extract Thesis No
-    thesis_no <- if ("Tez No" %in% names(col_map)) {
-      clean_text(rvest::html_text(values[col_map["Tez No"]]))
-    } else {
-      NA_character_
-    }
+#' Parse a detail page that uses the horizontal table layout
+#' @noRd
+parse_horizontal_detail_page <- function(html, header_row, value_row) {
+  columns <- horizontal_detail_columns(header_row, value_row)
+  blocks <- horizontal_detail_blocks(columns)
+  metadata_fields <- parse_horizontal_metadata_fields(
+    html,
+    blocks$metadata_text,
+    blocks$stats_text
+  )
 
-    # Extract PDF Link from "Indirme" column
-    pdf_cell <- if ("\u0130ndirme" %in% names(col_map)) {
-      values[col_map["\u0130ndirme"]]
-    } else {
-      NULL
-    }
-    pdf_link <- if (!is.null(pdf_cell)) {
-      link_node <- rvest::html_element(pdf_cell, "a")
-      if (!is.na(link_node)) {
-        href <- rvest::html_attr(link_node, "href")
-        if (!is.na(href)) paste0(base_url, href) else NA_character_
-      } else {
-        NA_character_
-      }
-    } else {
-      NA_character_
-    }
-
-    # Extract Metadata from "Tez Kunye" column
-    metadata_cell <- if ("Tez K\u00FCnye" %in% names(col_map)) {
-      values[col_map["Tez K\u00FCnye"]]
-    } else {
-      NULL
-    }
-    metadata_text <- if (!is.null(metadata_cell)) {
-      rvest::html_text(metadata_cell)
-    } else {
-      ""
-    }
-
-    # Extract Stats from "Durumu" column
-    stats_cell <- if ("Durumu" %in% names(col_map)) {
-      values[col_map["Durumu"]]
-    } else {
-      NULL
-    }
-    stats_text <- if (!is.null(stats_cell)) {
-      # Use html_text2 to preserve line breaks or just process the text
-      rvest::html_text(stats_cell) |> stringr::str_replace_all("\\s+", " ")
-    } else {
-      ""
-    }
-
-    # Parse Titles from Metadata Block (usually the first part before Yazar/Author:)
-    # Find the text before the first label
-    title_raw <- stringr::str_split(metadata_text, "Yazar\\s*:|Author\\s*:")[[
-      1
-    ]][1] |>
-      clean_text()
-    titles <- split_titles(title_raw)
-
-    # Extract and split subject into Turkish and English
-    # Konu = Subject
-    subject_raw <- extract_labeled_value(metadata_text, "Konu|Subject")
-    subjects <- split_bilingual_subjects(subject_raw)
-
-    # Extract index and process it into keywords
-    # Dizin = Index
-    index_raw <- extract_labeled_value(metadata_text, "Dizin|Index")
-    index_kw <- extract_keywords_from_index(index_raw)
-
-    # Extract td text blocks once for reuse
-    td_text <- extract_td_text(html)
-
-    # Extract language (returns list with tr and en)
-    language <- extract_stat_language(stats_text)
-
-    abstract_fields <- derive_abstract_fields(
-      td0_text = td_text$tr,
-      td1_text = td_text$en,
-      language_en = language$en
+  c(
+    list(thesis_no = blocks$thesis_no),
+    metadata_fields,
+    list(
+      access_status = extract_access_status(html, blocks$pdf_link),
+      pdf_url = blocks$pdf_link
     )
-    keyword_fields <- derive_keyword_fields(
-      td0_text = td_text$tr,
-      td1_text = td_text$en
+  )
+}
+
+#' Map horizontal table headers to value cells
+#' @noRd
+horizontal_detail_columns <- function(header_row, value_row) {
+  headers <- header_row |>
+    rvest::html_elements("td") |>
+    rvest::html_text() |>
+    clean_text()
+  col_map <- seq_along(headers)
+  names(col_map) <- headers
+
+  list(
+    values = value_row |> rvest::html_elements("td"),
+    col_map = col_map
+  )
+}
+
+#' Return one horizontal detail cell by displayed label
+#' @noRd
+horizontal_detail_cell <- function(columns, label) {
+  if (!label %in% names(columns$col_map)) {
+    return(NULL)
+  }
+
+  columns$values[columns$col_map[label]]
+}
+
+#' Extract the top-level horizontal detail text blocks
+#' @noRd
+horizontal_detail_blocks <- function(columns) {
+  thesis_cell <- horizontal_detail_cell(columns, "Tez No")
+  metadata_cell <- horizontal_detail_cell(columns, "Tez K\u00FCnye")
+  stats_cell <- horizontal_detail_cell(columns, "Durumu")
+
+  list(
+    thesis_no = detail_cell_text(thesis_cell),
+    pdf_link = detail_pdf_link(horizontal_detail_cell(columns, "\u0130ndirme")),
+    metadata_text = detail_cell_text(
+      metadata_cell,
+      default = "",
+      clean = FALSE
+    ),
+    stats_text = detail_cell_text(
+      stats_cell,
+      default = "",
+      collapse_whitespace = TRUE,
+      clean = FALSE
     )
+  )
+}
 
-    # Merge index keywords with existing keywords
-    # Index format is typically "Turkish=English", so:
-    # - Turkish keywords (before =) go to keywords_tr
-    # - English keywords (after =) go to keywords_en
-    keywords_tr <- merge_keywords(keyword_fields$keywords_tr, index_kw$tr)
-    keywords_en <- merge_keywords(keyword_fields$keywords_en, index_kw$en)
+#' Extract text from an optional detail cell
+#' @noRd
+detail_cell_text <- function(
+  cell,
+  default = NA_character_,
+  collapse_whitespace = FALSE,
+  clean = TRUE
+) {
+  if (is.null(cell)) {
+    return(default)
+  }
 
-    # Extract thesis type (returns list with tr and en)
-    thesis_type <- extract_stat_thesis_type(stats_text)
+  text <- rvest::html_text(cell)
+  if (collapse_whitespace) {
+    text <- stringr::str_replace_all(text, "\\s+", " ")
+  }
 
-    location_fields <- parse_location_info(metadata_text)
+  if (clean) {
+    return(clean_text(text))
+  }
 
-    advisor_raw <- extract_labeled_value(
-      metadata_text,
-      "Dan\u0131\u015Fman|Dani\u015Fman|Advisor"
-    )
-    advisors <- split_advisors(advisor_raw)
+  text
+}
 
-    thesis_details <- list(
-      thesis_no = thesis_no,
-      title_original = titles$primary,
-      title_translation = titles$secondary,
-      author = extract_labeled_value(metadata_text, "Yazar|Author"),
+#' Extract an absolute PDF link from an optional detail cell
+#' @noRd
+detail_pdf_link <- function(pdf_cell) {
+  if (is.null(pdf_cell)) {
+    return(NA_character_)
+  }
+
+  link_node <- rvest::html_element(pdf_cell, "a")
+  if (is.na(link_node)) {
+    return(NA_character_)
+  }
+
+  href <- rvest::html_attr(link_node, "href")
+  if (is.na(href)) {
+    return(NA_character_)
+  }
+
+  paste0(base_url, href)
+}
+
+#' Parse metadata from horizontal detail text blocks
+#' @noRd
+parse_horizontal_metadata_fields <- function(html, metadata_text, stats_text) {
+  title_raw <- stringr::str_split(metadata_text, "Yazar\\s*:|Author\\s*:")[[
+    1
+  ]][1] |>
+    clean_text()
+  title_fields <- split_titles(title_raw)
+  subjects <- split_bilingual_subjects(
+    extract_labeled_value(metadata_text, "Konu|Subject")
+  )
+  index_keywords <- extract_keywords_from_index(
+    extract_labeled_value(metadata_text, "Dizin|Index")
+  )
+  language <- extract_stat_language(stats_text)
+  abstract_fields <- derive_abstract_fields_from_html(html, language$en)
+  keyword_fields <- derive_keyword_fields_from_html(html)
+  thesis_type <- extract_stat_thesis_type(stats_text)
+  location <- parse_location_info(metadata_text)
+  advisors <- split_advisors(extract_labeled_value(
+    metadata_text,
+    "Dan\u0131\u015Fman|Dani\u015Fman|Advisor"
+  ))
+
+  list(
+    title_original = title_fields$primary,
+    title_translation = title_fields$secondary,
+    author = extract_labeled_value(metadata_text, "Yazar|Author"),
+    advisor = advisors$advisor,
+    co_advisor = advisors$co_advisor,
+    university = location$university,
+    institute = location$institute,
+    division = location$division,
+    year = extract_stat_year(stats_text),
+    pages = extract_stat_pages(stats_text),
+    thesis_type_tr = thesis_type$tr,
+    thesis_type_en = thesis_type$en,
+    language_tr = language$tr,
+    language_en = language$en,
+    subject_tr = subjects$subject_tr,
+    subject_en = subjects$subject_en,
+    abstract_original = abstract_fields$abstract_original,
+    abstract_translation = abstract_fields$abstract_translation,
+    keywords_tr = merge_keywords(keyword_fields$keywords_tr, index_keywords$tr),
+    keywords_en = merge_keywords(keyword_fields$keywords_en, index_keywords$en)
+  )
+}
+
+#' Derive abstract fields from detail-page abstract blocks
+#' @noRd
+derive_abstract_fields_from_html <- function(html, language_en) {
+  td_text <- extract_td_text(html)
+  derive_abstract_fields(
+    td0_text = td_text$tr,
+    td1_text = td_text$en,
+    language_en = language_en
+  )
+}
+
+#' Derive keyword fields from detail-page abstract blocks
+#' @noRd
+derive_keyword_fields_from_html <- function(html) {
+  td_text <- extract_td_text(html)
+  derive_keyword_fields(
+    td0_text = td_text$tr,
+    td1_text = td_text$en
+  )
+}
+
+#' Parse a detail page that uses the older vertical field layout
+#' @noRd
+parse_vertical_detail_page <- function(html) {
+  subjects <- split_bilingual_subjects(
+    extract_first_detail_field(html, "Konu", "Subject")
+  )
+  index_keywords <- extract_keywords_from_index(
+    extract_first_detail_field(html, "Dizin", "Index")
+  )
+  language <- extract_vertical_detail_language(html)
+  abstract_fields <- derive_abstract_fields_from_html(html, language$en)
+  thesis_type <- extract_vertical_detail_thesis_type(html)
+  advisors <- split_advisors(extract_first_detail_field(
+    html,
+    "Dan\u0131\u015Fman",
+    "Dani\u015Fman",
+    "Advisor"
+  ))
+
+  build_vertical_detail_fields(
+    html,
+    subjects,
+    index_keywords,
+    language,
+    abstract_fields,
+    thesis_type,
+    advisors
+  )
+}
+
+#' Extract language labels from a vertical detail page
+#' @noRd
+extract_vertical_detail_language <- function(html) {
+  language_raw <- extract_first_detail_field(html, "Dil", "Language")
+  extract_stat_language(coalesce_missing(language_raw, ""))
+}
+
+#' Extract thesis type labels from a vertical detail page
+#' @noRd
+extract_vertical_detail_thesis_type <- function(html) {
+  thesis_type_raw <- extract_first_detail_field(
+    html,
+    "T\u00FCr",
+    "Tur",
+    "Type"
+  )
+  extract_stat_thesis_type(coalesce_missing(thesis_type_raw, ""))
+}
+
+#' Build the normalized vertical detail field list
+#' @noRd
+build_vertical_detail_fields <- function(
+  html,
+  subjects,
+  index_keywords,
+  language,
+  abstract_fields,
+  thesis_type,
+  advisors
+) {
+  keywords_tr <- merge_keywords(extract_keywords(html, "tr"), index_keywords$tr)
+  keywords_en <- merge_keywords(extract_keywords(html, "en"), index_keywords$en)
+
+  c(
+    vertical_identity_fields(html),
+    list(
       advisor = advisors$advisor,
-      co_advisor = advisors$co_advisor,
-      university = location_fields$university,
-      institute = location_fields$institute,
-      division = location_fields$division,
-      year = extract_stat_year(stats_text),
-      pages = extract_stat_pages(stats_text),
+      co_advisor = advisors$co_advisor
+    ),
+    vertical_location_fields(html),
+    list(
+      year = extract_first_detail_field(html, "Y\u0131l", "Yil", "Year"),
       thesis_type_tr = thesis_type$tr,
       thesis_type_en = thesis_type$en,
+      pages = extract_vertical_detail_pages(html),
       language_tr = language$tr,
       language_en = language$en,
       subject_tr = subjects$subject_tr,
@@ -144,58 +295,16 @@ parse_detail_page <- function(html) {
       abstract_translation = abstract_fields$abstract_translation,
       keywords_tr = keywords_tr,
       keywords_en = keywords_en,
-      access_status = extract_access_status(html, pdf_link),
-      pdf_url = pdf_link
+      access_status = extract_access_status(html),
+      pdf_url = NA_character_
     )
-
-    return(thesis_details)
-  }
-
-  # Fallback to vertical extraction if horizontal table not found
-  # Extract and split subject (Konu = Subject)
-  subject_raw_fb <- extract_first_detail_field(html, "Konu", "Subject")
-  subjects_fb <- split_bilingual_subjects(subject_raw_fb)
-
-  # Extract and process index field (Dizin = Index)
-  index_raw_fb <- extract_first_detail_field(html, "Dizin", "Index")
-  index_kw_fb <- extract_keywords_from_index(index_raw_fb)
-
-  # Extract existing keywords
-  keywords_tr_raw_fb <- extract_keywords(html, "tr")
-  keywords_en_raw_fb <- extract_keywords(html, "en")
-
-  # Merge keywords
-  keywords_tr_fb <- merge_keywords(keywords_tr_raw_fb, index_kw_fb$tr)
-  keywords_en_fb <- merge_keywords(keywords_en_raw_fb, index_kw_fb$en)
-
-  # Extract language
-  language_raw_fb <- extract_first_detail_field(html, "Dil", "Language")
-  language_fb <- extract_stat_language(language_raw_fb %|na|% "")
-  td_text_fb <- extract_td_text(html)
-  abstract_fields_fb <- derive_abstract_fields(
-    td0_text = td_text_fb$tr,
-    td1_text = td_text_fb$en,
-    language_en = language_fb$en
   )
+}
 
-  # Extract thesis type
-  thesis_type_raw_fb <- extract_first_detail_field(
-    html,
-    "T\u00FCr",
-    "Tur",
-    "Type"
-  )
-  thesis_type_fb <- extract_stat_thesis_type(thesis_type_raw_fb %|na|% "")
-
-  advisor_raw_fb <- extract_first_detail_field(
-    html,
-    "Dan\u0131\u015Fman",
-    "Dani\u015Fman",
-    "Advisor"
-  )
-  advisors_fb <- split_advisors(advisor_raw_fb)
-
-  return(list(
+#' Extract identity fields from a vertical detail page
+#' @noRd
+vertical_identity_fields <- function(html) {
+  list(
     thesis_no = extract_first_detail_field(html, "Tez No", "Thesis No"),
     title_original = extract_first_detail_field(
       html,
@@ -209,9 +318,14 @@ parse_detail_page <- function(html) {
       "\u0130ngilizce Tez Ad\u0131",
       "English Title"
     ),
-    author = extract_first_detail_field(html, "Yazar", "Author"),
-    advisor = advisors_fb$advisor,
-    co_advisor = advisors_fb$co_advisor,
+    author = extract_first_detail_field(html, "Yazar", "Author")
+  )
+}
+
+#' Extract location fields from a vertical detail page
+#' @noRd
+vertical_location_fields <- function(html) {
+  list(
     university = extract_first_detail_field(
       html,
       "\u00DCniversite",
@@ -229,28 +343,20 @@ parse_detail_page <- function(html) {
       "Anabilim Dal\u0131",
       "ABD",
       "Division"
-    ),
-    year = extract_first_detail_field(html, "Y\u0131l", "Yil", "Year"),
-    thesis_type_tr = thesis_type_fb$tr,
-    thesis_type_en = thesis_type_fb$en,
-    pages = extract_first_detail_field(
-      html,
-      "Sayfa Say\u0131s\u0131",
-      "Sayfa",
-      "Pages",
-      "Page Count"
-    ),
-    language_tr = language_fb$tr,
-    language_en = language_fb$en,
-    subject_tr = subjects_fb$subject_tr,
-    subject_en = subjects_fb$subject_en,
-    abstract_original = abstract_fields_fb$abstract_original,
-    abstract_translation = abstract_fields_fb$abstract_translation,
-    keywords_tr = keywords_tr_fb,
-    keywords_en = keywords_en_fb,
-    access_status = extract_access_status(html),
-    pdf_url = NA_character_
-  ))
+    )
+  )
+}
+
+#' Extract page-count field from a vertical detail page
+#' @noRd
+extract_vertical_detail_pages <- function(html) {
+  extract_first_detail_field(
+    html,
+    "Sayfa Say\u0131s\u0131",
+    "Sayfa",
+    "Pages",
+    "Page Count"
+  )
 }
 
 #' Prefer the first non-missing, non-empty value
@@ -276,9 +382,16 @@ looks_turkish_text <- function(text) {
 
   normalized <- stringi::stri_trans_tolower(text, locale = "tr")
 
+  turkish_word_pattern <- paste0(
+    "\\b(",
+    "bu|tez|\u00e7al\u0131\u015fma|amac|ama\u00e7|sonu\u00e7|olarak|ile|",
+    "i\u00e7in|\u00fczerine|anahtar",
+    ")\\b"
+  )
+
   grepl("[\u00e7\u011f\u0131\u00f6\u015f\u00fc]", normalized) ||
     grepl(
-      "\\b(bu|tez|\u00e7al\u0131\u015fma|amac|ama\u00e7|sonu\u00e7|olarak|ile|i\u00e7in|\u00fczerine|anahtar)\\b",
+      turkish_word_pattern,
       normalized,
       perl = TRUE
     )
@@ -293,8 +406,15 @@ looks_english_text <- function(text) {
 
   normalized <- tolower(text)
 
+  english_word_pattern <- paste0(
+    "\\b(",
+    "this|thesis|study|abstract|chapter|analysis|results|using|findings|",
+    "the|and|of|for",
+    ")\\b"
+  )
+
   grepl(
-    "\\b(this|thesis|study|abstract|chapter|analysis|results|using|findings|the|and|of|for)\\b",
+    english_word_pattern,
     normalized,
     perl = TRUE
   )
@@ -361,97 +481,159 @@ derive_abstract_fields <- function(td0_text, td1_text, language_en) {
 
   td0_abstract <- td0_parts$abstract
   td1_abstract <- td1_parts$abstract
-  inferred_language <- language_en
-
-  if (is.na(inferred_language) || nchar(inferred_language) == 0) {
-    if (looks_turkish_text(td0_abstract) && looks_english_text(td1_abstract)) {
-      inferred_language <- "Turkish"
-    } else if (
-      looks_english_text(td0_abstract) && looks_turkish_text(td1_abstract)
-    ) {
-      inferred_language <- "English"
-    }
-  }
-
-  abstract_tr <- coalesce_text(
-    if (looks_turkish_text(td0_abstract)) td0_abstract else NA_character_,
-    if (looks_turkish_text(td1_abstract)) td1_abstract else NA_character_
+  inferred_language <- infer_abstract_language(
+    td0_abstract,
+    td1_abstract,
+    language_en
   )
-
-  abstract_original <- if (identical(inferred_language, "Turkish")) {
-    coalesce_text(td0_abstract, td1_abstract)
-  } else if (identical(inferred_language, "English")) {
-    coalesce_text(
-      if (
-        looks_english_text(td0_abstract) && !looks_turkish_text(td0_abstract)
-      ) {
-        td0_abstract
-      } else {
-        NA_character_
-      },
-      if (
-        looks_english_text(td1_abstract) && !looks_turkish_text(td1_abstract)
-      ) {
-        td1_abstract
-      } else {
-        NA_character_
-      }
-    )
-  } else {
-    coalesce_text(
-      if (matches_original_language(td0_abstract, inferred_language)) {
-        td0_abstract
-      } else {
-        NA_character_
-      },
-      if (matches_original_language(td1_abstract, inferred_language)) {
-        td1_abstract
-      } else {
-        NA_character_
-      }
-    )
-  }
-
-  abstract_translation <- {
-    remaining_td0 <- if (!identical(td0_abstract, abstract_original)) {
-      td0_abstract
-    } else {
-      NA_character_
-    }
-    remaining_td1 <- if (!identical(td1_abstract, abstract_original)) {
-      td1_abstract
-    } else {
-      NA_character_
-    }
-
-    coalesce_text(
-      if (looks_turkish_text(remaining_td0)) remaining_td0 else NA_character_,
-      if (looks_turkish_text(remaining_td1)) remaining_td1 else NA_character_,
-      if (looks_english_text(remaining_td0)) remaining_td0 else NA_character_,
-      if (looks_english_text(remaining_td1)) remaining_td1 else NA_character_,
-      remaining_td0,
-      remaining_td1
-    )
-  }
-
-  if (identical(inferred_language, "Turkish")) {
-    abstract_tr <- coalesce_text(abstract_original, abstract_tr)
-  } else if (identical(inferred_language, "English")) {
-    abstract_tr <- coalesce_text(
-      if (looks_turkish_text(abstract_translation)) {
-        abstract_translation
-      } else {
-        NA_character_
-      },
-      abstract_tr
-    )
-  }
+  abstract_tr <- select_turkish_abstract(td0_abstract, td1_abstract)
+  abstract_original <- select_original_abstract(
+    td0_abstract,
+    td1_abstract,
+    inferred_language
+  )
+  abstract_translation <- select_translation_abstract(
+    td0_abstract,
+    td1_abstract,
+    abstract_original
+  )
+  abstract_tr <- complete_turkish_abstract(
+    abstract_tr,
+    abstract_original,
+    abstract_translation,
+    inferred_language
+  )
 
   list(
     abstract_tr = abstract_tr,
     abstract_original = abstract_original,
     abstract_translation = abstract_translation
   )
+}
+
+#' Infer the original language for paired abstract blocks
+#' @noRd
+infer_abstract_language <- function(td0_abstract, td1_abstract, language_en) {
+  if (!is.na(language_en) && nchar(language_en) > 0) {
+    return(language_en)
+  }
+
+  if (looks_turkish_text(td0_abstract) && looks_english_text(td1_abstract)) {
+    return("Turkish")
+  }
+
+  if (looks_english_text(td0_abstract) && looks_turkish_text(td1_abstract)) {
+    return("English")
+  }
+
+  language_en
+}
+
+#' Select the Turkish abstract from paired abstract blocks
+#' @noRd
+select_turkish_abstract <- function(td0_abstract, td1_abstract) {
+  coalesce_text(
+    if (looks_turkish_text(td0_abstract)) td0_abstract else NA_character_,
+    if (looks_turkish_text(td1_abstract)) td1_abstract else NA_character_
+  )
+}
+
+#' Select the original-language abstract from paired abstract blocks
+#' @noRd
+select_original_abstract <- function(
+  td0_abstract,
+  td1_abstract,
+  inferred_language
+) {
+  if (identical(inferred_language, "Turkish")) {
+    return(coalesce_text(td0_abstract, td1_abstract))
+  }
+
+  if (identical(inferred_language, "English")) {
+    return(coalesce_text(
+      english_original_candidate(td0_abstract),
+      english_original_candidate(td1_abstract)
+    ))
+  }
+
+  coalesce_text(
+    original_language_candidate(td0_abstract, inferred_language),
+    original_language_candidate(td1_abstract, inferred_language)
+  )
+}
+
+#' Return an English original-language candidate
+#' @noRd
+english_original_candidate <- function(text) {
+  if (looks_english_text(text) && !looks_turkish_text(text)) {
+    return(text)
+  }
+
+  NA_character_
+}
+
+#' Return a candidate matching the inferred original language
+#' @noRd
+original_language_candidate <- function(text, inferred_language) {
+  if (matches_original_language(text, inferred_language)) {
+    return(text)
+  }
+
+  NA_character_
+}
+
+#' Select the non-original abstract as the translation
+#' @noRd
+select_translation_abstract <- function(
+  td0_abstract,
+  td1_abstract,
+  abstract_original
+) {
+  remaining_td0 <- if (identical(td0_abstract, abstract_original)) {
+    NA_character_
+  } else {
+    td0_abstract
+  }
+  remaining_td1 <- if (identical(td1_abstract, abstract_original)) {
+    NA_character_
+  } else {
+    td1_abstract
+  }
+
+  coalesce_text(
+    if (looks_turkish_text(remaining_td0)) remaining_td0 else NA_character_,
+    if (looks_turkish_text(remaining_td1)) remaining_td1 else NA_character_,
+    if (looks_english_text(remaining_td0)) remaining_td0 else NA_character_,
+    if (looks_english_text(remaining_td1)) remaining_td1 else NA_character_,
+    remaining_td0,
+    remaining_td1
+  )
+}
+
+#' Complete the Turkish abstract alias after original and translation mapping
+#' @noRd
+complete_turkish_abstract <- function(
+  abstract_tr,
+  abstract_original,
+  abstract_translation,
+  inferred_language
+) {
+  if (identical(inferred_language, "Turkish")) {
+    return(coalesce_text(abstract_original, abstract_tr))
+  }
+
+  if (identical(inferred_language, "English")) {
+    return(coalesce_text(
+      if (looks_turkish_text(abstract_translation)) {
+        abstract_translation
+      } else {
+        NA_character_
+      },
+      abstract_tr
+    ))
+  }
+
+  abstract_tr
 }
 
 #' Map keyword blocks to Turkish and English slots
@@ -562,7 +744,10 @@ split_titles <- function(title_text) {
 #' @noRd
 extract_labeled_value <- function(text, label_pattern) {
   # Stop pattern includes both Turkish and English labels
-  stop_labels <- "Yazar|Author|Dan\u0131\u015Fman|Dani\u015Fman|Advisor|Yer Bilgisi|Location|Konu|Subject|Dizin|Index"
+  stop_labels <- paste0(
+    "Yazar|Author|Dan\u0131\u015Fman|Dani\u015Fman|Advisor|",
+    "Yer Bilgisi|Location|Konu|Subject|Dizin|Index"
+  )
 
   pattern <- paste0(
     "(",
@@ -680,13 +865,13 @@ build_bilingual_lookup_metadata <- function(reference_data) {
   label_en[is.na(label_en)] <- NA_character_
 
   pattern <- label_tr |>
-    stringr::str_replace_all("\u0130", "[\u0130I]") |>
-    stringr::str_replace_all("\u0131", "[\u0131i]") |>
-    stringr::str_replace_all("\u015F", "[\u015Fs]") |>
-    stringr::str_replace_all("\u011F", "[\u011Fg]") |>
-    stringr::str_replace_all("\u00FC", "[\u00FCu]") |>
-    stringr::str_replace_all("\u00F6", "[\u00F6o]") |>
-    stringr::str_replace_all("\u00E7", "[\u00E7c]") |>
+    stringr::str_replace_all(stringr::fixed("\u0130"), "[\u0130I]") |>
+    stringr::str_replace_all(stringr::fixed("\u0131"), "[\u0131i]") |>
+    stringr::str_replace_all(stringr::fixed("\u015F"), "[\u015Fs]") |>
+    stringr::str_replace_all(stringr::fixed("\u011F"), "[\u011Fg]") |>
+    stringr::str_replace_all(stringr::fixed("\u00FC"), "[\u00FCu]") |>
+    stringr::str_replace_all(stringr::fixed("\u00F6"), "[\u00F6o]") |>
+    stringr::str_replace_all(stringr::fixed("\u00E7"), "[\u00E7c]") |>
     paste(collapse = "|")
 
   return(list(
@@ -699,22 +884,30 @@ build_bilingual_lookup_metadata <- function(reference_data) {
 
 #' Retrieve cached bilingual lookup metadata or build it on demand
 #' @noRd
+valid_bilingual_lookup_cache_key <- function(cache_key) {
+  !is.null(cache_key) &&
+    length(cache_key) == 1 &&
+    !is.na(cache_key) &&
+    nchar(cache_key) > 0
+}
+
+#' Return whether cached lookup metadata matches the reference data
+#' @noRd
+cached_bilingual_lookup_matches <- function(cached_metadata, reference_data) {
+  identical(cached_metadata$label_tr, reference_data$label_tr) &&
+    identical(cached_metadata$label_en, reference_data$label_en)
+}
+
+#' Retrieve cached bilingual lookup metadata or build it on demand
+#' @noRd
 get_bilingual_lookup_metadata <- function(reference_data, cache_key = NULL) {
-  if (
-    is.null(cache_key) ||
-      length(cache_key) != 1 ||
-      is.na(cache_key) ||
-      nchar(cache_key) == 0
-  ) {
+  if (!valid_bilingual_lookup_cache_key(cache_key)) {
     return(build_bilingual_lookup_metadata(reference_data))
   }
 
   if (exists(cache_key, envir = bilingual_lookup_cache, inherits = FALSE)) {
     cached_metadata <- bilingual_lookup_cache[[cache_key]]
-    if (
-      identical(cached_metadata$label_tr, reference_data$label_tr) &&
-        identical(cached_metadata$label_en, reference_data$label_en)
-    ) {
+    if (cached_bilingual_lookup_matches(cached_metadata, reference_data)) {
       return(cached_metadata)
     }
   }
@@ -732,58 +925,78 @@ extract_bilingual_lookup <- function(text, reference_data, cache_key = NULL) {
     return(list(tr = NA_character_, en = NA_character_))
   }
 
-  use_result_cache <- !is.null(cache_key) &&
-    length(cache_key) == 1 &&
-    !is.na(cache_key) &&
-    nchar(cache_key) > 0
-
-  if (use_result_cache) {
-    result_cache_key <- build_bilingual_lookup_result_key(cache_key, text)
-    if (
-      exists(
-        result_cache_key,
-        envir = bilingual_lookup_result_cache,
-        inherits = FALSE
-      )
-    ) {
-      return(bilingual_lookup_result_cache[[result_cache_key]])
-    }
+  result_cache <- get_bilingual_lookup_result_cache(cache_key, text)
+  if (!is.null(result_cache$result)) {
+    return(result_cache$result)
   }
 
   lookup_metadata <- get_bilingual_lookup_metadata(
     reference_data,
     cache_key = cache_key
   )
+  lookup_result <- match_bilingual_lookup_result(text, lookup_metadata)
+
+  set_bilingual_lookup_result_cache(result_cache$key, lookup_result)
+  return(lookup_result)
+}
+
+#' Return a cached bilingual lookup result, if present
+#' @noRd
+get_bilingual_lookup_result_cache <- function(cache_key, text) {
+  if (!valid_bilingual_lookup_cache_key(cache_key)) {
+    return(list(key = NULL, result = NULL))
+  }
+
+  result_cache_key <- build_bilingual_lookup_result_key(cache_key, text)
+  if (
+    exists(
+      result_cache_key,
+      envir = bilingual_lookup_result_cache,
+      inherits = FALSE
+    )
+  ) {
+    return(list(
+      key = result_cache_key,
+      result = bilingual_lookup_result_cache[[result_cache_key]]
+    ))
+  }
+
+  list(key = result_cache_key, result = NULL)
+}
+
+#' Store a bilingual lookup result if result caching is enabled
+#' @noRd
+set_bilingual_lookup_result_cache <- function(result_cache_key, lookup_result) {
+  if (!is.null(result_cache_key)) {
+    bilingual_lookup_result_cache[[result_cache_key]] <- lookup_result
+  }
+
+  invisible(NULL)
+}
+
+#' Match text to a bilingual lookup label
+#' @noRd
+match_bilingual_lookup_result <- function(text, lookup_metadata) {
   match <- stringr::str_extract(text, lookup_metadata$pattern)
 
-  if (!is.na(match)) {
-    match_indices <- which(stringr::str_detect(
-      lookup_metadata$label_tr_lower,
-      stringr::fixed(stringr::str_to_lower(match))
-    ))
-
-    if (length(match_indices) > 0) {
-      first_index <- match_indices[[1]]
-      matched_result <- list(
-        tr = lookup_metadata$label_tr[[first_index]],
-        en = lookup_metadata$label_en[[first_index]]
-      )
-
-      if (use_result_cache) {
-        bilingual_lookup_result_cache[[result_cache_key]] <- matched_result
-      }
-
-      return(matched_result)
-    }
+  if (is.na(match)) {
+    return(list(tr = NA_character_, en = NA_character_))
   }
 
-  no_match_result <- list(tr = NA_character_, en = NA_character_)
+  match_indices <- which(stringr::str_detect(
+    lookup_metadata$label_tr_lower,
+    stringr::fixed(stringr::str_to_lower(match))
+  ))
 
-  if (use_result_cache) {
-    bilingual_lookup_result_cache[[result_cache_key]] <- no_match_result
+  if (length(match_indices) == 0) {
+    return(list(tr = NA_character_, en = NA_character_))
   }
 
-  return(no_match_result)
+  first_index <- match_indices[[1]]
+  list(
+    tr = lookup_metadata$label_tr[[first_index]],
+    en = lookup_metadata$label_en[[first_index]]
+  )
 }
 
 #' Match thesis type label against known types and return TR/EN pair
@@ -836,7 +1049,10 @@ extract_detail_field <- function(html, label) {
   }
 
   xpath2 <- sprintf(
-    "//*[contains(@class, 'label') and contains(text(), '%s')]/following-sibling::*[1]",
+    paste0(
+      "//*[contains(@class, 'label') and contains(text(), '%s')]",
+      "/following-sibling::*[1]"
+    ),
     label
   )
   node2 <- rvest::html_element(html, xpath = xpath2)
@@ -927,11 +1143,13 @@ extract_td_text <- function(html) {
 
 #' Extract keywords from index field
 #'
-#' The index field contains entries like "TurkishTerm=EnglishTerm; Term2=Value2".
-#' This function splits on "=" and returns separate Turkish and English keywords.
+#' The index field contains entries like "TurkishTerm=EnglishTerm;
+#' Term2=Value2". This function splits on "=" and returns separate Turkish and
+#' English keywords.
 #'
 #' @param index_raw Character. Raw index string from the metadata
-#' @return List with tr and en components containing semicolon-separated keywords
+#' @return List with tr and en components containing semicolon-separated
+#'   keywords
 #' @noRd
 extract_keywords_from_index <- function(index_raw) {
   if (is.na(index_raw) || nchar(index_raw) == 0) {
@@ -982,7 +1200,7 @@ merge_keywords <- function(existing_keywords, index_keywords) {
 
   # Add index keywords
   if (!is.na(index_keywords) && nchar(index_keywords) > 0) {
-    index_kw <- stringr::str_split(index_keywords, ";")[[1]] |>
+    index_kw <- stringr::str_split(index_keywords, stringr::fixed(";"))[[1]] |>
       purrr::map_chr(clean_text) |>
       purrr::discard(~ nchar(.x) == 0)
     all_keywords <- c(all_keywords, index_kw)
@@ -1008,34 +1226,18 @@ extract_total_count <- function(html) {
   page_text <- rvest::html_text(html)
 
   # Try "X kayit bulundu" pattern first (search results)
-  match <- stringr::str_match(
-    page_text,
-    "([0-9][0-9\\.,]*)\\s+kay[\u0131i]t bulundu"
-  )
+  match <- stringr::str_match(page_text, "([0-9,]+)\\s+kay\u0131t bulundu")
 
   # Try "Tarama sonucunda X kayit" pattern (detail pages)
   if (is.na(match[1])) {
-    match <- stringr::str_match(
-      page_text,
-      "Tarama sonucunda\\s+([0-9][0-9\\.,]*)\\s+kay"
-    )
-  }
-
-  if (is.na(match[1])) {
-    match <- stringr::str_match(
-      page_text,
-      stringr::regex(
-        "([0-9][0-9\\.,]*)\\s+records?\\s+found",
-        ignore_case = TRUE
-      )
-    )
+    match <- stringr::str_match(page_text, "Tarama sonucunda\\s+(\\d+)\\s+kay")
   }
 
   if (is.na(match[1])) {
     return(0L)
   }
 
-  count_str <- stringr::str_remove_all(match[2], "[^0-9]")
+  count_str <- stringr::str_remove_all(match[2], stringr::fixed(","))
   count <- suppressWarnings(as.integer(count_str))
 
   if (is.na(count)) {
@@ -1043,77 +1245,4 @@ extract_total_count <- function(html) {
   }
 
   return(count)
-}
-
-#' Strip HTML and leading label text from JSON detail fields
-#' @noRd
-strip_detail_json_label <- function(text) {
-  if (is.null(text) || length(text) == 0 || is.na(text)) {
-    return(NA_character_)
-  }
-
-  stripped_text <- gsub(
-    "<strong>\\s*[^<:]+:\\s*</strong>",
-    "",
-    text,
-    perl = TRUE
-  )
-  stripped_text <- gsub("<[^>]+>", "", stripped_text, perl = TRUE)
-  stripped_text <- clean_text(stripped_text)
-
-  if (nchar(stripped_text) == 0) {
-    return(NA_character_)
-  }
-
-  stripped_text
-}
-
-#' Collapse character values after dropping missing and duplicate entries
-#' @noRd
-collapse_unique_text <- function(values) {
-  values <- values[!is.na(values)]
-  values <- unique(values[nchar(values) > 0])
-
-  if (length(values) == 0) {
-    return(NA_character_)
-  }
-
-  paste(values, collapse = "; ")
-}
-
-#' Parse bilingual keyword strings from the JSON detail endpoint
-#' @noRd
-parse_detail_json_keywords <- function(keywords_tr, keywords_en = NULL) {
-  parsed_tr <- parse_bilingual_entries(strip_detail_json_label(keywords_tr))
-  parsed_en <- parse_bilingual_entries(strip_detail_json_label(keywords_en))
-
-  list(
-    keywords_tr = collapse_unique_text(c(parsed_tr$tr, parsed_en$en)),
-    keywords_en = collapse_unique_text(c(parsed_tr$en, parsed_en$tr))
-  )
-}
-
-#' Parse payload returned by tezBilgiDetay.jsp
-#' @noRd
-parse_detail_json_payload <- function(payload) {
-  keyword_fields <- parse_detail_json_keywords(
-    payload[["anahtarKelimeTr"]],
-    payload[["anahtarKelimeEn"]]
-  )
-
-  list(
-    advisor = strip_detail_json_label(payload[["danisman"]]),
-    location_full = clean_text(payload[["yer"]] %|na|% NA_character_),
-    abstract_original = clean_text(payload[["trOzet"]] %|na|% NA_character_),
-    abstract_translation = clean_text(payload[["enOzet"]] %|na|% NA_character_),
-    keywords_tr = keyword_fields$keywords_tr,
-    keywords_en = keyword_fields$keywords_en,
-    citation_apa = clean_text(payload[["apa_ref"]] %|na|% NA_character_),
-    citation_ieee = clean_text(payload[["ieee_ref"]] %|na|% NA_character_),
-    citation_mla = clean_text(payload[["mla_ref"]] %|na|% NA_character_),
-    citation_chicago = clean_text(
-      payload[["chicago_ref"]] %|na|% NA_character_
-    ),
-    citation_harvard = clean_text(payload[["harvard_ref"]] %|na|% NA_character_)
-  )
 }

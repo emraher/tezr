@@ -18,7 +18,15 @@ Returns all universities in the National Thesis Center database.
 Turkish: Üniversite
 }
 \examples{
-\dontrun{
+\dontshow{if (interactive()) withAutoprint(\{ # examplesIf}
 unis <- list_universities()
+\dontshow{\}) # examplesIf}
 }
+\seealso{
+Other lookup functions: 
+\code{\link{list_disciplines}()},
+\code{\link{list_divisions}()},
+\code{\link{list_institutes}()},
+\code{\link{list_subjects}()}
 }
+\concept{lookup functions}

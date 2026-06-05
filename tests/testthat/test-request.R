@@ -1,7 +1,7 @@
 # Tests for request helpers (request.R)
 
 # Mock the full perform_search_request pipeline for a successful 200 response.
-# Pass tezr_overrides to override specific tezr bindings (e.g. refresh/increment).
+# Pass tezr_overrides to override specific tezr bindings.
 local_mock_search_pipeline <- function(
   tezr_overrides = list(),
   env = parent.frame()
@@ -34,26 +34,69 @@ local_mock_search_pipeline <- function(
   )
 }
 
-test_that("resolve_lookup_item returns canonical name and id", {
-  info <- NULL
-  lookup <- function(x) tibble::tibble(name = "ANKARA ÜNİVERSİTESİ", id = "3")
+test_that("resolve_lookup_id skips lookup for NULL input", {
+  state <- new.env(parent = emptyenv())
+  state$called <- FALSE
+  lookup <- function(x) {
+    state$called <- TRUE
+    "1"
+  }
+
+  result <- resolve_lookup_id(NULL, lookup, "University")
+
+  expect_false(state$called)
+  expect_null(result)
+})
+
+test_that("resolve_lookup_id returns id and logs info", {
+  state <- new.env(parent = emptyenv())
+  state$called <- FALSE
+  state$info <- NULL
+  state$warn <- NULL
+  lookup <- function(x) {
+    state$called <- TRUE
+    "5"
+  }
 
   testthat::local_mocked_bindings(
-    cli_alert_info = function(msg, ...) info <<- msg,
+    cli_alert_info = function(msg, ...) state$info <- msg,
+    cli_warn = function(msg, ...) state$warn <- msg,
     .package = "cli"
   )
 
-  result <- resolve_lookup_item("Ankara Üniversitesi", lookup, "University")
+  result <- resolve_lookup_id("Foo University", lookup, "University")
 
-  expect_equal(result$id, "3")
-  expect_equal(result$name, "ANKARA ÜNİVERSİTESİ")
-  expect_true(is.character(info))
+  expect_true(state$called)
+  expect_identical(result, "5")
+  expect_type(state$info, "character")
+  expect_null(state$warn)
+})
+
+test_that("resolve_lookup_id warns when id is not found", {
+  state <- new.env(parent = emptyenv())
+  state$warn <- NULL
+  lookup <- function(x) NULL
+
+  testthat::local_mocked_bindings(
+    cli_warn = function(msg, ...) state$warn <- msg,
+    .package = "cli"
+  )
+
+  result <- resolve_lookup_id("Missing University", lookup, "University")
+
+  expect_null(result)
+  expect_type(state$warn, "character")
+})
+
+test_that("normalize_basic_cache_entry ignores malformed payloads", {
+  expect_null(normalize_basic_cache_entry(list(results = tibble::tibble())))
 })
 
 test_that("perform_search_request errors on non-200 search response", {
-  calls <- 0L
+  state <- new.env(parent = emptyenv())
+  state$calls <- 0L
   fake_req_perform <- function(...) {
-    calls <<- calls + 1L
+    state$calls <- state$calls + 1L
     structure(list(status = 500L), class = "httr2_response")
   }
 
@@ -78,47 +121,50 @@ test_that("perform_search_request errors on non-200 search response", {
     perform_search_request(list(dummy = "x")),
     "Search request failed with status 500"
   )
-  expect_equal(calls, 1L)
+  expect_identical(state$calls, 1L)
 })
 
 test_that("perform_search_request calls refresh_session_if_needed", {
-  refresh_called <- FALSE
+  state <- new.env(parent = emptyenv())
+  state$refresh_called <- FALSE
   local_mock_search_pipeline(
     tezr_overrides = list(
-      refresh_session_if_needed = function() refresh_called <<- TRUE
+      refresh_session_if_needed = function() state$refresh_called <- TRUE
     )
   )
 
   perform_search_request(list(dummy = "x"))
-  expect_true(refresh_called)
+  expect_true(state$refresh_called)
 })
 
 test_that("perform_search_request calls increment_request_count", {
-  increment_called <- FALSE
+  state <- new.env(parent = emptyenv())
+  state$increment_called <- FALSE
   local_mock_search_pipeline(
     tezr_overrides = list(
-      increment_request_count = function() increment_called <<- TRUE
+      increment_request_count = function() state$increment_called <- TRUE
     )
   )
 
   perform_search_request(list(dummy = "x"))
-  expect_true(increment_called)
+  expect_true(state$increment_called)
 })
 
-test_that("perform_search_request reuses one session object and counts one logical request", {
-  create_session_calls <- 0L
-  increment_calls <- 0L
+test_that("perform_search_request reuses one session and counts one request", {
+  state <- new.env(parent = emptyenv())
+  state$create_session_calls <- 0L
+  state$increment_calls <- 0L
   request_id <- new.env(parent = emptyenv())
   request_id$value <- "session-request"
 
   testthat::local_mocked_bindings(
     refresh_session_if_needed = function() NULL,
     increment_request_count = function() {
-      increment_calls <<- increment_calls + 1L
+      state$increment_calls <- state$increment_calls + 1L
       invisible(NULL)
     },
     create_session = function(...) {
-      create_session_calls <<- create_session_calls + 1L
+      state$create_session_calls <- state$create_session_calls + 1L
       request_id
     },
     extract_total_count = function(...) 1L,
@@ -142,46 +188,13 @@ test_that("perform_search_request reuses one session object and counts one logic
 
   perform_search_request(list(dummy = "x"))
 
-  expect_equal(create_session_calls, 1L)
-  expect_equal(increment_calls, 1L)
-})
-
-test_that("perform_search_request resets the session when search operation changes", {
-  init_calls <- 0L
-  old_has_last_search_mode <- exists(
-    "last_search_mode",
-    envir = tezr_env,
-    inherits = FALSE
-  )
-  old_last_search_mode <- tezr_env$last_search_mode
-  withr::defer({
-    if (old_has_last_search_mode) {
-      tezr_env$last_search_mode <- old_last_search_mode
-    } else if (exists("last_search_mode", envir = tezr_env, inherits = FALSE)) {
-      rm(list = "last_search_mode", envir = tezr_env)
-    }
-  })
-
-  tezr_env$last_search_mode <- "4"
-
-  local_mock_search_pipeline(
-    tezr_overrides = list(
-      init_session = function(...) {
-        init_calls <<- init_calls + 1L
-        rm(list = "last_search_mode", envir = tezr_env)
-        invisible(TRUE)
-      }
-    )
-  )
-
-  perform_search_request(list(islem = 2L))
-
-  expect_equal(init_calls, 1L)
-  expect_equal(tezr_env$last_search_mode, "2")
+  expect_identical(state$create_session_calls, 1L)
+  expect_identical(state$increment_calls, 1L)
 })
 
 test_that("perform_search_request errors on non-200 results page", {
-  call_count <- 0L
+  state <- new.env(parent = emptyenv())
+  state$call_count <- 0L
 
   testthat::local_mocked_bindings(
     refresh_session_if_needed = function() NULL,
@@ -193,8 +206,8 @@ test_that("perform_search_request errors on non-200 results page", {
     req_url_path_append = function(req, ...) req,
     req_body_form = function(req, ...) req,
     req_perform = function(...) {
-      call_count <<- call_count + 1L
-      if (call_count == 1) {
+      state$call_count <- state$call_count + 1L
+      if (state$call_count == 1) {
         # First call (search POST) succeeds
         structure(list(status = 200L), class = "httr2_response")
       } else {
@@ -230,19 +243,20 @@ test_that("run_basic_search returns cached results without network", {
     cache_label = "test"
   )
 
-  expect_equal(result$results, cached)
-  expect_equal(result$total_count, 2L)
+  expect_identical(result$results, cached)
+  expect_identical(result$total_count, 2L)
 })
 
 test_that("run_basic_search caches results after fetch", {
-  cached_key <- NULL
-  cached_value <- NULL
+  state <- new.env(parent = emptyenv())
+  state$cached_key <- NULL
+  state$cached_value <- NULL
 
   testthat::local_mocked_bindings(
     get_cached = function(...) NULL,
     set_cached = function(cache_env, key, value) {
-      cached_key <<- key
-      cached_value <<- value
+      state$cached_key <- key
+      state$cached_value <- value
     },
     init_session = function(...) NULL,
     perform_search_request = function(...) {
@@ -266,11 +280,11 @@ test_that("run_basic_search caches results after fetch", {
     cache_label = "test"
   )
 
-  expect_equal(cached_key, "my_key")
-  expect_type(cached_value, "list")
-  expect_equal(cached_value$total_count, 1L)
-  expect_equal(nrow(cached_value$results), 1)
-  expect_equal(result$results$thesis_no, "42")
+  expect_identical(state$cached_key, "my_key")
+  expect_type(state$cached_value, "list")
+  expect_identical(state$cached_value$total_count, 1L)
+  expect_identical(nrow(state$cached_value$results), 1L)
+  expect_identical(result$results$thesis_no, "42")
 })
 
 test_that("run_basic_search returns empty tibble for zero results", {
@@ -294,7 +308,7 @@ test_that("run_basic_search returns empty tibble for zero results", {
     cache_label = "test"
   )
 
-  expect_equal(result$total_count, 0L)
+  expect_identical(result$total_count, 0L)
   expect_s3_class(result$results, "tbl_df")
-  expect_equal(nrow(result$results), 0)
+  expect_identical(nrow(result$results), 0L)
 })

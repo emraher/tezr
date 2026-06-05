@@ -18,7 +18,15 @@ Returns all institutes in the National Thesis Center database.
 Turkish: Enstitü
 }
 \examples{
-\dontrun{
+\dontshow{if (interactive()) withAutoprint(\{ # examplesIf}
 insts <- list_institutes()
+\dontshow{\}) # examplesIf}
 }
+\seealso{
+Other lookup functions: 
+\code{\link{list_disciplines}()},
+\code{\link{list_divisions}()},
+\code{\link{list_subjects}()},
+\code{\link{list_universities}()}
 }
+\concept{lookup functions}

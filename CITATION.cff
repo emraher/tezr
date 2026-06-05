@@ -1,13 +1,17 @@
 cff-version: 1.2.0
-message: "If you use this software, please cite it as below."
+message: >
+  If you use this software, cite it as below. Also cite the National Thesis
+  Center or Council of Higher Education as the source of thesis metadata.
 type: software
-title: 'tezr: Access the Turkiye's National Thesis Center Database'
-version: 0.2.0
+title: "tezr: Access Thesis Metadata from Turkiye's National Thesis Center"
+version: "0.1.0.9000"
 authors:
   - family-names: Er
     given-names: Emrah
     email: eer@eremrah.com
 repository-code: 'https://github.com/emraher/tezr'
 url: 'https://github.com/emraher/tezr'
-abstract: R package to query Turkiye's National Thesis Center (Ulusal Tez Merkezi) and extract thesis metadata.
+abstract: >
+  Retrieve, parse, cache, and analyze thesis metadata from the Council of
+  Higher Education's National Thesis Center (Ulusal Tez Merkezi).
 license: MIT

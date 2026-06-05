@@ -1,24 +1,20 @@
 #' Parse search results from HTML
 #'
 #' Parses the watable-based results from tezSorguSonucYeni.jsp.
-#' The data is embedded in JavaScript objects within the page, not in HTML tables.
+#' The data is embedded in JavaScript objects within the page, not in HTML
+#' tables.
 #'
 #' @param html An xml_document or xml_node object containing search results
 #' @return A tibble with parsed thesis records
 #' @noRd
 parse_results_table <- function(html) {
-  html_text <- as.character(html)
-
-  if (grepl("result-card", html_text, fixed = TRUE)) {
-    reference_data <- extract_reference_data(html_text)
-    card_records <- parse_result_cards(html, reference_data)
-
-    if (length(card_records) > 0) {
-      return(build_results_tibble(card_records))
-    }
+  modern_results <- parse_modern_result_cards(html)
+  if (nrow(modern_results) > 0) {
+    return(modern_results)
   }
 
-  # Get the raw HTML text - legacy data is in JavaScript, not HTML tables.
+  html_text <- as.character(html)
+
   doc_matches <- extract_js_doc_blocks(html_text)
 
   if (length(doc_matches) == 0) {
@@ -90,343 +86,82 @@ empty_results_tibble <- function() {
     language_en = character(),
     subject_tr = character(),
     subject_en = character(),
-    detail_id = character(),
-    encrypted_no = character(),
-    detail_url = character()
+    detail_id = character()
   ))
+}
+
+#' Compose an opaque detail ID from one or two portal identifiers
+#' @noRd
+compose_detail_id <- function(id, no = NA_character_) {
+  id <- coalesce_missing(id, NA_character_)
+  no <- coalesce_missing(no, NA_character_)
+
+  if (is.na(id)) {
+    return(NA_character_)
+  }
+  if (is.na(no)) {
+    return(id)
+  }
+
+  paste(id, no, sep = "|")
+}
+
+#' Split an opaque detail ID into portal request identifiers
+#' @noRd
+split_detail_id <- function(detail_id) {
+  detail_id <- coalesce_missing(detail_id, NA_character_)
+  if (is.na(detail_id)) {
+    return(list(id = NA_character_, no = NA_character_))
+  }
+
+  parts <- strsplit(detail_id, "|", fixed = TRUE)[[1]]
+  if (length(parts) < 2L) {
+    return(list(id = detail_id, no = NA_character_))
+  }
+
+  list(
+    id = parts[[1]],
+    no = paste(parts[-1], collapse = "|")
+  )
 }
 
 #' Build a results tibble from parsed JavaScript record lists
 #' @noRd
 build_results_tibble <- function(parsed_records) {
-  record_count <- length(parsed_records)
-
-  thesis_no <- character(record_count)
-  title_original <- character(record_count)
-  title_translation <- character(record_count)
-  author <- character(record_count)
-  university <- character(record_count)
-  year <- integer(record_count)
-  thesis_type_tr <- character(record_count)
-  thesis_type_en <- character(record_count)
-  language_tr <- character(record_count)
-  language_en <- character(record_count)
-  subject_tr <- character(record_count)
-  subject_en <- character(record_count)
-  detail_id <- character(record_count)
-  encrypted_no <- character(record_count)
-  detail_url <- character(record_count)
-
-  for (record_index in seq_len(record_count)) {
-    parsed_record <- parsed_records[[record_index]]
-
-    thesis_no[[record_index]] <- parsed_record$thesis_no %|na|% NA_character_
-    title_original[[record_index]] <- parsed_record$title_original %|na|%
-      NA_character_
-    title_translation[[record_index]] <- parsed_record$title_translation %|na|%
-      NA_character_
-    author[[record_index]] <- parsed_record$author %|na|% NA_character_
-    university[[record_index]] <- parsed_record$university %|na|% NA_character_
-    year[[record_index]] <- parsed_record$year %|na|% NA_integer_
-    thesis_type_tr[[record_index]] <- parsed_record$thesis_type_tr %|na|%
-      NA_character_
-    thesis_type_en[[record_index]] <- parsed_record$thesis_type_en %|na|%
-      NA_character_
-    language_tr[[record_index]] <- parsed_record$language_tr %|na|%
-      NA_character_
-    language_en[[record_index]] <- parsed_record$language_en %|na|%
-      NA_character_
-    subject_tr[[record_index]] <- parsed_record$subject_tr %|na|% NA_character_
-    subject_en[[record_index]] <- parsed_record$subject_en %|na|% NA_character_
-    detail_id[[record_index]] <- parsed_record$detail_id %|na|% NA_character_
-    encrypted_no[[record_index]] <- parsed_record$encrypted_no %|na|%
-      NA_character_
-    detail_url[[record_index]] <- parsed_record$detail_url %|na|%
-      NA_character_
-  }
-
   return(tibble::tibble(
-    thesis_no = thesis_no,
-    title_original = title_original,
-    title_translation = title_translation,
-    author = author,
-    university = university,
-    year = year,
-    thesis_type_tr = thesis_type_tr,
-    thesis_type_en = thesis_type_en,
-    language_tr = language_tr,
-    language_en = language_en,
-    subject_tr = subject_tr,
-    subject_en = subject_en,
-    detail_id = detail_id,
-    encrypted_no = encrypted_no,
-    detail_url = detail_url
+    thesis_no = result_record_column(parsed_records, "thesis_no"),
+    title_original = result_record_column(parsed_records, "title_original"),
+    title_translation = result_record_column(
+      parsed_records,
+      "title_translation"
+    ),
+    author = result_record_column(parsed_records, "author"),
+    university = result_record_column(parsed_records, "university"),
+    year = result_record_column(parsed_records, "year", NA_integer_),
+    thesis_type_tr = result_record_column(parsed_records, "thesis_type_tr"),
+    thesis_type_en = result_record_column(parsed_records, "thesis_type_en"),
+    language_tr = result_record_column(parsed_records, "language_tr"),
+    language_en = result_record_column(parsed_records, "language_en"),
+    subject_tr = result_record_column(parsed_records, "subject_tr"),
+    subject_en = result_record_column(parsed_records, "subject_en"),
+    detail_id = result_record_column(parsed_records, "detail_id")
   ))
 }
 
-#' Extract the redesigned `referenceData` JavaScript object from results HTML
+#' Extract one typed column from parsed search-result records
 #' @noRd
-extract_reference_data <- function(html_text) {
-  marker <- "const referenceData ="
-  marker_start <- regexpr(marker, html_text, fixed = TRUE)[[1]]
-
-  if (marker_start < 0) {
-    return(list())
-  }
-
-  reference_tail <- substr(html_text, marker_start, nchar(html_text))
-  script_end <- regexpr("</script>", reference_tail, fixed = TRUE)[[1]]
-
-  if (script_end > 0) {
-    reference_tail <- substr(reference_tail, 1L, script_end - 1L)
-  }
-
-  brace_start <- regexpr(
-    "\\{",
-    reference_tail,
-    perl = TRUE
-  )[[1]]
-
-  if (brace_start < 0) {
-    return(list())
-  }
-
-  brace_end <- find_matching_js_brace(reference_tail, brace_start)
-
-  if (is.na(brace_end)) {
-    return(list())
-  }
-
-  raw_json <- substr(reference_tail, brace_start, brace_end)
-  clean_json <- gsub(",(\\s*[}\\]])", "\\1", raw_json, perl = TRUE)
-
-  tryCatch(
-    jsonlite::fromJSON(clean_json, simplifyVector = FALSE),
-    error = function(error) {
-      list()
-    }
+result_record_column <- function(
+  parsed_records,
+  field_name,
+  default = NA_character_
+) {
+  vapply(
+    parsed_records,
+    function(parsed_record) {
+      coalesce_missing(parsed_record[[field_name]], default)
+    },
+    default
   )
-}
-
-#' Find the closing brace for a JavaScript object literal
-#' @noRd
-find_matching_js_brace <- function(text, open_position) {
-  code_points <- utf8ToInt(text)
-
-  if (
-    length(code_points) == 0 ||
-      is.na(open_position) ||
-      open_position < 1L ||
-      open_position > length(code_points) ||
-      !identical(code_points[[open_position]], 123L)
-  ) {
-    return(NA_integer_)
-  }
-
-  depth <- 0L
-  in_string <- FALSE
-  string_quote <- NA_integer_
-  text_length <- length(code_points)
-  position <- open_position
-
-  while (position <= text_length) {
-    character_at_position <- code_points[[position]]
-
-    if (in_string) {
-      if (character_at_position == 92L) {
-        position <- position + 2L
-        next
-      }
-      if (character_at_position == string_quote) {
-        in_string <- FALSE
-        string_quote <- NA_integer_
-      }
-    } else {
-      if (character_at_position == 34L || character_at_position == 39L) {
-        in_string <- TRUE
-        string_quote <- character_at_position
-      } else if (character_at_position == 123L) {
-        depth <- depth + 1L
-      } else if (character_at_position == 125L) {
-        depth <- depth - 1L
-        if (depth == 0L) {
-          return(position)
-        }
-      }
-    }
-
-    position <- position + 1L
-  }
-
-  NA_integer_
-}
-
-#' Parse redesigned result cards from the 2026 YOK search output
-#' @noRd
-parse_result_cards <- function(html, reference_data) {
-  cards <- xml2::xml_find_all(
-    html,
-    ".//div[contains(concat(' ', normalize-space(@class), ' '), ' result-card ')]",
-    ns = character()
-  )
-
-  if (length(cards) == 0) {
-    return(list())
-  }
-
-  parsed_records <- vector("list", length(cards))
-  parsed_count <- 0L
-
-  for (card in cards) {
-    parsed_card <- parse_result_card(card, reference_data)
-    if (!is.null(parsed_card)) {
-      parsed_count <- parsed_count + 1L
-      parsed_records[[parsed_count]] <- parsed_card
-    }
-  }
-
-  if (parsed_count == 0L) {
-    return(list())
-  }
-
-  parsed_records[seq_len(parsed_count)]
-}
-
-#' Parse one redesigned result card
-#' @noRd
-parse_result_card <- function(card, reference_data) {
-  detail_id <- xml2::xml_attr(card, "data-kayitno")
-  encrypted_no <- xml2::xml_attr(card, "data-tezno")
-  card_index <- xml2::xml_attr(card, "data-index")
-
-  if (is.na(detail_id) || is.na(encrypted_no)) {
-    return(NULL)
-  }
-
-  title_node <- xml2::xml_find_first(
-    card,
-    ".//div[contains(concat(' ', normalize-space(@class), ' '), ' card-title ')]",
-    ns = character()
-  )
-  title_original <- if (!is_missing_xml_node(title_node)) {
-    clean_text(xml2::xml_text(title_node))
-  } else {
-    NA_character_
-  }
-
-  card_info <- extract_card_info(card)
-  meta <- extract_card_meta(reference_data, card_index)
-
-  subject_raw <- meta[["subject"]] %|na|% NA_character_
-  subjects <- split_bilingual_subjects(subject_raw)
-  language <- extract_stat_language(meta[["lang"]] %|na|% "")
-  thesis_type <- extract_stat_thesis_type(meta[["type"]] %|na|% "")
-  university <- clean_text(meta[["yer"]] %|na|% NA_character_)
-  university <- sub("\\s*/\\s*$", "", university, perl = TRUE)
-
-  list(
-    thesis_no = card_info$thesis_no %|na|% NA_character_,
-    title_original = title_original %|na|% NA_character_,
-    title_translation = card_info$title_translation %|na|% NA_character_,
-    author = clean_text(meta[["author"]] %|na|% NA_character_),
-    university = university %|na|% NA_character_,
-    year = suppressWarnings(as.integer(meta[["year"]] %|na|% NA_character_)),
-    thesis_type_tr = thesis_type$tr %|na|% NA_character_,
-    thesis_type_en = thesis_type$en %|na|% NA_character_,
-    language_tr = language$tr,
-    language_en = language$en,
-    subject_tr = subjects$subject_tr,
-    subject_en = subjects$subject_en,
-    detail_id = detail_id,
-    encrypted_no = encrypted_no,
-    detail_url = build_detail_url(detail_id, encrypted_no)
-  )
-}
-
-#' Does an xml2 lookup result represent a missing node?
-#' @noRd
-is_missing_xml_node <- function(node) {
-  inherits(node, "xml_missing") || length(node) == 0L || isTRUE(is.na(node))
-}
-
-#' Return metadata for a result card index
-#' @noRd
-extract_card_meta <- function(reference_data, card_index) {
-  if (is.na(card_index) || is.null(reference_data[[card_index]])) {
-    return(list())
-  }
-
-  meta <- reference_data[[card_index]][["meta"]]
-  if (is.null(meta)) {
-    return(list())
-  }
-
-  meta
-}
-
-#' Extract translated title and visible thesis number from card-info rows
-#' @noRd
-extract_card_info <- function(card) {
-  info_nodes <- xml2::xml_find_all(
-    card,
-    ".//div[contains(concat(' ', normalize-space(@class), ' '), ' card-info ')]",
-    ns = character()
-  )
-
-  title_translation <- NA_character_
-  thesis_no <- NA_character_
-
-  for (info_node in info_nodes) {
-    style <- xml2::xml_attr(info_node, "style")
-    info_text <- clean_text(xml2::xml_text(info_node))
-
-    if (
-      is.na(title_translation) &&
-      !is.na(style) && grepl("font-style\\s*:\\s*italic", style, perl = TRUE)
-    ) {
-      title_translation <- info_text
-    }
-
-    if (is.na(thesis_no)) {
-      thesis_match <- regexec(
-        "(?:Tez|Thesis)\\s+No[:\\s]*([0-9]+)",
-        info_text,
-        ignore.case = TRUE,
-        perl = TRUE
-      )
-      thesis_parts <- regmatches(info_text, thesis_match)[[1]]
-      if (length(thesis_parts) >= 2L) {
-        thesis_no <- thesis_parts[[2]]
-      }
-    }
-
-    if (!is.na(title_translation) && !is.na(thesis_no)) {
-      break
-    }
-  }
-
-  list(
-    title_translation = title_translation,
-    thesis_no = thesis_no
-  )
-}
-
-#' Build a YOK detail URL from the redesigned search identifiers
-#' @noRd
-build_detail_url <- function(detail_id, encrypted_no = NULL) {
-  if (is.na(detail_id) || nchar(detail_id) == 0) {
-    return(NA_character_)
-  }
-
-  detail_url <- paste0(base_url, endpoints$detail, "?id=", detail_id)
-
-  if (
-    !is.null(encrypted_no) && !is.na(encrypted_no) && nchar(encrypted_no) > 0
-  ) {
-    detail_url <- paste0(detail_url, "&no=", encrypted_no)
-  }
-
-  detail_url
 }
 
 #' Parse JavaScript object fields into a named character vector
@@ -500,6 +235,183 @@ strip_html_tags_if_present <- function(values) {
   return(values)
 }
 
+#' Parse quoted JavaScript object string fields
+#' @noRd
+parse_js_quoted_fields <- function(text) {
+  field_matches <- stringr::str_match_all(
+    text,
+    "\"([^\"]+)\"\\s*:\\s*\"((?:[^\"\\\\]|\\\\.)*)\""
+  )[[1]]
+
+  if (nrow(field_matches) == 0) {
+    return(stats::setNames(character(), character()))
+  }
+
+  field_names <- field_matches[, 2]
+  field_values <- normalize_js_field_values(field_matches[, 3])
+
+  stats::setNames(field_values, field_names)
+}
+
+#' Extract modern result-card metadata from referenceData JavaScript
+#' @noRd
+extract_modern_reference_data <- function(html_text) {
+  reference_match <- stringr::str_match(
+    html_text,
+    stringr::regex(
+      "const\\s+referenceData\\s*=\\s*\\{([\\s\\S]*?)\\};",
+      dotall = TRUE
+    )
+  )
+
+  if (is.na(reference_match[1, 2])) {
+    return(list())
+  }
+
+  entry_matches <- stringr::str_match_all(
+    reference_match[1, 2],
+    stringr::regex(
+      "\"([0-9]+)\"\\s*:\\s*\\{\\s*\"meta\"\\s*:\\s*\\{([\\s\\S]*?)\\}\\s*\\}",
+      dotall = TRUE
+    )
+  )[[1]]
+
+  if (nrow(entry_matches) == 0) {
+    return(list())
+  }
+
+  refs <- vector("list", nrow(entry_matches))
+  names(refs) <- entry_matches[, 2]
+
+  for (idx in seq_len(nrow(entry_matches))) {
+    refs[[idx]] <- parse_js_quoted_fields(entry_matches[idx, 3])
+  }
+
+  refs
+}
+
+#' Parse redesigned result-card search results
+#' @noRd
+parse_modern_result_cards <- function(html) {
+  cards <- rvest::html_elements(html, ".result-card")
+  if (length(cards) == 0) {
+    return(empty_results_tibble())
+  }
+
+  reference_data <- extract_modern_reference_data(as.character(html))
+  parsed_records <- vector("list", length(cards))
+  parsed_count <- 0L
+
+  for (card in cards) {
+    parsed_record <- parse_modern_result_card(card, reference_data)
+    if (!is.null(parsed_record)) {
+      parsed_count <- parsed_count + 1L
+      parsed_records[[parsed_count]] <- parsed_record
+    }
+  }
+
+  if (parsed_count == 0L) {
+    return(empty_results_tibble())
+  }
+
+  build_results_tibble(parsed_records[seq_len(parsed_count)])
+}
+
+#' Parse one redesigned search result card
+#' @noRd
+parse_modern_result_card <- function(card, reference_data) {
+  index <- rvest::html_attr(card, "data-index")
+  kayit_no <- rvest::html_attr(card, "data-kayitno")
+  tez_no <- rvest::html_attr(card, "data-tezno")
+  meta <- reference_data[[index]]
+  if (is.null(meta)) {
+    meta <- stats::setNames(character(), character())
+  }
+
+  thesis_no <- extract_modern_thesis_no(card)
+  if (is.na(thesis_no)) {
+    return(NULL)
+  }
+
+  title <- parse_modern_card_title(card, meta)
+  subject <- split_bilingual_subjects(normalize_modern_subject(
+    get_doc_field(meta, "subject")
+  ))
+  language <- extract_stat_language(get_doc_field(meta, "lang"))
+  thesis_type <- extract_stat_thesis_type(get_doc_field(meta, "type"))
+
+  list(
+    thesis_no = thesis_no,
+    title_original = title$primary,
+    title_translation = title$secondary,
+    author = coalesce_missing(get_doc_field(meta, "author"), NA_character_),
+    university = parse_modern_university(get_doc_field(meta, "yer")),
+    year = coalesce_missing(
+      suppressWarnings(as.integer(get_doc_field(meta, "year"))),
+      NA_integer_
+    ),
+    thesis_type_tr = coalesce_missing(thesis_type$tr, NA_character_),
+    thesis_type_en = coalesce_missing(thesis_type$en, NA_character_),
+    language_tr = language$tr,
+    language_en = language$en,
+    subject_tr = subject$subject_tr,
+    subject_en = subject$subject_en,
+    detail_id = compose_detail_id(kayit_no, tez_no)
+  )
+}
+
+#' Extract a numeric thesis number from a redesigned result card
+#' @noRd
+extract_modern_thesis_no <- function(card) {
+  card_text <- rvest::html_text2(card)
+  match <- stringr::str_match(card_text, "(?:Tez No|Thesis No):\\s*([0-9]+)")
+  coalesce_missing(match[1, 2], NA_character_)
+}
+
+#' Extract title fields from a redesigned result card
+#' @noRd
+parse_modern_card_title <- function(card, meta) {
+  card_title <- rvest::html_element(card, ".card-title") |>
+    rvest::html_text2()
+  title_original <- coalesce_missing(
+    get_doc_field(meta, "title"),
+    card_title
+  )
+  title_translation <- rvest::html_element(
+    card,
+    ".card-info[style*='italic']"
+  ) |>
+    rvest::html_text2()
+
+  list(
+    primary = coalesce_missing(clean_text(title_original), NA_character_),
+    secondary = coalesce_missing(clean_text(title_translation), NA_character_)
+  )
+}
+
+#' Extract the university name from modern location metadata
+#' @noRd
+parse_modern_university <- function(location) {
+  location <- coalesce_missing(location, NA_character_)
+  if (is.na(location)) {
+    return(NA_character_)
+  }
+
+  parts <- strsplit(location, "/", fixed = TRUE)[[1]]
+  coalesce_missing(clean_text(parts[[1]]), NA_character_)
+}
+
+#' Normalize compact semicolon-delimited modern subject metadata
+#' @noRd
+normalize_modern_subject <- function(subject) {
+  subject <- coalesce_missing(subject, NA_character_)
+  if (is.na(subject)) {
+    return(NA_character_)
+  }
+
+  gsub(";", "; ", subject, fixed = TRUE)
+}
+
 #' Return one cleaned field value from parsed JavaScript fields
 #' @noRd
 get_doc_field <- function(parsed_fields, field_name) {
@@ -545,8 +457,8 @@ parse_title_fields_fast <- function(title_raw) {
   }
 
   return(list(
-    primary = title_primary %|na|% NA_character_,
-    secondary = title_secondary %|na|% NA_character_
+    primary = coalesce_missing(title_primary, NA_character_),
+    secondary = coalesce_missing(title_secondary, NA_character_)
   ))
 }
 
@@ -560,58 +472,104 @@ parse_js_doc <- function(doc_str) {
     return(NULL)
   }
 
-  thesis_no <- stringr::str_match(
-    userid_html,
-    ">([0-9]+)(?:</span>)?$"
-  )[2]
-
-  detail_match <- stringr::str_match(
-    userid_html,
-    "tezDetay\\('([^']+)'\\s*,\\s*'([^']+)'\\)"
-  )
-  detail_id <- if (!is.na(detail_match[1])) detail_match[2] else NA_character_
-  encrypted_no <- if (!is.na(detail_match[1])) {
-    detail_match[3]
-  } else {
-    NA_character_
-  }
-
-  author <- get_doc_field(parsed_fields, "name")
-  year <- suppressWarnings(as.integer(get_doc_field(parsed_fields, "age")))
-
-  title_raw <- get_doc_field(parsed_fields, "weight")
-  parsed_title <- parse_title_fields_fast(title_raw %|na|% "")
-
-  # Extract and split subject into Turkish and English
-  subject_raw <- get_doc_field(parsed_fields, "someDate") %|na|% NA_character_
-  subjects <- split_bilingual_subjects(subject_raw)
-
-  # University and language fields - YÖK may not return these in basic search
-  # but we include them for consistency with advanced search
-  university <- get_doc_field(parsed_fields, "uni") %|na|% NA_character_
-  language_raw <- get_doc_field(parsed_fields, "height") %|na|% ""
-  language <- extract_stat_language(language_raw)
-
+  identity <- parse_js_doc_identity(userid_html)
+  title <- parse_js_doc_title(parsed_fields)
+  subject <- parse_js_doc_subject(parsed_fields)
+  language <- parse_js_doc_language(parsed_fields)
   thesis_type <- extract_stat_thesis_type(get_doc_field(
     parsed_fields,
     "important"
   ))
 
-  return(list(
-    thesis_no = thesis_no %|na|% NA_character_,
-    title_original = parsed_title$primary %|na|% NA_character_,
-    title_translation = parsed_title$secondary %|na|% NA_character_,
-    author = author %|na|% NA_character_,
-    university = university,
-    year = year %|na|% NA_integer_,
-    thesis_type_tr = thesis_type$tr %|na|% NA_character_,
-    thesis_type_en = thesis_type$en %|na|% NA_character_,
+  build_js_doc_record(
+    identity,
+    title,
+    subject,
+    language,
+    thesis_type,
+    parsed_fields
+  )
+}
+
+#' Parse thesis and detail identifiers from a JavaScript userId field
+#' @noRd
+parse_js_doc_identity <- function(userid_html) {
+  detail_match <- stringr::str_match(
+    userid_html,
+    "tezDetay\\('([^']+)'\\s*,\\s*'([^']+)'\\)"
+  )
+
+  detail_id <- if (!is.na(detail_match[1])) {
+    compose_detail_id(detail_match[2], detail_match[3])
+  } else {
+    NA_character_
+  }
+
+  list(
+    thesis_no = stringr::str_match(userid_html, ">([0-9]+)(?:</span>)?$")[2],
+    detail_id = detail_id
+  )
+}
+
+#' Parse original and translated title fields from JavaScript fields
+#' @noRd
+parse_js_doc_title <- function(parsed_fields) {
+  title_raw <- get_doc_field(parsed_fields, "weight")
+  parse_title_fields_fast(coalesce_missing(title_raw, ""))
+}
+
+#' Parse subject labels from JavaScript fields
+#' @noRd
+parse_js_doc_subject <- function(parsed_fields) {
+  subject_raw <- coalesce_missing(
+    get_doc_field(parsed_fields, "someDate"),
+    NA_character_
+  )
+  split_bilingual_subjects(subject_raw)
+}
+
+#' Parse language labels from JavaScript fields
+#' @noRd
+parse_js_doc_language <- function(parsed_fields) {
+  language_raw <- coalesce_missing(get_doc_field(parsed_fields, "height"), "")
+  extract_stat_language(language_raw)
+}
+
+#' Build a normalized search-result record
+#' @noRd
+build_js_doc_record <- function(
+  identity,
+  title,
+  subject,
+  language,
+  thesis_type,
+  parsed_fields
+) {
+  list(
+    thesis_no = coalesce_missing(identity$thesis_no, NA_character_),
+    title_original = coalesce_missing(title$primary, NA_character_),
+    title_translation = coalesce_missing(
+      title$secondary,
+      NA_character_
+    ),
+    author = coalesce_missing(
+      get_doc_field(parsed_fields, "name"),
+      NA_character_
+    ),
+    university = coalesce_missing(
+      get_doc_field(parsed_fields, "uni"),
+      NA_character_
+    ),
+    year = coalesce_missing(
+      suppressWarnings(as.integer(get_doc_field(parsed_fields, "age"))),
+      NA_integer_
+    ),
+    thesis_type_tr = coalesce_missing(thesis_type$tr, NA_character_),
+    thesis_type_en = coalesce_missing(thesis_type$en, NA_character_),
     language_tr = language$tr,
     language_en = language$en,
-    subject_tr = subjects$subject_tr,
-    subject_en = subjects$subject_en,
-    detail_id = detail_id,
-    encrypted_no = encrypted_no,
-    detail_url = build_detail_url(detail_id, encrypted_no)
-  ))
+    subject_tr = subject$subject_tr,
+    subject_en = subject$subject_en,
+    detail_id = identity$detail_id
+  )
 }

@@ -10,6 +10,7 @@
 #'   NULL means cache lives for entire session. Default is NULL (session).
 #'
 #' @return Invisible NULL
+#' @family cache functions
 #' @export
 #'
 #' @examples
@@ -26,9 +27,19 @@ cache_config <- function(
   search_ttl = 3600,
   detail_ttl = NULL
 ) {
-  enable <- validate_cache_enable(enable)
-  search_ttl <- validate_cache_ttl(search_ttl, "search_ttl")
-  detail_ttl <- validate_cache_ttl(detail_ttl, "detail_ttl")
+  # Validate search_ttl
+  if (!is.null(search_ttl)) {
+    if (!is.numeric(search_ttl) || search_ttl < 0) {
+      cli::cli_abort("{.arg search_ttl} must be a positive number or NULL")
+    }
+  }
+
+  # Validate detail_ttl
+  if (!is.null(detail_ttl)) {
+    if (!is.numeric(detail_ttl) || detail_ttl < 0) {
+      cli::cli_abort("{.arg detail_ttl} must be a positive number or NULL")
+    }
+  }
 
   tezr_env$cache_enabled <- enable
   tezr_env$search_ttl <- search_ttl
@@ -36,49 +47,15 @@ cache_config <- function(
   return(invisible(NULL))
 }
 
-#' Validate cache enabled flag
-#' @noRd
-validate_cache_enable <- function(enable) {
-  if (
-    !is.logical(enable) ||
-      length(enable) != 1L ||
-      is.na(enable)
-  ) {
-    cli::cli_abort("{.arg enable} must be TRUE or FALSE")
-  }
-
-  enable
-}
-
-#' Validate a cache TTL value
-#' @noRd
-validate_cache_ttl <- function(ttl, arg_name) {
-  if (is.null(ttl)) {
-    return(NULL)
-  }
-
-  if (
-    !is.numeric(ttl) ||
-      length(ttl) != 1L ||
-      is.na(ttl) ||
-      ttl < 0
-  ) {
-    cli::cli_abort(
-      "{.arg {arg_name}} must be a single non-negative number or NULL"
-    )
-  }
-
-  ttl
-}
-
 #' Clear the cache
 #'
-#' Removes cached search results, thesis details, and/or lookup data from memory.
+#' Removes cached search results, thesis details, and lookup data from memory.
 #'
-#' @param what Character. What to clear: "all", "searches", "details", or "lookups".
-#'   Default is "all".
+#' @param what Character. What to clear: "all", "searches", "details", or
+#'   "lookups". Default is "all".
 #'
 #' @return Invisible NULL
+#' @family cache functions
 #' @export
 #'
 #' @examples
@@ -96,12 +73,12 @@ cache_clear <- function(what = c("all", "searches", "details", "lookups")) {
   if (what %in% c("all", "searches")) {
     tezr_env$search_cache <- new.env(parent = emptyenv())
     tezr_env$range_cache <- new.env(parent = emptyenv())
-    cli::cli_alert_success("Search cache cleared")
+    tezr_success("Search cache cleared")
   }
 
   if (what %in% c("all", "details")) {
     tezr_env$detail_cache <- new.env(parent = emptyenv())
-    cli::cli_alert_success("Detail cache cleared")
+    tezr_success("Detail cache cleared")
   }
 
   if (what %in% c("all", "lookups")) {
@@ -109,7 +86,7 @@ cache_clear <- function(what = c("all", "searches", "details", "lookups")) {
     if (exists("lookup_cache", envir = asNamespace("tezr"))) {
       lookup_env <- get("lookup_cache", envir = asNamespace("tezr"))
       rm(list = ls(lookup_env), envir = lookup_env)
-      cli::cli_alert_success("Lookup cache cleared")
+      tezr_success("Lookup cache cleared")
     }
   }
 
@@ -130,6 +107,7 @@ cache_clear <- function(what = c("all", "searches", "details", "lookups")) {
 #'     \item search_ttl - Search cache TTL in seconds (NULL = session)
 #'     \item detail_ttl - Detail cache TTL in seconds (NULL = session)
 #'   }
+#' @family cache functions
 #' @export
 #'
 #' @examples
@@ -166,7 +144,7 @@ cache_info <- function() {
 #' Check whether caching is enabled
 #' @noRd
 cache_enabled <- function() {
-  return(isTRUE(tezr_env$cache_enabled %|na|% TRUE))
+  return(isTRUE(coalesce_missing(tezr_env$cache_enabled, TRUE)))
 }
 
 #' Initialize cache environments if they do not exist yet
@@ -195,7 +173,7 @@ init_cache <- function() {
 make_search_key <- function(...) {
   params <- list(...)
   params <- params[order(names(params))]
-  param_str <- paste(names(params), params, sep = "=", collapse = "|")
+  param_str <- paste0(names(params), "=", params, collapse = "|")
   return(rlang::hash(param_str))
 }
 

@@ -32,70 +32,82 @@ search_detailed(
 )
 }
 \arguments{
-\item{university}{University name filter. If provided without
-\code{university_id}, the ID is looked up automatically.}
+\item{university}{University name (optional). Accepts character vector for
+multiple universities.}
 
-\item{university_id}{University ID filter. Use this to skip lookup.}
+\item{university_id}{University ID (optional). If provided, lookup by
+\code{university} is skipped.}
 
-\item{thesis_type}{Type(s) of thesis. Default is "all". Accepts character vector
-for multiple types: "all", "masters", "phd", "medical_specialty", "arts",
-"dentistry", "medical_sub", "pharmacy". Multiple values will trigger
-separate searches that are combined.}
-
-\item{year_start}{Start year (optional). Used for pagination when results > 2000.}
-
-\item{year_end}{End year (optional). Used for pagination when results > 2000.}
-
-\item{institute}{Institute name filter. If provided without
-\code{institute_id}, the ID is looked up automatically.}
-
-\item{institute_id}{Institute ID filter. Use this to skip lookup.}
-
-\item{access_type}{Access type. Default is "all". Accepts character vector for
-multiple access types: "all", "open", "restricted". Multiple values will
+\item{thesis_type}{Type(s) of thesis. Default is "all". Accepts character
+vector for multiple types: "all", "masters", "phd", "medical_specialty",
+"arts", "dentistry", "medical_sub", "pharmacy". Multiple values will
 trigger separate searches that are combined.}
 
-\item{group}{Group filter. One of "all", "science", "social", or "medical".}
+\item{year_start}{Start year (optional). Used for pagination when results >
+2000.}
 
-\item{thesis_no}{Thesis number to search for. This uses YOK's detailed form
-endpoint because the redesigned keyword endpoint is unreliable for thesis
-numbers.}
+\item{year_end}{End year (optional). Used for pagination when results >
+2000.}
 
-\item{division}{Division name filter. If provided without
-\code{division_id}, the ID is looked up automatically.}
+\item{institute}{Institute name (optional). Accepts character vector for
+multiple institutes.}
 
-\item{division_id}{Division ID filter. Use this to skip lookup.}
+\item{institute_id}{Institute ID (optional). If provided, lookup by
+\code{institute} is skipped.}
+
+\item{access_type}{Access type. Default is "all". Accepts character vector
+for multiple access types: "all", "open", "restricted". Multiple values
+will trigger separate searches that are combined.}
+
+\item{group}{Group filter. One of "all", "science", "social", or
+"medical". Default is "all".}
+
+\item{thesis_no}{Thesis number to search for (optional). Accepts character
+vector for multiple thesis numbers.}
+
+\item{division}{Division name (optional). Accepts character vector for
+multiple divisions.}
+
+\item{division_id}{Division ID (optional). If provided, lookup by
+\code{division} is skipped.}
 
 \item{status}{Character. Thesis status filter. One of "approved", "all",
 "in_preparation". Default is "approved".}
 
-\item{title}{Title to search for (optional). Accepts character vector for multiple titles.}
+\item{title}{Title to search for (optional). Accepts character vector for
+multiple titles.}
 
-\item{discipline}{Discipline name filter. If provided without
-\code{discipline_id}, the ID is looked up automatically.}
+\item{discipline}{Discipline name (optional). Accepts character vector for
+multiple disciplines.}
 
-\item{discipline_id}{Discipline ID filter. Use this to skip lookup.}
+\item{discipline_id}{Discipline ID (optional). If provided, lookup by
+\code{discipline} is skipped.}
 
 \item{language}{Integer language ID or character label (e.g., "tr", "en",
-"Turkish", "İngilizce"). Accepts a character vector for multiple languages.}
+"Turkish", "İngilizce"). Accepts a character vector for multiple
+languages.}
 
-\item{author}{Author name (optional). Accepts character vector for multiple authors.}
+\item{author}{Author name (optional). Accepts character vector for multiple
+authors.}
 
-\item{subject}{Subject (Konu) name (optional). Accepts character vector for multiple subjects.}
+\item{subject}{Subject (Konu) name (optional). Accepts character vector for
+multiple subjects.}
 
-\item{supervisor}{Supervisor name (optional). Accepts character vector for multiple supervisors.}
+\item{supervisor}{Supervisor name (optional). Accepts character vector for
+multiple supervisors.}
 
-\item{keyword}{Keyword text (Dizin) to search (optional). Accepts character vector
-for multiple keywords.}
+\item{keyword}{Keyword text (Dizin) to search (optional). Accepts character
+vector for multiple keywords.}
 
-\item{abstract}{Abstract text to search (optional). Accepts character vector for multiple abstracts.}
+\item{abstract}{Abstract text to search (optional). Accepts character vector
+for multiple abstracts.}
 
-\item{max_search_results}{Maximum results to return. Default is 2000 (server limit per query).
-Use higher values or \code{Inf} to paginate beyond the first server batch when
-year-range splitting can narrow each request below the server cap.}
+\item{max_search_results}{Maximum results to return. Default is 2000 (server
+limit per query). Use higher values or \code{Inf} to get all available results
+via automatic pagination.}
 
-\item{ignore_cache}{Logical. If \code{TRUE}, bypass cached search/range results and
-fetch fresh data from the server.}
+\item{ignore_cache}{Logical. If \code{TRUE}, bypass cached search/range results
+and fetch fresh data from the server.}
 }
 \value{
 A tibble containing thesis records with columns:
@@ -116,19 +128,22 @@ A tibble containing thesis records with columns:
 }
 }
 \description{
-Searches YOK's redesigned detailed form. When total results exceed 2000,
-automatically paginates using year ranges to retrieve more results. Very
-broad single-year ranges can still be capped by the server.
+Searches with detailed field-specific filter options. When total results
+exceed 2000 (server limit), automatically paginates using year ranges to
+retrieve all results.
 }
 \details{
-The detailed form accepts field-specific and institutional filters in the
-same request, including \code{title}, \code{author}, \code{supervisor}, \code{subject},
-\code{keyword}, \code{abstract}, \code{thesis_no}, \code{university}, \code{institute}, \code{division},
-\code{discipline}, and \code{group}. Vector-valued fields are expanded into separate
-requests, and the results are combined and deduplicated by thesis number.
+The YOK web portal accepts only a single value per filter field. This
+function extends beyond the portal by accepting vector-valued parameters
+for most fields. Multiple values are expanded into separate API calls,
+and the results are combined and deduplicated by thesis number.
+
+When the total result count exceeds 2000 and no year range is specified,
+the function automatically uses 1959-present as the year range and paginates
+to retrieve all results.
 }
 \examples{
-\dontrun{
+\dontshow{if (interactive()) withAutoprint(\{ # examplesIf}
 # Field-specific search with year filter
 climate <- search_detailed(
   title = "iklim değişikliği",
@@ -136,27 +151,43 @@ climate <- search_detailed(
   year_end = 2024
 )
 
-# Title search with a thesis type filter
+# Title search with university filter
 ml_theses <- search_detailed(
   title = "makine öğrenmesi",
+  university = "Orta Doğu Teknik Üniversitesi",
   thesis_type = "phd"
 )
 
-# Search by subject and year range
+# Search by university and division
 search_results <- search_detailed(
-  subject = "Ekonometri",
+  university = "Ankara Üniversitesi",
+  division = "İktisat Ana Bilim Dalı",
   year_start = 2020,
   year_end = 2023
 )
 
-# Paginate a broad subject search
+# Get ALL results for a subject (auto-paginates if > 2000)
 all_econ <- search_detailed(subject = "Ekonometri", max_search_results = Inf)
 
 # Search for a specific supervisor's theses
 search_results <- search_detailed(supervisor = "Hasan Şahin")
 
-# Search for a specific thesis number
-search_results <- search_detailed(thesis_no = "12345")
+# Search across multiple universities (automatically expands)
+search_results <- search_detailed(
+  university = c("Ankara Üniversitesi", "İstanbul Üniversitesi"),
+  subject = "Ekonomi"
+)
+
+# Search multiple disciplines within a subject
+search_results <- search_detailed(
+  subject = "Ekonomi",
+  discipline = c("İktisat", "Maliye", "Ekonometri")
+)
+
+# Search for multiple specific thesis numbers
+search_results <- search_detailed(
+  thesis_no = c("123456", "234567", "345678")
+)
 
 # Search for multiple titles
 search_results <- search_detailed(
@@ -184,7 +215,14 @@ search_results <- search_detailed(
 # Complex multi-parameter search
 search_results <- search_detailed(
   author = c("Ahmet Yılmaz", "Mehmet Demir"),
+  university = c("Ankara Üniversitesi", "İstanbul Üniversitesi"),
   year_start = 2020
 )
+\dontshow{\}) # examplesIf}
 }
+\seealso{
+Other search functions: 
+\code{\link{search_advanced}()},
+\code{\link{search_basic}()}
 }
+\concept{search functions}

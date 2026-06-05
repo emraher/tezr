@@ -4,21 +4,16 @@
 \alias{detail}
 \title{Get detailed information about a thesis}
 \usage{
-detail(detail_id, progress = TRUE, encrypted_no = NULL, ...)
+detail(detail_id, progress = TRUE, ...)
 }
 \arguments{
-\item{detail_id}{Character vector, detail URL, or search-result data frame.
-Character values may be encoded IDs from the \code{detail_id} column or
-redesigned YOK detail URLs. A data frame returned by a search function can
-be passed directly. Accepts multiple values or rows for batch retrieval.}
+\item{detail_id}{Character vector. Encoded thesis detail identifier(s) from
+the \code{detail_id} column of search results. Treat these values as opaque.
+They may contain one or more portal identifiers depending on the current
+National Thesis Center markup.}
 
 \item{progress}{Logical. Show text progress updates when fetching multiple
 theses? Default is TRUE.}
-
-\item{encrypted_no}{Character vector. Optional encrypted thesis number from
-the \code{encrypted_no} column of redesigned search results. When available,
-\code{detail()} includes it in the YOK detail request and uses the JSON detail
-endpoint to add citation metadata.}
 
 \item{...}{Reserved for internal use.}
 }
@@ -31,28 +26,32 @@ Columns (in order):
 \item title_translation - Title translation when available
 \item author - Author name
 \item advisor - Advisor name and title
-\item co_advisor - Co-advisor name(s) (semicolon-separated if multiple; NA when absent)
+\item co_advisor - Co-advisor name(s). Multiple names are
+semicolon-separated, and absent values are \code{NA}.
 \item university - University name
 \item institute - Institute name
 \item division - Division name
 \item year - Year
 \item pages - Number of pages
-\item thesis_type_tr - Thesis type in Turkish (e.g., "Doktora", "Yüksek Lisans")
-\item thesis_type_en - Thesis type in English (e.g., "Doctorate", "Master's")
-\item language_tr - Language in Turkish (e.g., "Türkçe", "İngilizce")
+\item thesis_type_tr - Thesis type in Turkish, such as "Doktora" or
+"Yüksek Lisans"
+\item thesis_type_en - Thesis type in English, such as "Doctorate" or
+"Master's"
+\item language_tr - Language in Turkish, such as "Türkçe" or
+"İngilizce"
 \item language_en - Language in English (e.g., "Turkish", "English")
-\item subject_tr - Turkish subject classifications (semicolon-separated when multiple)
-\item subject_en - English subject classifications (semicolon-separated when multiple)
-\item abstract_original - Abstract in the thesis's original language when available
+\item subject_tr - Turkish subject classifications, semicolon-separated
+when multiple
+\item subject_en - English subject classifications, semicolon-separated
+when multiple
+\item abstract_original - Abstract in the thesis's original language when
+available
 \item abstract_translation - Translated abstract when available
 \item keywords_tr - Turkish keywords (includes keywords from index field)
 \item keywords_en - English keywords (includes keywords from index field)
 \item access_status - Access status (open/restricted)
 \item pdf_url - URL to download PDF (if available)
 \item detail_url - URL to the thesis detail page
-\item citation_apa, citation_ieee, citation_mla, citation_chicago,
-citation_harvard - Citation strings when YOK's JSON detail endpoint is
-available
 }
 }
 \description{
@@ -60,17 +59,18 @@ Retrieves the full details of one or more theses from the Turkish National
 Thesis Center using encoded IDs from search results.
 }
 \examples{
-\dontrun{
+\dontshow{if (interactive()) withAutoprint(\{ # examplesIf}
 # Search for theses
 results <- search_basic("panel veri")
 
-# Get details for a single thesis, including citation metadata when present
-thesis_details <- detail(results[1, ])
+# Get details for a single thesis
+thesis_details <- detail(results$detail_id[1])
 
 # Get details for multiple theses (batch)
-all_details <- detail(results)
+all_details <- detail(detail_id = results$detail_id)
 
 # Without progress updates
-all_details <- detail(results, progress = FALSE)
+all_details <- detail(detail_id = results$detail_id, progress = FALSE)
+\dontshow{\}) # examplesIf}
 }
-}
+\concept{detail functions}

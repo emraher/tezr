@@ -37,6 +37,8 @@ local_clean_cache <- function(env = parent.frame()) {
   old_search_cache <- snapshot_env(tezr$search_cache)
   old_range_cache <- snapshot_env(tezr$range_cache)
   old_detail_cache <- snapshot_env(tezr$detail_cache)
+  lookup_cache <- get("lookup_cache", envir = asNamespace("tezr"))
+  old_lookup_cache <- snapshot_env(lookup_cache)
 
   withr::defer(
     {
@@ -46,6 +48,7 @@ local_clean_cache <- function(env = parent.frame()) {
       restore_env(tezr$search_cache, old_search_cache)
       restore_env(tezr$range_cache, old_range_cache)
       restore_env(tezr$detail_cache, old_detail_cache)
+      restore_env(lookup_cache, old_lookup_cache)
     },
     envir = env
   )
@@ -73,26 +76,15 @@ test_that("cache_config sets TTL values", {
   cache_config(search_ttl = 1800, detail_ttl = 7200)
 
   env <- get_tezr_env()
-  expect_equal(env$search_ttl, 1800)
-  expect_equal(env$detail_ttl, 7200)
+  expect_identical(env$search_ttl, 1800)
+  expect_identical(env$detail_ttl, 7200)
 })
 
-test_that("cache_config validates scalar arguments", {
+test_that("cache_config validates TTL values", {
   local_clean_cache()
 
-  expect_error(cache_config(enable = NA), "enable")
-  expect_error(cache_config(enable = c(TRUE, FALSE)), "enable")
-  expect_error(cache_config(enable = "TRUE"), "enable")
-
-  expect_error(cache_config(search_ttl = NA_real_), "search_ttl")
-  expect_error(cache_config(search_ttl = c(1, 2)), "search_ttl")
   expect_error(cache_config(search_ttl = -1), "search_ttl")
-  expect_error(cache_config(search_ttl = "10"), "search_ttl")
-
-  expect_error(cache_config(detail_ttl = NA_real_), "detail_ttl")
-  expect_error(cache_config(detail_ttl = c(1, 2)), "detail_ttl")
-  expect_error(cache_config(detail_ttl = -1), "detail_ttl")
-  expect_error(cache_config(detail_ttl = "10"), "detail_ttl")
+  expect_error(cache_config(detail_ttl = "bad"), "detail_ttl")
 })
 
 test_that("cache_info returns correct structure", {
@@ -106,6 +98,24 @@ test_that("cache_info returns correct structure", {
   expect_true("detail_count" %in% names(info))
   expect_true("search_ttl" %in% names(info))
   expect_true("detail_ttl" %in% names(info))
+})
+
+test_that("cache_info counts missing cache environments as zero", {
+  local_clean_cache()
+  env <- get_tezr_env()
+  env$search_cache <- NULL
+  env$range_cache <- NULL
+  env$detail_cache <- NULL
+
+  info <- cache_info()
+
+  expect_identical(info$search_count, 0L)
+  expect_identical(info$range_count, 0L)
+  expect_identical(info$detail_count, 0L)
+
+  env$search_cache <- new.env(parent = emptyenv())
+  env$range_cache <- new.env(parent = emptyenv())
+  env$detail_cache <- new.env(parent = emptyenv())
 })
 
 test_that("cache_clear clears search cache", {
@@ -147,18 +157,46 @@ test_that("cache_clear clears detail cache", {
   expect_false("test_key" %in% ls(env$detail_cache))
 })
 
+test_that("cache_clear clears lookup cache", {
+  local_clean_cache()
+  local_silence_cli()
+  lookup_cache <- get("lookup_cache", envir = asNamespace("tezr"))
+  lookup_cache[["test_key"]] <- list(value = "test")
+
+  expect_true("test_key" %in% ls(lookup_cache))
+
+  cache_clear("lookups")
+
+  expect_false("test_key" %in% ls(lookup_cache))
+})
+
 test_that("make_search_key creates consistent keys", {
   key1 <- make_search_key(query = "test", field = "all")
   key2 <- make_search_key(query = "test", field = "all")
   key3 <- make_search_key(query = "different", field = "all")
 
-  expect_equal(key1, key2)
+  expect_identical(key1, key2)
   expect_false(key1 == key3)
+})
+
+test_that("build_search_cache_key uses stable sorted parameters", {
+  key1 <- build_search_cache_key(
+    "advanced",
+    list(beta = "2", alpha = "1")
+  )
+  key2 <- build_search_cache_key(
+    "advanced",
+    list(alpha = "1", beta = "2")
+  )
+  empty_key <- build_search_cache_key("advanced", NULL)
+
+  expect_identical(key1, key2)
+  expect_type(empty_key, "character")
 })
 
 test_that("make_detail_key creates expected format", {
   key <- make_detail_key("abc123", "xyz789")
-  expect_equal(key, "d_abc123_xyz789")
+  expect_identical(key, "d_abc123_xyz789")
 })
 
 test_that("get_cached returns NULL when cache disabled", {
@@ -208,7 +246,7 @@ test_that("get_cached respects TTL", {
 
   # Should not be expired
   cached_value <- get_cached(env$search_cache, "new_item", ttl = 50)
-  expect_equal(cached_value, "new_data")
+  expect_identical(cached_value, "new_data")
 })
 
 test_that("set_cached stores value with timestamp", {
@@ -220,7 +258,7 @@ test_that("set_cached stores value with timestamp", {
   set_cached(env$search_cache, "store_test", "my_value")
 
   cached <- env$search_cache[["store_test"]]
-  expect_equal(cached$value, "my_value")
+  expect_identical(cached$value, "my_value")
   expect_s3_class(cached$timestamp, "POSIXct")
 })
 

@@ -25,9 +25,10 @@ fetch_by_year_ranges <- function(
   cache_key_params,
   ignore_cache = FALSE
 ) {
-  cli::cli_alert_info(
-    "Auto-pagination: target {.val {total_count}} results across {.val {year_start}}-{.val {year_end}}"
-  )
+  tezr_inform(paste0(
+    "Auto-pagination: target {.val {total_count}} results across ",
+    "{.val {year_start}}-{.val {year_end}}"
+  ))
 
   all_search_results <- fetch_year_range_iterative(
     total_count = total_count,
@@ -51,7 +52,7 @@ fetch_by_year_ranges <- function(
   combined <- dplyr::bind_rows(all_search_results) |>
     dplyr::distinct(.data$thesis_no, .keep_all = TRUE)
 
-  cli::cli_alert_success(
+  tezr_success(
     "Pagination complete: {.val {nrow(combined)}} unique results"
   )
 
@@ -89,153 +90,329 @@ fetch_year_range_iterative <- function(
   }
 
   density_state <- initialize_density_state()
-
-  # Build initial set of ranges from multi-way split
-  ranges <- build_ranges_from_split(
-    year_start = year_start,
-    year_end = year_end,
-    total_count = total_count,
-    era_weights = effective_era_weights(density_state)
+  ranges <- initial_year_ranges(
+    year_start,
+    year_end,
+    total_count,
+    density_state
   )
-
   collected <- list()
   collected_count <- 0L
   single_year_overflow_years <- integer(0)
 
-  while (length(ranges) > 0) {
-    if (collected_count >= max_search_results) {
-      break
-    }
-
+  while (length(ranges) > 0 && collected_count < max_search_results) {
     range <- ranges[[1]]
     ranges <- ranges[-1]
 
-    r_start <- range$start
-    r_end <- range$end
-
-    # Check cache
-    cache_key <- build_search_cache_key(
-      type = "year_range",
-      params = c(
-        list(year_start = r_start, year_end = r_end),
-        cache_key_params
-      )
+    result <- process_year_range_iteration(
+      range,
+      density_state,
+      form_builder,
+      cache_key_params,
+      ignore_cache
     )
 
-    cached_range <- NULL
-    if (!ignore_cache) {
-      cached_range <- get_cached(
-        tezr_env$range_cache,
-        cache_key,
-        tezr_env$search_ttl
-      )
-    }
-
-    if (!is.null(cached_range)) {
-      range_rows <- cached_range$search_results
-      range_total <- cached_range$total_count
-      range_count <- nrow(range_rows)
-    } else {
-      range_data <- tryCatch(
-        {
-          search_data <- perform_search_request(form_builder(r_start, r_end))
-          list(
-            search_results = search_data$search_results,
-            total_count = search_data$total_count
-          )
-        },
-        error = function(e) {
-          cli::cli_alert_warning(
-            "Failed to fetch years {r_start}-{r_end}: {e$message}"
-          )
-          list(search_results = empty_results_tibble(), total_count = 0L)
-        }
-      )
-
-      range_rows <- range_data$search_results
-      range_total <- range_data$total_count
-      range_count <- nrow(range_rows)
-
-      if (!ignore_cache) {
-        set_cached(tezr_env$range_cache, cache_key, range_data)
-      }
-    }
-
-    needs_split <- range_total > range_count &&
-      r_end > r_start &&
-      range_count >= 1999
-
-    if (needs_split) {
-      cli::cli_alert_info(
-        paste0(
-          "Range {r_start}-{r_end}: total {.val {range_total}}, ",
-          "retrieved {.val {range_count}} (limit). Re-splitting..."
-        )
-      )
-
-      sub_ranges <- build_ranges_from_split(
-        year_start = r_start,
-        year_end = r_end,
-        total_count = range_total,
-        era_weights = effective_era_weights(density_state)
-      )
-      ranges <- c(sub_ranges, ranges)
+    if (result$resplit) {
+      ranges <- c(result$ranges, ranges)
       next
     }
 
-    cli::cli_alert_info(
-      "Range {r_start}-{r_end}: {.val {range_count}} results retrieved."
+    single_year_overflow_years <- c(
+      single_year_overflow_years,
+      result$overflow_years
     )
-
-    if (range_total > range_count && range_count >= 1999) {
-      if (r_start == r_end) {
-        single_year_overflow_years <- c(
-          single_year_overflow_years,
-          as.integer(r_start)
-        )
-        cli::cli_alert_warning(
-          paste0(
-            "Range {r_start}-{r_end} has {.val {range_total}} results but only ",
-            "{.val {range_count}} returned (server limit). This is a ",
-            "single-year range and cannot split further. Some results were ",
-            "truncated. Add more filters to narrow the search."
-          )
-        )
-      } else {
-        cli::cli_alert_warning(
-          paste0(
-            "Range {r_start}-{r_end} has {.val {range_total}} results but only ",
-            "{.val {range_count}} returned (server limit). Some results were ",
-            "truncated. Add more filters to narrow the search."
-          )
-        )
-      }
-    } else if (range_total > range_count) {
-      cli::cli_alert_warning(
-        paste0(
-          "Range {r_start}-{r_end} reported {.val {range_total}} results but ",
-          "parsed {.val {range_count}}. Some results may be missing due to ",
-          "response inconsistencies."
-        )
-      )
-    }
-
-    density_state <- update_density_state(
-      state = density_state,
-      year_start = r_start,
-      year_end = r_end,
-      range_total = range_total,
-      range_count = range_count
-    )
-
-    collected[[length(collected) + 1]] <- range_rows
-    collected_count <- collected_count + range_count
+    density_state <- result$density_state
+    collected[[length(collected) + 1]] <- result$search_results
+    collected_count <- collected_count + result$count
   }
 
   attr(collected, "single_year_overflow_years") <- sort(unique(
     single_year_overflow_years
   ))
   return(collected)
+}
+
+#' Build the initial year-range queue
+#' @noRd
+initial_year_ranges <- function(
+  year_start,
+  year_end,
+  total_count,
+  density_state
+) {
+  build_ranges_from_split(
+    year_start = year_start,
+    year_end = year_end,
+    total_count = total_count,
+    era_weights = effective_era_weights(density_state)
+  )
+}
+
+#' Process one year-range queue item
+#' @noRd
+process_year_range_iteration <- function(
+  range,
+  density_state,
+  form_builder,
+  cache_key_params,
+  ignore_cache
+) {
+  r_start <- range$start
+  r_end <- range$end
+  range_result <- fetch_year_range_result(
+    r_start,
+    r_end,
+    form_builder,
+    cache_key_params,
+    ignore_cache
+  )
+
+  if (
+    needs_year_range_resplit(
+      r_start,
+      r_end,
+      range_result$total_count,
+      range_result$count
+    )
+  ) {
+    return(resplit_year_range_result(
+      r_start,
+      r_end,
+      range_result,
+      density_state
+    ))
+  }
+
+  complete_year_range_result(r_start, r_end, range_result, density_state)
+}
+
+#' Return a re-split year-range iteration result
+#' @noRd
+resplit_year_range_result <- function(
+  r_start,
+  r_end,
+  range_result,
+  density_state
+) {
+  list(
+    resplit = TRUE,
+    ranges = split_overflowing_year_range(
+      r_start,
+      r_end,
+      range_result$total_count,
+      range_result$count,
+      density_state
+    )
+  )
+}
+
+#' Return a completed year-range iteration result
+#' @noRd
+complete_year_range_result <- function(
+  r_start,
+  r_end,
+  range_result,
+  density_state
+) {
+  overflow_years <- warn_year_range_incomplete(
+    r_start,
+    r_end,
+    range_result$total_count,
+    range_result$count
+  )
+
+  list(
+    resplit = FALSE,
+    search_results = range_result$search_results,
+    count = range_result$count,
+    overflow_years = overflow_years,
+    density_state = update_density_state(
+      state = density_state,
+      year_start = r_start,
+      year_end = r_end,
+      range_total = range_result$total_count,
+      range_count = range_result$count
+    )
+  )
+}
+
+#' Fetch one year-range chunk from cache or the server
+#' @noRd
+fetch_year_range_result <- function(
+  r_start,
+  r_end,
+  form_builder,
+  cache_key_params,
+  ignore_cache
+) {
+  cache_key <- build_year_range_cache_key(r_start, r_end, cache_key_params)
+  cached_range <- get_cached_year_range(cache_key, ignore_cache)
+
+  if (!is.null(cached_range)) {
+    return(normalize_year_range_result(cached_range))
+  }
+
+  range_data <- request_year_range_result(r_start, r_end, form_builder)
+  if (!ignore_cache) {
+    set_cached(tezr_env$range_cache, cache_key, range_data)
+  }
+
+  normalize_year_range_result(range_data)
+}
+
+#' Build a cache key for one year range
+#' @noRd
+build_year_range_cache_key <- function(r_start, r_end, cache_key_params) {
+  build_search_cache_key(
+    type = "year_range",
+    params = c(
+      list(year_start = r_start, year_end = r_end),
+      cache_key_params
+    )
+  )
+}
+
+#' Return cached year-range data unless cache bypass is requested
+#' @noRd
+get_cached_year_range <- function(cache_key, ignore_cache) {
+  if (ignore_cache) {
+    return(NULL)
+  }
+
+  get_cached(
+    tezr_env$range_cache,
+    cache_key,
+    tezr_env$search_ttl
+  )
+}
+
+#' Fetch one year range from the search endpoint with warning fallback
+#' @noRd
+request_year_range_result <- function(r_start, r_end, form_builder) {
+  tryCatch(
+    {
+      search_data <- perform_search_request(form_builder(r_start, r_end))
+      list(
+        search_results = search_data$search_results,
+        total_count = search_data$total_count
+      )
+    },
+    error = function(e) {
+      cli::cli_alert_warning(
+        "Failed to fetch years {r_start}-{r_end}: {e$message}"
+      )
+      list(search_results = empty_results_tibble(), total_count = 0L)
+    }
+  )
+}
+
+#' Add a row count to year-range search data
+#' @noRd
+normalize_year_range_result <- function(range_data) {
+  range_data$count <- nrow(range_data$search_results)
+  range_data
+}
+
+#' Return whether a capped year-range result should be split again
+#' @noRd
+needs_year_range_resplit <- function(r_start, r_end, range_total, range_count) {
+  range_total > range_count &&
+    r_end > r_start &&
+    range_count >= 1999
+}
+
+#' Re-split an overflowing year range and emit the existing progress message
+#' @noRd
+split_overflowing_year_range <- function(
+  r_start,
+  r_end,
+  range_total,
+  range_count,
+  density_state
+) {
+  tezr_inform(
+    paste0(
+      "Range {r_start}-{r_end}: total {.val {range_total}}, ",
+      "retrieved {.val {range_count}} (limit). Re-splitting..."
+    )
+  )
+
+  build_ranges_from_split(
+    year_start = r_start,
+    year_end = r_end,
+    total_count = range_total,
+    era_weights = effective_era_weights(density_state)
+  )
+}
+
+#' Warn on incomplete year ranges and return unsplittable overflow years
+#' @noRd
+warn_year_range_incomplete <- function(
+  r_start,
+  r_end,
+  range_total,
+  range_count
+) {
+  tezr_inform(
+    "Range {r_start}-{r_end}: {.val {range_count}} results retrieved."
+  )
+
+  if (range_total > range_count && range_count >= 1999) {
+    warn_capped_year_range(r_start, r_end, range_total, range_count)
+    if (r_start == r_end) {
+      return(as.integer(r_start))
+    }
+  } else if (range_total > range_count) {
+    warn_inconsistent_year_range(r_start, r_end, range_total, range_count)
+  }
+
+  integer(0)
+}
+
+#' Warn when a year range hits the server cap
+#' @noRd
+warn_capped_year_range <- function(r_start, r_end, range_total, range_count) {
+  if (r_start == r_end) {
+    cli::cli_alert_warning(
+      paste0(
+        "Range {r_start}-{r_end} has {.val {range_total}} ",
+        "results but only ",
+        "{.val {range_count}} returned (server limit). This is a ",
+        "single-year range and cannot split further. Some results were ",
+        "truncated. Add more filters to narrow the search."
+      )
+    )
+    return(invisible(NULL))
+  }
+
+  cli::cli_alert_warning(
+    paste0(
+      "Range {r_start}-{r_end} has {.val {range_total}} ",
+      "results but only ",
+      "{.val {range_count}} returned (server limit). Some results were ",
+      "truncated. Add more filters to narrow the search."
+    )
+  )
+  invisible(NULL)
+}
+
+#' Warn when the server reports more rows than the parser saw
+#' @noRd
+warn_inconsistent_year_range <- function(
+  r_start,
+  r_end,
+  range_total,
+  range_count
+) {
+  cli::cli_alert_warning(
+    paste0(
+      "Range {r_start}-{r_end} reported {.val {range_total}} results but ",
+      "parsed {.val {range_count}}. Some results may be missing due to ",
+      "response inconsistencies."
+    )
+  )
+
+  invisible(NULL)
 }
 
 #' Build year ranges from density-weighted split points
@@ -252,11 +429,11 @@ calculate_target_chunk_size <- function(
   total_count,
   era_weights = default_era_weights()
 ) {
-  years <- seq.int(year_start, year_end)
-  if (length(years) == 0) {
+  if (year_start > year_end) {
     return(1500L)
   }
 
+  years <- seq.int(year_start, year_end)
   range_weights <- year_density_weight(years, era_weights = era_weights)
   average_weight <- mean(range_weights)
   baseline_weight <- era_weights[["y2000_2010"]]
@@ -304,7 +481,8 @@ build_ranges_from_split <- function(
     era_weights
   )
 
-  # Build ranges: [year_start, split1], [split1+1, split2], ..., [splitN+1, year_end]
+  # Build ranges that cover [year_start, split1], [split1+1, split2],
+  # ..., [splitN+1, year_end].
   boundaries <- c(year_start - 1L, split_pts, year_end)
   ranges <- vector("list", length(boundaries) - 1)
   for (i in seq_along(ranges)) {
@@ -325,10 +503,10 @@ build_ranges_from_split <- function(
 #' @return Numeric weight.
 #' @noRd
 year_density_weight <- function(year, era_weights = default_era_weights()) {
-  ifelse(
-    year < 2000,
-    era_weights[["pre2000"]],
-    ifelse(year <= 2010, era_weights[["y2000_2010"]], era_weights[["post2010"]])
+  dplyr::case_when(
+    year < 2000 ~ era_weights[["pre2000"]],
+    year <= 2010 ~ era_weights[["y2000_2010"]],
+    .default = era_weights[["post2010"]]
   )
 }
 
@@ -406,6 +584,10 @@ initialize_density_state <- function() {
 #' Count overlap years per era for a year range
 #' @noRd
 overlap_years_by_era <- function(year_start, year_end) {
+  if (year_start > year_end) {
+    return(c(pre2000 = 0L, y2000_2010 = 0L, post2010 = 0L))
+  }
+
   years <- seq.int(year_start, year_end)
   return(c(
     pre2000 = sum(years < 2000),

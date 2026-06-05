@@ -1,8 +1,27 @@
+citHeader(
+  paste(
+    "To cite tezr in publications use the package citation below.",
+    "Also cite the source of thesis metadata."
+  )
+)
+
 bibentry(
   bibtype = "Manual",
-  title = "tezr: Access the Turkiye's National Thesis Center Database",
+  title = "tezr: Access Thesis Metadata from Turkiye's National Thesis Center",
   author = person("Emrah", "Er", email = "eer@eremrah.com"),
-  year = "2025",
-  note = "R package version 0.2.0",
+  year = "2026",
+  note = "R package version 0.1.0.9000",
   url = "https://github.com/emraher/tezr"
+)
+
+bibentry(
+  bibtype = "Misc",
+  title = "National Thesis Center",
+  author = person("Council of Higher Education"),
+  year = "2026",
+  url = "https://tez.yok.gov.tr",
+  note = paste(
+    "Public web portal for graduate thesis metadata.",
+    "Include the date of data retrieval"
+  )
 )

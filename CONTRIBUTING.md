@@ -1,61 +1,90 @@
 # Contributing to tezr
 
-Thank you for considering contributing to this package!
+Thank you for considering a contribution to `tezr`.
 
-## Getting Started
+This project follows the [rOpenSci Code of Conduct](https://ropensci.org/code-of-conduct/). Please keep issues and pull requests professional, reproducible, and free of sensitive data.
 
-1. Fork the repository
-2. Clone your fork: `git clone https://github.com/your-username/tezr.git`
-3. Create a branch: `git checkout -b feature/your-feature-name`
+## Development Setup
 
-## Development Workflow
+Fork and clone the repository.
 
-### Setup
+```sh
+git clone https://github.com/your-username/tezr.git
+cd tezr
+git checkout -b feature/your-feature-name
+```
+
+Install development dependencies from R.
 
 ```r
-# Install development dependencies
 install.packages("devtools")
 devtools::install_dev_deps()
 ```
 
-### Making Changes
+## Development Workflow
 
-1. Write your code following the existing style
-2. Document your functions with roxygen2 comments
-3. Add tests for new functionality
-4. Run checks locally:
+Write code in the existing package style. Add or update roxygen documentation for exported functions. Add focused tests for new behavior.
+
+Run the core local checks before opening a pull request.
 
 ```r
-devtools::document()  # Update documentation
-devtools::test()      # Run tests
-devtools::check()     # Run R CMD check
+devtools::document()
+devtools::test()
+devtools::check()
 ```
 
-### Code Style
+Use `air format .` when Air is available. The repository also has an Air formatting check in GitHub Actions.
 
-- Use 2 spaces for indentation
-- Follow the tidyverse style guide
-- Keep lines under 80 characters when possible
+## Tests
 
-### Testing
+The default test suite uses fixtures and mocks. It should not contact the National Thesis Center portal.
 
-- Add tests in `tests/testthat/`
-- Use testthat edition 3 syntax
-- Ensure all tests pass before submitting
+Run the default suite with:
 
-### Documentation
+```r
+devtools::test()
+```
 
-- Document all exported functions
-- Include examples that run without errors
-- Update NEWS.md for user-facing changes
+Live integration tests are skipped unless you explicitly enable them.
 
-## Submitting Changes
+```sh
+TEZR_LIVE_TESTS=true Rscript -e 'devtools::test()'
+```
 
-1. Ensure `devtools::check()` passes with no errors, warnings, or notes
-2. Commit your changes with clear messages
-3. Push to your fork
-4. Open a pull request
+Run live tests sparingly. They depend on portal availability, network behavior, and current NTC markup. They can also take longer because the package applies request delays.
 
-## Questions?
+## Documentation Examples
 
-Open an issue for any questions or discussions.
+README and vignette builds do not run live NTC queries by default. Set `TEZR_LIVE_EXAMPLES=true` only when you intentionally want documentation chunks to contact the portal.
+
+```sh
+TEZR_LIVE_EXAMPLES=true Rscript -e 'devtools::build_readme()'
+TEZR_LIVE_EXAMPLES=true Rscript -e 'pkgdown::build_site()'
+```
+
+Save returned objects with `saveRDS()` or `readr::write_rds()` when developing examples from live data. Avoid repeated identical portal requests.
+
+## Request Behavior
+
+`tezr` identifies itself with a package-specific user agent. Use `request_config(user_agent = "...")` if your institution or the portal requires a different value.
+
+Use `request_config(verbose = FALSE)` or `TEZR_VERBOSE=false` to silence informational progress messages during local development. Warnings and errors are still shown.
+
+## Issue Reports
+
+A useful bug report includes the function call, a small reproducible example, the returned error or warning, your package version, your R version, and whether `TEZR_LIVE_TESTS` or `TEZR_LIVE_EXAMPLES` was enabled.
+
+Do not post private researcher data, thesis full-text files, local cookies, session headers, access tokens, or sensitive institutional details. Redact query terms if they reveal private research plans.
+
+## Pull Requests
+
+Before submitting a pull request, make sure these checks pass locally when feasible.
+
+```r
+devtools::document()
+devtools::test()
+devtools::check()
+urlchecker::url_check()
+```
+
+Also update `NEWS.md` for user-facing changes.

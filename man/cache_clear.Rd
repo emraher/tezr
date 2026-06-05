@@ -7,14 +7,14 @@
 cache_clear(what = c("all", "searches", "details", "lookups"))
 }
 \arguments{
-\item{what}{Character. What to clear: "all", "searches", "details", or "lookups".
-Default is "all".}
+\item{what}{Character. What to clear: "all", "searches", "details", or
+"lookups". Default is "all".}
 }
 \value{
 Invisible NULL
 }
 \description{
-Removes cached search results, thesis details, and/or lookup data from memory.
+Removes cached search results, thesis details, and lookup data from memory.
 }
 \examples{
 # Clear everything
@@ -26,3 +26,9 @@ cache_clear("searches")
 # Clear only thesis details
 cache_clear("details")
 }
+\seealso{
+Other cache functions: 
+\code{\link{cache_config}()},
+\code{\link{cache_info}()}
+}
+\concept{cache functions}

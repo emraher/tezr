@@ -23,7 +23,7 @@ precompile_vignette <- function(vignette_name) {
     vignette_content <- readr::read_file(output_path)
     fixed_content <- stringr::str_replace_all(
       vignette_content,
-      "\\(figure/",
+      stringr::fixed("(figure/"),
       "("
     )
     readr::write_file(fixed_content, output_path)

@@ -31,30 +31,12 @@ normalize_basic_cache_entry <- function(cache_entry) {
 #' Internal helper to execute search and parse results
 #' @noRd
 perform_search_request <- function(form_data) {
-  reset_session_if_search_mode_changed(form_data)
   refresh_session_if_needed()
   increment_request_count()
 
   session_request <- create_session()
-
-  search_resp <- session_request |>
-    httr2::req_url_path_append(endpoints$search) |>
-    httr2::req_body_form(!!!form_data) |>
-    httr2::req_perform()
-
-  if (httr2::resp_status(search_resp) != 200) {
-    cli::cli_abort(
-      "Search request failed with status {httr2::resp_status(search_resp)}"
-    )
-  }
-
-  search_results_resp <- session_request |>
-    httr2::req_url_path_append(endpoints$results) |>
-    httr2::req_perform()
-
-  if (httr2::resp_status(search_results_resp) != 200) {
-    cli::cli_abort("Failed to retrieve results page")
-  }
+  perform_search_submit(session_request, form_data)
+  search_results_resp <- fetch_search_results_page(session_request)
 
   html <- httr2::resp_body_html(search_results_resp)
   total_count <- extract_total_count(html)
@@ -67,53 +49,88 @@ perform_search_request <- function(form_data) {
   )
 }
 
-#' Reset the server session when switching search form modes
+#' Submit a search form to the search endpoint
 #' @noRd
-reset_session_if_search_mode_changed <- function(form_data) {
-  search_mode <- form_data[["islem"]]
-  if (
-    is.null(search_mode) ||
-      length(search_mode) == 0L ||
-      is.na(search_mode[[1L]])
-  ) {
+perform_search_submit <- function(session_request, form_data) {
+  search_resp <- session_request |>
+    httr2::req_url_path_append(endpoints$search) |>
+    httr2::req_body_form(!!!form_data) |>
+    httr2::req_perform()
+
+  abort_on_search_submit_error(search_resp)
+  invisible(search_resp)
+}
+
+#' Fetch the search results page after form submission
+#' @noRd
+fetch_search_results_page <- function(session_request) {
+  search_results_resp <- session_request |>
+    httr2::req_url_path_append(endpoints$results) |>
+    httr2::req_perform()
+
+  abort_on_search_results_error(search_results_resp)
+  search_results_resp
+}
+
+#' Abort when the search form response is not successful
+#' @noRd
+abort_on_search_submit_error <- function(search_resp) {
+  if (httr2::resp_status(search_resp) == 200) {
     return(invisible(NULL))
   }
 
-  search_mode <- as.character(search_mode[[1L]])
-  previous_mode <- tezr_env$last_search_mode
-
-  if (!is.null(previous_mode) && !identical(previous_mode, search_mode)) {
-    init_session()
-  }
-
-  tezr_env$last_search_mode <- search_mode
-  invisible(NULL)
+  status <- httr2::resp_status(search_resp)
+  cli::cli_abort(
+    c(
+      "Search request failed with status {status}.",
+      "i" = paste0(
+        "The NTC portal may be unavailable, may have changed its form ",
+        "handling, or may have rejected the request."
+      )
+    )
+  )
 }
 
-#' Resolve a lookup item with its canonical API label
+#' Abort when the search results response is not successful
 #' @noRd
-resolve_lookup_item <- function(value, lookup_fn, label) {
+abort_on_search_results_error <- function(search_results_resp) {
+  if (httr2::resp_status(search_results_resp) == 200) {
+    return(invisible(NULL))
+  }
+
+  status <- httr2::resp_status(search_results_resp)
+  cli::cli_abort(
+    c(
+      "Failed to retrieve results page with status {status}.",
+      "i" = paste0(
+        "The NTC portal may be unavailable or may have changed the ",
+        "results page markup."
+      )
+    )
+  )
+}
+
+#' Resolve a lookup ID with consistent messaging
+#' @noRd
+resolve_lookup_id <- function(value, lookup_fn, label) {
   if (is.null(value)) {
     return(NULL)
   }
 
-  item <- lookup_fn(value)
-  if (is.null(item) || nrow(item) == 0) {
+  id <- lookup_fn(value)
+  if (is.null(id)) {
+    label_lower <- tolower(label)
     cli::cli_warn(
-      "{label} {.val {value}} not found. Search may not filter by {tolower(label)} correctly."
+      paste0(
+        "{label} {.val {value}} not found. Search may not filter by ",
+        "{label_lower} correctly."
+      )
     )
     return(NULL)
   }
 
-  id <- item$id[[1L]]
-  name <- if ("name" %in% names(item)) clean_text(item$name[[1L]]) else value
-
-  cli::cli_alert_info("Found {label} ID: {.val {id}}")
-
-  list(
-    id = id,
-    name = name
-  )
+  tezr_inform("Found {label} ID: {.val {id}}")
+  return(id)
 }
 
 #' Read and normalize a cached search payload
@@ -152,7 +169,7 @@ set_cached_search_result <- function(cache_key, value, ignore_cache = FALSE) {
 #' @noRd
 ensure_search_session <- function() {
   if (!has_session()) {
-    cli::cli_alert_info("Initializing session...")
+    tezr_inform("Initializing session...")
     init_session()
   }
 
@@ -163,11 +180,11 @@ ensure_search_session <- function() {
 #' @noRd
 run_search_request <- function(form_data, message) {
   ensure_search_session()
-  cli::cli_alert_info(message)
+  tezr_inform(message)
 
   search_data <- perform_search_request(form_data)
 
-  cli::cli_alert_success("Found {.val {search_data$total_count}} results")
+  tezr_success("Found {.val {search_data$total_count}} results")
   search_data
 }
 
@@ -188,8 +205,8 @@ run_basic_search <- function(
   )
 
   if (!is.null(cached_search)) {
-    cli::cli_alert_success(
-      "Found cached results ({.val {nrow(cached_search$results)}} records)"
+    tezr_success(
+      "Returning cached results ({.val {nrow(cached_search$results)}} records)"
     )
     return(list(
       results = cached_search$results,
@@ -214,6 +231,10 @@ run_basic_search <- function(
     list(results = search_results, total_count = total_count),
     ignore_cache = ignore_cache
   )
+
+  if (total_count - nrow(search_results) <= 1) {
+    tezr_success("Returning {.val {nrow(search_results)}} results")
+  }
 
   return(list(results = search_results, total_count = total_count))
 }
