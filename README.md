@@ -35,8 +35,8 @@ into tibbles, deduplicates merged searches, caches repeated queries,
 paginates large searches by adaptive year ranges, and exposes statistics
 functions for retrieval checks.
 
-`tezr` is not affiliated with, endorsed by, or connected to YOK, YÖK,
-the Council of Higher Education, or the National Thesis Center.
+`tezr` is not affiliated with, endorsed by, or connected to YÖK, the
+Council of Higher Education, or the National Thesis Center.
 
 ## Installation
 

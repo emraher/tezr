@@ -47,7 +47,7 @@ The NTC is the Council of Higher Education's national portal for graduate thesis
 
 `tezr` turns that capped web-only archive into a scriptable R workflow. It maps the basic, advanced, and detailed search forms into R functions. It resolves valid university, institute, division, discipline, and subject labels. It retrieves detail pages, parses bilingual metadata into tibbles, deduplicates merged searches, caches repeated queries, paginates large searches by adaptive year ranges, and exposes statistics functions for retrieval checks.
 
-`tezr` is not affiliated with, endorsed by, or connected to YOK, YÖK, the Council of Higher Education, or the National Thesis Center.
+`tezr` is not affiliated with, endorsed by, or connected to YÖK, the Council of Higher Education, or the National Thesis Center.
 
 ## Installation
 
