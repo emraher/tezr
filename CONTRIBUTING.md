@@ -19,6 +19,7 @@ git checkout -b feature/your-feature-name
 Install development dependencies from R.
 
 ``` r
+
 install.packages("devtools")
 devtools::install_dev_deps()
 ```
@@ -32,6 +33,7 @@ behavior.
 Run the core local checks before opening a pull request.
 
 ``` r
+
 devtools::document()
 devtools::test()
 devtools::check()
@@ -48,6 +50,7 @@ the National Thesis Center portal.
 Run the default suite with:
 
 ``` r
+
 devtools::test()
 ```
 
@@ -105,6 +108,7 @@ Before submitting a pull request, make sure these checks pass locally
 when feasible.
 
 ``` r
+
 devtools::document()
 devtools::test()
 devtools::check()

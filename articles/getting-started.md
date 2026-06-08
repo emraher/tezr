@@ -12,6 +12,7 @@ shapes without depending on the live portal. Set
 portal requests.
 
 ``` r
+
 library(tezr)
 library(dplyr)
 ```
@@ -53,6 +54,7 @@ database by keyword. It checks all fields by default, so it works well
 when you do not know where your term appears.
 
 ``` r
+
 # Search all fields for "tarımsal sulama"
 ag_irrigation <- search_basic("tarımsal sulama")
 ```
@@ -60,6 +62,7 @@ ag_irrigation <- search_basic("tarımsal sulama")
 The output is a tibble with one row per thesis.
 
 ``` r
+
 # Column names and types
 dplyr::glimpse(ag_irrigation)
 ```
@@ -86,6 +89,7 @@ You can use the `search_field` argument to restrict matching to a single
 field.
 
 ``` r
+
 # Search only in thesis titles
 ag_irrigation_title <- search_basic(
   "tarımsal sulama",
@@ -114,6 +118,7 @@ Available search field values are: `"all"` (default), `"title"`,
 `"thesis_no"`.
 
 ``` r
+
 # Search abstracts
 abstract_search <- search_basic(
   "production function",
@@ -141,6 +146,7 @@ Available `thesis_type` values are: `"all"` (default), `"masters"`,
 `"medical_sub"`, `"pharmacy"`.
 
 ``` r
+
 # PhD dissertations only
 phd_results <- search_basic(
   "ekonometri",
@@ -168,6 +174,7 @@ Available access type values are: `"all"` (default), `"open"`,
 `"restricted"`.
 
 ``` r
+
 # Open access theses only
 open_results <- search_basic(
   "hanehalkı",
@@ -186,6 +193,7 @@ automatically delegates to advanced search for pagination when you set
 below.
 
 ``` r
+
 # This stops at 2000
 climate_change <- search_basic("climate change")
 
@@ -233,6 +241,7 @@ can use the following approaches.
 ### Year and Language Filters
 
 ``` r
+
 # Keyword search with year range
 recent_climate <- search_advanced(
   keyword = "iklim değişikliği",
@@ -266,6 +275,7 @@ in-preparation ones: `"approved"` (default), `"all"`,
 `"in_preparation"`.
 
 ``` r
+
 # Social sciences only
 social_econ <- search_advanced(
   keyword = "ekonometri",
@@ -285,6 +295,7 @@ You can combine filters to build precise keyword queries. Start with a
 minimal query, then add constraints.
 
 ``` r
+
 # PhD theses in social sciences, open access, 2000-2024
 complex_query <- search_advanced(
   keyword = "ekonometri",
@@ -316,6 +327,7 @@ further for that year and warns you to narrow the query with additional
 filters.
 
 ``` r
+
 # Retrieve all results (auto-paginate by year)
 all_eu <- search_advanced(
   keyword = "avrupa",
@@ -373,6 +385,7 @@ performance-sensitive workflows (for example `university_id`,
 `institute_id`, `division_id`, `discipline_id`) if you want.
 
 ``` r
+
 # All universities
 unis <- list_universities()
 head(unis)
@@ -386,6 +399,7 @@ head(unis)
     #> 3 ORTA DOGU TEKNIK UNIVERSITESI 60
 
 ``` r
+
 # Subjects have Turkish and English names
 subjects <- list_subjects()
 subjects |>
@@ -398,6 +412,7 @@ subjects |>
     #> 1 Ekonomi Economics 115
 
 ``` r
+
 # Other list functions (each returns 'name' and 'id' columns)
 institutes <- list_institutes()
 divisions <- list_divisions()
@@ -411,11 +426,13 @@ resolves them to internal IDs automatically via lookup as we mentioned
 above.
 
 ``` r
+
 # All theses from Ankara University
 ankara <- search_detailed(university = "Ankara Üniversitesi")
 ```
 
 ``` r
+
 # Narrow to a specific division within a university
 ankara_econ <- search_detailed(
   university = "Ankara Üniversitesi",
@@ -424,6 +441,7 @@ ankara_econ <- search_detailed(
 ```
 
 ``` r
+
 # Filter by institute
 sosyal_bilimler <- search_detailed(
   university = "İstanbul Üniversitesi",
@@ -441,11 +459,13 @@ and
 to confirm exact names.
 
 ``` r
+
 # All econometrics theses
 econ_all <- search_detailed(subject = "Ekonometri")
 ```
 
 ``` r
+
 # Narrow to a discipline within a subject
 theory <- search_detailed(
   subject = "Ekonomi",
@@ -454,6 +474,7 @@ theory <- search_detailed(
 ```
 
 ``` r
+
 # Combine discipline with university
 boun_theory <- search_detailed(
   university = "Boğaziçi Üniversitesi",
@@ -466,6 +487,7 @@ boun_theory <- search_detailed(
 You can also filter results by supervisor names.
 
 ``` r
+
 # Find theses supervised by a specific supervisor
 supervisor_theses <- search_detailed(supervisor = "Mustafa Kadir Doğan")
 head(supervisor_theses)
@@ -495,6 +517,7 @@ deduplicates by `thesis_no`. This makes cross-institutional and
 cross-disciplinary comparisons possible in a single function call.
 
 ``` r
+
 # Search across multiple universities
 multi_uni <- search_detailed(
   university = c("Ankara Üniversitesi", "İstanbul Üniversitesi"),
@@ -542,6 +565,7 @@ You can pass a single `detail_id` from search results to
 returns a one-row tibble.
 
 ``` r
+
 # Search and get details for the first match
 ankara_econ <- search_detailed(
   university = "Ankara Üniversitesi",
@@ -594,6 +618,7 @@ multiple theses. The function shows text progress updates by default and
 fetches uncached records in parallel (up to 5 active requests).
 
 ``` r
+
 # Fetch details for all results
 ankara_econ <- search_detailed(
   university = "Ankara Üniversitesi",
@@ -612,6 +637,7 @@ ankara_econ_all_details <- detail(ankara_econ$detail_id)
 These functions return summary statistics tables from the NTC.
 
 ``` r
+
 # Thesis counts by year
 year_stats <- stats_years()
 tail(year_stats)
@@ -627,6 +653,7 @@ tail(year_stats)
     #> 5  2025         22615    4416  27031
 
 ``` r
+
 # Thesis counts by university
 uni_stats <- stats_universities()
 head(uni_stats)
@@ -649,6 +676,7 @@ server load.
 ### Viewing Cache Status
 
 ``` r
+
 # Shows: enabled status, item counts, and TTL settings
 cache_info()
 ```
@@ -682,6 +710,7 @@ You can clear specific cache types or everything at once. The
 `"lookups"` option clears cached university/subject/division lists.
 
 ``` r
+
 # Clear search results only
 cache_clear("searches")
 
@@ -702,6 +731,7 @@ TTL values are in seconds. `NULL` means entries persist for the entire
 session.
 
 ``` r
+
 # 2-hour search cache, 1-week detail cache
 cache_config(
   search_ttl = 7200,
@@ -722,6 +752,7 @@ You can override that value for an institutional network policy or a
 portal compatibility issue.
 
 ``` r
+
 request_config(user_agent = "my-lab-contact@example.edu")
 request_config(reset = TRUE)
 ```
@@ -741,6 +772,7 @@ Search results are returned in tibbles, so they work directly with
 `dplyr` and other `tidyverse` tools.
 
 ``` r
+
 climate_change <- search_basic("climate change")
 
 # Count by year
