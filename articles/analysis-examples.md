@@ -15,7 +15,6 @@ Started](https://eremrah.com/tezr/articles/getting-started.md) vignette
 for search function details.
 
 ``` r
-
 library(tezr)
 library(dplyr)
 library(ggplot2)
@@ -46,7 +45,6 @@ with the `search_field` parameter set to all. The result is a tibble of
 matching records with year, author, university, and other metadata.
 
 ``` r
-
 # Search for "iklim değişikliği" (climate change) in thesis titles
 if (live_examples) {
   climate <- search_advanced(keyword = "iklim değişikliği",
@@ -80,7 +78,6 @@ The rolling average reveals sustained growth versus one-off spikes. We
 can adjust `k` for a wider or narrower window.
 
 ``` r
-
 # Count theses per year
 yearly_counts <- climate |>
   count(year) |>
@@ -115,7 +112,6 @@ We can split by degree type to see what drives growth. Filter to the two
 main types for a readable plot.
 
 ``` r
-
 # Compare master's and PhD thesis counts over time
 type_trends <- climate |>
   filter(thesis_type_en %in% c("Master", "Doctorate")) |>
@@ -145,7 +141,6 @@ in a given field. You can replace `"Ekonometri"` with any subject from
 ### Collecting University-Level Data
 
 ``` r
-
 # All econometrics theses, counted by university
 if (live_examples) {
   econ_theses <- search_detailed(subject = "Ekonometri",
@@ -174,7 +169,6 @@ Let’s create a simple bar chart. Horizontal bars make long Turkish
 university names easy to read.
 
 ``` r
-
 uni_counts |>
   head(10) |>
   ggplot(aes(x = n, y = reorder(university, n))) +
@@ -195,7 +189,6 @@ uni_counts |>
 Let’s compare the top four universities from 2000 onward.
 
 ``` r
-
 top4_unis <- uni_counts$university[1:4]
 
 # Filter to top 4 universities, 2000 onward
@@ -228,7 +221,6 @@ Let’s assume a higher PhD ratio suggests a more research-intensive
 program.
 
 ``` r
-
 # Compute PhD share at each top university
 top_unis <- uni_counts$university[1:10]
 
@@ -260,7 +252,6 @@ details for all matching theses, so it is slow.
 ### Collecting Detailed Metadata
 
 ``` r
-
 # Search for machine learning theses
 if (live_examples) {
   ml_search <- search_basic("makine öğrenmesi",
@@ -292,7 +283,6 @@ The `keywords_tr` field contains semicolon separated terms. Let’s split
 them, trim whitespace, and count.
 
 ``` r
-
 # Parse comma-separated keywords into individual rows
 keywords <- ml_details |>
   filter(!is.na(keywords_tr)) |>
@@ -329,7 +319,6 @@ sessions to skip network calls. RDS preserves column types and CSV is
 useful for sharing.
 
 ``` r
-
 # Save after first fetch
 saveRDS(econ_theses, "econ_theses.rds")
 readr::write_rds(econ_theses, "econ_theses_readr.rds")
@@ -346,7 +335,6 @@ This protects against interruptions — if the process stops, you only
 lose the current batch.
 
 ``` r
-
 batch_size <- 50
 all_results <- search_basic("panel data")
 

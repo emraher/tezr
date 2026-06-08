@@ -26,7 +26,6 @@ the Council of Higher Education, or the National Thesis Center.
 ## Installation
 
 ``` r
-
 # install.packages("pak")
 pak::pak("emraher/tezr")
 ```
@@ -39,7 +38,6 @@ current availability of the NTC portal. Set `TEZR_LIVE_EXAMPLES=true`
 before rendering the README or pkgdown site to run the portal queries.
 
 ``` r
-
 library(tezr)
 ```
 
@@ -47,7 +45,6 @@ Search results use `title_original` and `title_translation`. Detail
 records use `abstract_original` and `abstract_translation`.
 
 ``` r
-
 household <- search_basic(keyword = "hanehalkı")
 dplyr::glimpse(household)
 ```
@@ -73,7 +70,6 @@ A representative search result has this shape.
 ```
 
 ``` r
-
 climate_change <- search_advanced(
   keyword = "iklim değişikliği",
   year_start = 2015,
@@ -101,7 +97,6 @@ dplyr::glimpse(climate_change)
 ```
 
 ``` r
-
 phd_theses <- search_detailed(
   university = "Ankara Üniversitesi",
   division = "İktisat Ana Bilim Dalı",
@@ -127,7 +122,6 @@ head(phd_theses)
 ```
 
 ``` r
-
 details <- detail(phd_theses$detail_id[1])
 
 details |>
@@ -173,7 +167,6 @@ Save returned objects after large queries so later analysis does not
 repeat the same portal requests.
 
 ``` r
-
 saveRDS(climate_change, "climate_change_theses.rds")
 readr::write_rds(climate_change, "climate_change_theses.readr.rds")
 ```
@@ -219,7 +212,6 @@ with `request_config(user_agent = "...")` or `TEZR_USER_AGENT` if your
 institution or the portal requires a different header.
 
 ``` r
-
 request_config(user_agent = "my-lab-contact@example.edu")
 request_config(reset = TRUE)
 ```
