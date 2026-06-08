@@ -32,5 +32,11 @@ Other lookup functions:
 ``` r
 if (FALSE) { # interactive()
 subjects <- list_subjects()
+head(subjects)
+#> # A tibble: 6 x 3
+#>   name_tr    name_en      id
+#>   <chr>      <chr>        <chr>
+#> 1 Ekonomi    Economics    115
+#> 2 Ekonometri Econometrics 116
 }
 ```

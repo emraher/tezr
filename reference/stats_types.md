@@ -24,5 +24,10 @@ Other statistics functions:
 ``` r
 if (FALSE) { # interactive()
 stats <- stats_types()
+stats
+#> # A tibble: 1 x 4
+#>   yuksek_lisans doktora tipta_uzmanlik sanatta_yeterlik
+#>           <dbl>   <dbl>           <dbl>            <dbl>
+#> 1        721384  178264           90030             2395
 }
 ```

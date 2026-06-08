@@ -24,5 +24,10 @@ Other statistics functions:
 ``` r
 if (FALSE) { # interactive()
 stats <- stats_subjects()
+head(stats)
+#> # A tibble: 6 x 8
+#>   subject   yuksek_lisans doktora toplam
+#>   <chr>             <int>   <int>  <int>
+#> 1 Ekonomi           21142    5842  26984
 }
 ```

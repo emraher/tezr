@@ -6,8 +6,10 @@ progressing to multi-filter queries, detail retrieval, and cache
 management.
 
 The vignette does not run live NTC queries during ordinary package
-builds. Set `TEZR_LIVE_EXAMPLES=true` before rendering if you want to
-execute the portal requests.
+builds. It uses representative output so readers can see the returned
+shapes without depending on the live portal. Set
+`TEZR_LIVE_EXAMPLES=true` before rendering if you want to execute the
+portal requests.
 
 ``` r
 
@@ -65,6 +67,22 @@ The output is a tibble with one row per thesis.
 dplyr::glimpse(ag_irrigation)
 ```
 
+    #> Rows: 8
+    #> Columns: 13
+    #> $ thesis_no         <chr> "967755", "975988", "955779", "974976", "96…
+    #> $ title_original    <chr> "Tarimsal sulama verimliligi 1", "Tarimsal …
+    #> $ title_translation <chr> "Agricultural irrigation efficiency 1", "Ag…
+    #> $ author            <chr> "PERIHAN EZGI BALLI", "CENAP ALAYBEYI", "SE…
+    #> $ university        <chr> "Bandirma Onyedi Eylul Universitesi", "Harr…
+    #> $ year              <int> 2025, 2025, 2025, 2024, 2023, 2022, 2021, 2…
+    #> $ thesis_type_tr    <chr> "Doktora", "Yuksek Lisans", "Yuksek Lisans"…
+    #> $ thesis_type_en    <chr> "Doctorate", "Master", "Master", "Master", …
+    #> $ language_tr       <chr> "Turkce", "Turkce", "Turkce", "Turkce", "Tu…
+    #> $ language_en       <chr> "Turkish", "Turkish", "Turkish", "Turkish",…
+    #> $ subject_tr        <chr> "Ziraat; Ekonomi", "Ziraat; Ekonomi", "Zira…
+    #> $ subject_en        <chr> "Agriculture; Economics", "Agriculture; Eco…
+    #> $ detail_id         <chr> "TCKf4ksTOVsOBqUcPYMKWQ", "LypZzbdoWcG0f3c6…
+
 ### Targeting Specific Fields
 
 You can use the `search_field` argument to restrict matching to a single
@@ -78,6 +96,22 @@ ag_irrigation_title <- search_basic(
   search_field = "title")
 dplyr::glimpse(ag_irrigation_title)
 ```
+
+    #> Rows: 3
+    #> Columns: 13
+    #> $ thesis_no         <chr> "967755", "975988", "955779"
+    #> $ title_original    <chr> "Tarimsal sulama verimliligi 1", "Tarimsal …
+    #> $ title_translation <chr> "Agricultural irrigation efficiency 1", "Ag…
+    #> $ author            <chr> "PERIHAN EZGI BALLI", "CENAP ALAYBEYI", "SE…
+    #> $ university        <chr> "Bandirma Onyedi Eylul Universitesi", "Harr…
+    #> $ year              <int> 2025, 2025, 2025
+    #> $ thesis_type_tr    <chr> "Doktora", "Yuksek Lisans", "Yuksek Lisans"
+    #> $ thesis_type_en    <chr> "Doctorate", "Master", "Master"
+    #> $ language_tr       <chr> "Turkce", "Turkce", "Turkce"
+    #> $ language_en       <chr> "Turkish", "Turkish", "Turkish"
+    #> $ subject_tr        <chr> "Ziraat; Ekonomi", "Ziraat; Ekonomi", "Zira…
+    #> $ subject_en        <chr> "Agriculture; Economics", "Agriculture; Eco…
+    #> $ detail_id         <chr> "TCKf4ksTOVsOBqUcPYMKWQ", "LypZzbdoWcG0f3c6…
 
 Available search field values are: `"all"` (default), `"title"`,
 `"author"`, `"supervisor"`, `"subject"`, `"index"`, `"abstract"`, and
@@ -119,6 +153,22 @@ phd_results <- search_basic(
   thesis_type = "phd")
 dplyr::glimpse(phd_results)
 ```
+
+    #> Rows: 4
+    #> Columns: 13
+    #> $ thesis_no         <chr> "967755", "960162", "946580", "968778"
+    #> $ title_original    <chr> "Ekonometri uygulamalari 1", "Ekonometri uy…
+    #> $ title_translation <chr> "Applications of econometrics 1", "Applicat…
+    #> $ author            <chr> "PERIHAN EZGI BALLI", "SAMI KAYA", "ADIL MA…
+    #> $ university        <chr> "Bandirma Onyedi Eylul Universitesi", "Ista…
+    #> $ year              <int> 2025, 2023, 2022, 2020
+    #> $ thesis_type_tr    <chr> "Doktora", "Doktora", "Doktora", "Doktora"
+    #> $ thesis_type_en    <chr> "Doctorate", "Doctorate", "Doctorate", "Doc…
+    #> $ language_tr       <chr> "Turkce", "Turkce", "Ingilizce", "Turkce"
+    #> $ language_en       <chr> "Turkish", "Turkish", "English", "Turkish"
+    #> $ subject_tr        <chr> "Ekonometri; Ekonomi", "Ekonometri; Ekonomi…
+    #> $ subject_en        <chr> "Econometrics; Economics", "Econometrics; E…
+    #> $ detail_id         <chr> "TCKf4ksTOVsOBqUcPYMKWQ", "h8m0hAyVIXV5l0pz…
 
 Available access type values are: `"all"` (default), `"open"`,
 `"restricted"`.
@@ -289,6 +339,22 @@ all_eu <- search_advanced(
 dplyr::glimpse(all_eu)
 ```
 
+    #> Rows: 8
+    #> Columns: 13
+    #> $ thesis_no         <chr> "967755", "975988", "955779", "974976", "96…
+    #> $ title_original    <chr> "Avrupa Birligi ve Turkiye 1", "Avrupa Birl…
+    #> $ title_translation <chr> "European Union and Turkiye 1", "European U…
+    #> $ author            <chr> "PERIHAN EZGI BALLI", "CENAP ALAYBEYI", "SE…
+    #> $ university        <chr> "Bandirma Onyedi Eylul Universitesi", "Harr…
+    #> $ year              <int> 2025, 2025, 2025, 2024, 2023, 2022, 2021, 2…
+    #> $ thesis_type_tr    <chr> "Doktora", "Yuksek Lisans", "Yuksek Lisans"…
+    #> $ thesis_type_en    <chr> "Doctorate", "Master", "Master", "Master", …
+    #> $ language_tr       <chr> "Turkce", "Turkce", "Turkce", "Turkce", "Tu…
+    #> $ language_en       <chr> "Turkish", "Turkish", "Turkish", "Turkish",…
+    #> $ subject_tr        <chr> "Avrupa Birligi; Ekonomi", "Avrupa Birligi;…
+    #> $ subject_en        <chr> "European Union; Economics", "European Unio…
+    #> $ detail_id         <chr> "TCKf4ksTOVsOBqUcPYMKWQ", "LypZzbdoWcG0f3c6…
+
 ## Detailed Search
 
 [`search_detailed()`](https://eremrah.com/tezr/reference/search_detailed.md)
@@ -325,6 +391,13 @@ unis <- list_universities()
 head(unis)
 ```
 
+    #> # A tibble: 3 × 2
+    #>   name                          id   
+    #>   <chr>                         <chr>
+    #> 1 ANKARA UNIVERSITESI           2    
+    #> 2 ISTANBUL UNIVERSITESI         3    
+    #> 3 ORTA DOGU TEKNIK UNIVERSITESI 60
+
 ``` r
 
 # Subjects have Turkish and English names
@@ -332,6 +405,11 @@ subjects <- list_subjects()
 subjects |>
   filter(stringr::str_detect(name_tr, stringr::fixed("Ekonomi")))
 ```
+
+    #> # A tibble: 1 × 3
+    #>   name_tr name_en   id   
+    #>   <chr>   <chr>     <chr>
+    #> 1 Ekonomi Economics 115
 
 ``` r
 
@@ -415,6 +493,19 @@ supervisor_theses <- search_detailed(supervisor = "Mustafa Kadir Doğan")
 head(supervisor_theses)
 ```
 
+    #> # A tibble: 6 × 13
+    #>   thesis_no title_original    title_translation author university  year
+    #>   <chr>     <chr>             <chr>             <chr>  <chr>      <int>
+    #> 1 9677551   Parasal aktarım … Domestic credit … PERIH… Ankara Un…  2020
+    #> 2 9759882   1980 sonrası Tür… Changes in sunfl… CENAP… Ankara Un…  2021
+    #> 3 9557793   Doğrudan yabancı… Foreign direct i… SECIL… Ankara Un…  2022
+    #> 4 9749764   Enerji kullanımı… Panel data analy… RUMEY… Ankara Un…  2023
+    #> 5 9601625   Finansal liberal… Fragility during… SAMI … Ankara Un…  2024
+    #> 6 9465806   Azerbaycan'ın ek… An analysis of A… ADIL … Ankara Un…  2025
+    #> # ℹ 7 more variables: thesis_type_tr <chr>, thesis_type_en <chr>,
+    #> #   language_tr <chr>, language_en <chr>, subject_tr <chr>,
+    #> #   subject_en <chr>, detail_id <chr>
+
 ### Vector-Valued Parameters
 
 The YÖK web portal accepts only one value per filter field. `tezr`
@@ -492,6 +583,34 @@ dplyr::glimpse(ankara_econ_details)
 ankara_econ_details$abstract_translation
 ```
 
+    #> Rows: 1
+    #> Columns: 24
+    #> $ thesis_no            <chr> "9677551"
+    #> $ title_original       <chr> "Parasal aktarim mekanizmasi cercevesind…
+    #> $ title_translation    <chr> "Domestic credit to private sector and m…
+    #> $ author               <chr> "PERIHAN EZGI BALLI"
+    #> $ advisor              <chr> "PROF. DR. HASAN SAHIN"
+    #> $ co_advisor           <chr> NA
+    #> $ university           <chr> "Ankara Universitesi"
+    #> $ institute            <chr> "Sosyal Bilimler Enstitusu"
+    #> $ division             <chr> "Iktisat Ana Bilim Dali"
+    #> $ year                 <chr> "2020"
+    #> $ pages                <chr> "153"
+    #> $ thesis_type_tr       <chr> "Doktora"
+    #> $ thesis_type_en       <chr> "Doctorate"
+    #> $ language_tr          <chr> "Turkce"
+    #> $ language_en          <chr> "Turkish"
+    #> $ subject_tr           <chr> "Ekonomi; Enerji"
+    #> $ subject_en           <chr> "Economics; Energy"
+    #> $ abstract_original    <chr> "Enerji piyasasi duzenlemelerinin ana ek…
+    #> $ abstract_translation <chr> "This thesis consists of three essays on…
+    #> $ keywords_tr          <chr> "Enerji piyasalari; Duzenleme; Elektrik"
+    #> $ keywords_en          <chr> "Energy markets; Regulation; Electricity"
+    #> $ access_status        <chr> "open"
+    #> $ pdf_url              <chr> "https://tez.yok.gov.tr/UlusalTezMerkezi…
+    #> $ detail_url           <chr> "https://tez.yok.gov.tr/UlusalTezMerkezi…
+    #> [1] "This thesis consists of three essays on energy market regulation, market design, and transformation."
+
 ### Batch Retrieval
 
 You can also pass a vector of `detail_id` values to fetch details for
@@ -524,6 +643,15 @@ year_stats <- stats_years()
 tail(year_stats)
 ```
 
+    #> # A tibble: 5 × 4
+    #>    year yuksek_lisans doktora toplam
+    #>   <int>         <int>   <int>  <int>
+    #> 1  2021         28906    7128  36034
+    #> 2  2022         33102    7481  40583
+    #> 3  2023         35987    8026  44013
+    #> 4  2024         40124    8841  48965
+    #> 5  2025         22615    4416  27031
+
 ``` r
 
 # Thesis counts by university
@@ -552,6 +680,24 @@ server load.
 # Shows: enabled status, item counts, and TTL settings
 cache_info()
 ```
+
+    #> $enabled
+    #> [1] TRUE
+    #> 
+    #> $search_count
+    #> [1] 0
+    #> 
+    #> $range_count
+    #> [1] 0
+    #> 
+    #> $detail_count
+    #> [1] 0
+    #> 
+    #> $search_ttl
+    #> [1] 3600
+    #> 
+    #> $detail_ttl
+    #> NULL
 
 The output includes `search_count`, `range_count`, `detail_count`,
 `search_ttl`, and `detail_ttl`. Search cache defaults to 3600 seconds (1

@@ -249,6 +249,12 @@ to retrieve all results.</p>
 <span class="r-in"><span>  year_start <span class="op">=</span> <span class="fl">2015</span>,</span></span>
 <span class="r-in"><span>  year_end <span class="op">=</span> <span class="fl">2024</span></span></span>
 <span class="r-in"><span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="va">climate</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="co">#&gt; # A tibble: 6 x 13</span></span></span>
+<span class="r-in"><span><span class="co">#&gt;   thesis_no title_original author university year thesis_type_en detail_id</span></span></span>
+<span class="r-in"><span><span class="co">#&gt;   &lt;chr&gt;     &lt;chr&gt;          &lt;chr&gt;  &lt;chr&gt;      &lt;int&gt; &lt;chr&gt;          &lt;chr&gt;</span></span></span>
+<span class="r-in"><span><span class="co">#&gt; 1 967755    Iklim degis... AYSE   Ankara...  2024 Master         TCKf...</span></span></span>
+<span class="r-in"><span><span class="co">#&gt; 2 955779    Iklim polit... MEHMET Istanbul...2023 Doctorate      xSXE...</span></span></span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># Title search with university filter</span></span></span>
 <span class="r-in"><span><span class="va">ml_theses</span> <span class="op">&lt;-</span> <span class="fu">search_detailed</span><span class="op">(</span></span></span>

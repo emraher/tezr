@@ -133,6 +133,15 @@ year-range splitting to retrieve all results. With the default
     <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="kw">if</span> <span class="op">(</span><span class="cn">FALSE</span><span class="op">)</span> <span class="op">{</span> <span class="co"># interactive()</span></span></span>
 <span class="r-in"><span><span class="co"># Search for theses (returns up to 2000 results)</span></span></span>
 <span class="r-in"><span><span class="va">search_results</span> <span class="op">&lt;-</span> <span class="fu">search_basic</span><span class="op">(</span><span class="st">"hanehalkı"</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="fu">dplyr</span><span class="fu">::</span><span class="fu"><a href="https://pillar.r-lib.org/reference/glimpse.html" class="external-link">glimpse</a></span><span class="op">(</span><span class="va">search_results</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="co">#&gt; Rows: 2,000</span></span></span>
+<span class="r-in"><span><span class="co">#&gt; Columns: 13</span></span></span>
+<span class="r-in"><span><span class="co">#&gt; $ thesis_no         &lt;chr&gt; "967755", "975988", "955779", ...</span></span></span>
+<span class="r-in"><span><span class="co">#&gt; $ title_original    &lt;chr&gt; "Parasal aktarim mekanizmasi...", ...</span></span></span>
+<span class="r-in"><span><span class="co">#&gt; $ author            &lt;chr&gt; "PERIHAN EZGI BALLI", ...</span></span></span>
+<span class="r-in"><span><span class="co">#&gt; $ university        &lt;chr&gt; "Bandirma Onyedi Eylul Universitesi", ...</span></span></span>
+<span class="r-in"><span><span class="co">#&gt; $ year              &lt;int&gt; 2025, 2025, 2025, ...</span></span></span>
+<span class="r-in"><span><span class="co">#&gt; $ detail_id         &lt;chr&gt; "TCKf4ksTOVsOBqUcPYMKWQ", ...</span></span></span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># Search for PhD theses by a specific author</span></span></span>
 <span class="r-in"><span><span class="va">search_results</span> <span class="op">&lt;-</span> <span class="fu">search_basic</span><span class="op">(</span></span></span>

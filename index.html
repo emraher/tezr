@@ -78,27 +78,72 @@
 <div class="section level2">
 <h2 id="quick-start">Quick Start<a class="anchor" aria-label="anchor" href="#quick-start"></a>
 </h2>
-<p>Live examples are not run when this README is built. Set <code>TEZR_LIVE_EXAMPLES=true</code> before rendering the README or pkgdown site if you want to run the portal queries.</p>
+<p>The code below shows live portal queries. Ordinary documentation builds use representative output so the README and website do not depend on the current availability of the NTC portal. Set <code>TEZR_LIVE_EXAMPLES=true</code> before rendering the README or pkgdown site to run the portal queries.</p>
 <div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://eremrah.com/tezr/">tezr</a></span><span class="op">)</span></span></code></pre></div>
 <p>Search results use <code>title_original</code> and <code>title_translation</code>. Detail records use <code>abstract_original</code> and <code>abstract_translation</code>.</p>
 <div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">household</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/search_basic.html">search_basic</a></span><span class="op">(</span>keyword <span class="op">=</span> <span class="st">"hanehalkı"</span><span class="op">)</span></span>
 <span><span class="fu">dplyr</span><span class="fu">::</span><span class="fu"><a href="https://pillar.r-lib.org/reference/glimpse.html" class="external-link">glimpse</a></span><span class="op">(</span><span class="va">household</span><span class="op">)</span></span></code></pre></div>
-<div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
+<p>A representative search result has this shape.</p>
+<div class="sourceCode" id="cb4"><pre class="sourceCode R"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1" tabindex="-1"></a><span class="co">#&gt; Rows: 8</span></span>
+<span id="cb4-2"><a href="#cb4-2" tabindex="-1"></a><span class="co">#&gt; Columns: 13</span></span>
+<span id="cb4-3"><a href="#cb4-3" tabindex="-1"></a><span class="co">#&gt; $ thesis_no         &lt;chr&gt; "967755", "975988", "955779", "974976", "960162", "9…</span></span>
+<span id="cb4-4"><a href="#cb4-4" tabindex="-1"></a><span class="co">#&gt; $ title_original    &lt;chr&gt; "Hanehalki gelir ve tuketim analizi 1", "Hanehalki g…</span></span>
+<span id="cb4-5"><a href="#cb4-5" tabindex="-1"></a><span class="co">#&gt; $ title_translation &lt;chr&gt; "Household income and consumption analysis 1", "Hous…</span></span>
+<span id="cb4-6"><a href="#cb4-6" tabindex="-1"></a><span class="co">#&gt; $ author            &lt;chr&gt; "PERIHAN EZGI BALLI", "CENAP ALAYBEYI", "SECIL ALMIS…</span></span>
+<span id="cb4-7"><a href="#cb4-7" tabindex="-1"></a><span class="co">#&gt; $ university        &lt;chr&gt; "Bandirma Onyedi Eylul Universitesi", "Harran Univer…</span></span>
+<span id="cb4-8"><a href="#cb4-8" tabindex="-1"></a><span class="co">#&gt; $ year              &lt;int&gt; 2025, 2025, 2025, 2024, 2023, 2022, 2021, 2020</span></span>
+<span id="cb4-9"><a href="#cb4-9" tabindex="-1"></a><span class="co">#&gt; $ thesis_type_tr    &lt;chr&gt; "Doktora", "Yuksek Lisans", "Yuksek Lisans", "Yuksek…</span></span>
+<span id="cb4-10"><a href="#cb4-10" tabindex="-1"></a><span class="co">#&gt; $ thesis_type_en    &lt;chr&gt; "Doctorate", "Master", "Master", "Master", "Doctorat…</span></span>
+<span id="cb4-11"><a href="#cb4-11" tabindex="-1"></a><span class="co">#&gt; $ language_tr       &lt;chr&gt; "Turkce", "Turkce", "Turkce", "Turkce", "Turkce", "I…</span></span>
+<span id="cb4-12"><a href="#cb4-12" tabindex="-1"></a><span class="co">#&gt; $ language_en       &lt;chr&gt; "Turkish", "Turkish", "Turkish", "Turkish", "Turkish…</span></span>
+<span id="cb4-13"><a href="#cb4-13" tabindex="-1"></a><span class="co">#&gt; $ subject_tr        &lt;chr&gt; "Ekonomi", "Ekonomi", "Ekonomi", "Ekonomi", "Ekonomi…</span></span>
+<span id="cb4-14"><a href="#cb4-14" tabindex="-1"></a><span class="co">#&gt; $ subject_en        &lt;chr&gt; "Economics", "Economics", "Economics", "Economics", …</span></span>
+<span id="cb4-15"><a href="#cb4-15" tabindex="-1"></a><span class="co">#&gt; $ detail_id         &lt;chr&gt; "TCKf4ksTOVsOBqUcPYMKWQ", "LypZzbdoWcG0f3c62wverw", …</span></span></code></pre></div>
+<div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">climate_change</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/search_advanced.html">search_advanced</a></span><span class="op">(</span></span>
 <span>  keyword <span class="op">=</span> <span class="st">"iklim değişikliği"</span>,</span>
 <span>  year_start <span class="op">=</span> <span class="fl">2015</span>,</span>
 <span>  group <span class="op">=</span> <span class="st">"science"</span></span>
-<span><span class="op">)</span></span></code></pre></div>
-<div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
+<span><span class="op">)</span></span>
+<span><span class="fu">dplyr</span><span class="fu">::</span><span class="fu"><a href="https://pillar.r-lib.org/reference/glimpse.html" class="external-link">glimpse</a></span><span class="op">(</span><span class="va">climate_change</span><span class="op">)</span></span></code></pre></div>
+<div class="sourceCode" id="cb6"><pre class="sourceCode R"><code class="sourceCode r"><span id="cb6-1"><a href="#cb6-1" tabindex="-1"></a><span class="co">#&gt; Rows: 24</span></span>
+<span id="cb6-2"><a href="#cb6-2" tabindex="-1"></a><span class="co">#&gt; Columns: 13</span></span>
+<span id="cb6-3"><a href="#cb6-3" tabindex="-1"></a><span class="co">#&gt; $ thesis_no         &lt;chr&gt; "9677551", "9759882", "9557793", "9749764", "9601625…</span></span>
+<span id="cb6-4"><a href="#cb6-4" tabindex="-1"></a><span class="co">#&gt; $ title_original    &lt;chr&gt; "Iklim degisikligi 1", "Iklim degisikligi 2", "Iklim…</span></span>
+<span id="cb6-5"><a href="#cb6-5" tabindex="-1"></a><span class="co">#&gt; $ title_translation &lt;chr&gt; "Climate change 1", "Climate change 2", "Climate cha…</span></span>
+<span id="cb6-6"><a href="#cb6-6" tabindex="-1"></a><span class="co">#&gt; $ author            &lt;chr&gt; "PERIHAN EZGI BALLI", "CENAP ALAYBEYI", "SECIL ALMIS…</span></span>
+<span id="cb6-7"><a href="#cb6-7" tabindex="-1"></a><span class="co">#&gt; $ university        &lt;chr&gt; "Ankara Universitesi", "Istanbul Universitesi", "Ege…</span></span>
+<span id="cb6-8"><a href="#cb6-8" tabindex="-1"></a><span class="co">#&gt; $ year              &lt;int&gt; 2015, 2016, 2017, 2018, 2019, 2020, 2021, 2022, 2023…</span></span>
+<span id="cb6-9"><a href="#cb6-9" tabindex="-1"></a><span class="co">#&gt; $ thesis_type_tr    &lt;chr&gt; "Doktora", "Yuksek Lisans", "Yuksek Lisans", "Yuksek…</span></span>
+<span id="cb6-10"><a href="#cb6-10" tabindex="-1"></a><span class="co">#&gt; $ thesis_type_en    &lt;chr&gt; "Master", "Doctorate", "Master", "Doctorate", "Maste…</span></span>
+<span id="cb6-11"><a href="#cb6-11" tabindex="-1"></a><span class="co">#&gt; $ language_tr       &lt;chr&gt; "Turkce", "Turkce", "Turkce", "Turkce", "Turkce", "I…</span></span>
+<span id="cb6-12"><a href="#cb6-12" tabindex="-1"></a><span class="co">#&gt; $ language_en       &lt;chr&gt; "Turkish", "Turkish", "Turkish", "Turkish", "Turkish…</span></span>
+<span id="cb6-13"><a href="#cb6-13" tabindex="-1"></a><span class="co">#&gt; $ subject_tr        &lt;chr&gt; "Cevre Bilimleri; Ekonomi", "Cevre Bilimleri; Ekonom…</span></span>
+<span id="cb6-14"><a href="#cb6-14" tabindex="-1"></a><span class="co">#&gt; $ subject_en        &lt;chr&gt; "Environmental Sciences; Economics", "Environmental …</span></span>
+<span id="cb6-15"><a href="#cb6-15" tabindex="-1"></a><span class="co">#&gt; $ detail_id         &lt;chr&gt; "TCKf4ksTOVsOBqUcPYMKWQ", "LypZzbdoWcG0f3c62wverw", …</span></span></code></pre></div>
+<div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">phd_theses</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/search_detailed.html">search_detailed</a></span><span class="op">(</span></span>
 <span>  university <span class="op">=</span> <span class="st">"Ankara Üniversitesi"</span>,</span>
 <span>  division <span class="op">=</span> <span class="st">"İktisat Ana Bilim Dalı"</span>,</span>
 <span>  thesis_type <span class="op">=</span> <span class="st">"phd"</span>,</span>
 <span>  year_start <span class="op">=</span> <span class="fl">2020</span></span>
-<span><span class="op">)</span></span></code></pre></div>
-<div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
+<span><span class="op">)</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="va">phd_theses</span><span class="op">)</span></span></code></pre></div>
+<div class="sourceCode" id="cb8"><pre class="sourceCode R"><code class="sourceCode r"><span id="cb8-1"><a href="#cb8-1" tabindex="-1"></a><span class="co">#&gt; # A tibble: 6 × 13</span></span>
+<span id="cb8-2"><a href="#cb8-2" tabindex="-1"></a><span class="co">#&gt;   thesis_no title_original             title_translation author university  year</span></span>
+<span id="cb8-3"><a href="#cb8-3" tabindex="-1"></a><span class="co">#&gt;   &lt;chr&gt;     &lt;chr&gt;                      &lt;chr&gt;             &lt;chr&gt;  &lt;chr&gt;      &lt;int&gt;</span></span>
+<span id="cb8-4"><a href="#cb8-4" tabindex="-1"></a><span class="co">#&gt; 1 9677551   Parasal aktarım mekanizma… Domestic credit … PERIH… Ankara Un…  2020</span></span>
+<span id="cb8-5"><a href="#cb8-5" tabindex="-1"></a><span class="co">#&gt; 2 9759882   1980 sonrası Türkiye'de a… Changes in sunfl… CENAP… Ankara Un…  2021</span></span>
+<span id="cb8-6"><a href="#cb8-6" tabindex="-1"></a><span class="co">#&gt; 3 9557793   Doğrudan yabancı yatırıml… Foreign direct i… SECIL… Ankara Un…  2022</span></span>
+<span id="cb8-7"><a href="#cb8-7" tabindex="-1"></a><span class="co">#&gt; 4 9749764   Enerji kullanımı ile G-20… Panel data analy… RUMEY… Ankara Un…  2023</span></span>
+<span id="cb8-8"><a href="#cb8-8" tabindex="-1"></a><span class="co">#&gt; 5 9601625   Finansal liberalleşme sür… Fragility during… SAMI … Ankara Un…  2024</span></span>
+<span id="cb8-9"><a href="#cb8-9" tabindex="-1"></a><span class="co">#&gt; 6 9465806   Azerbaycan'ın ekolojik ay… An analysis of A… ADIL … Ankara Un…  2025</span></span>
+<span id="cb8-10"><a href="#cb8-10" tabindex="-1"></a><span class="co">#&gt; # ℹ 7 more variables: thesis_type_tr &lt;chr&gt;, thesis_type_en &lt;chr&gt;,</span></span>
+<span id="cb8-11"><a href="#cb8-11" tabindex="-1"></a><span class="co">#&gt; #   language_tr &lt;chr&gt;, language_en &lt;chr&gt;, subject_tr &lt;chr&gt;, subject_en &lt;chr&gt;,</span></span>
+<span id="cb8-12"><a href="#cb8-12" tabindex="-1"></a><span class="co">#&gt; #   detail_id &lt;chr&gt;</span></span></code></pre></div>
+<div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">details</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/detail.html">detail</a></span><span class="op">(</span><span class="va">phd_theses</span><span class="op">$</span><span class="va">detail_id</span><span class="op">[</span><span class="fl">1</span><span class="op">]</span><span class="op">)</span></span>
 <span></span>
 <span><span class="va">details</span> <span class="op">|&gt;</span></span>
@@ -107,9 +152,36 @@
 <span>    names_to <span class="op">=</span> <span class="st">"colname"</span>,</span>
 <span>    values_to <span class="op">=</span> <span class="st">"colvalue"</span></span>
 <span>  <span class="op">)</span> <span class="op">|&gt;</span></span>
-<span>  <span class="fu"><a href="https://rdrr.io/r/base/print.html" class="external-link">print</a></span><span class="op">(</span>n <span class="op">=</span> <span class="fl">23</span><span class="op">)</span></span></code></pre></div>
+<span>  <span class="fu"><a href="https://rdrr.io/r/base/print.html" class="external-link">print</a></span><span class="op">(</span>n <span class="op">=</span> <span class="fl">24</span><span class="op">)</span></span></code></pre></div>
+<div class="sourceCode" id="cb10"><pre class="sourceCode R"><code class="sourceCode r"><span id="cb10-1"><a href="#cb10-1" tabindex="-1"></a><span class="co">#&gt; # A tibble: 24 × 2</span></span>
+<span id="cb10-2"><a href="#cb10-2" tabindex="-1"></a><span class="co">#&gt;    colname              colvalue</span></span>
+<span id="cb10-3"><a href="#cb10-3" tabindex="-1"></a><span class="co">#&gt;    &lt;chr&gt;                &lt;chr&gt;</span></span>
+<span id="cb10-4"><a href="#cb10-4" tabindex="-1"></a><span class="co">#&gt;  1 thesis_no            9677551</span></span>
+<span id="cb10-5"><a href="#cb10-5" tabindex="-1"></a><span class="co">#&gt;  2 title_original       Parasal aktarim mekanizmasi cercevesinde ozel sektore k…</span></span>
+<span id="cb10-6"><a href="#cb10-6" tabindex="-1"></a><span class="co">#&gt;  3 title_translation    Domestic credit to private sector and monetary transmis…</span></span>
+<span id="cb10-7"><a href="#cb10-7" tabindex="-1"></a><span class="co">#&gt;  4 author               PERIHAN EZGI BALLI</span></span>
+<span id="cb10-8"><a href="#cb10-8" tabindex="-1"></a><span class="co">#&gt;  5 advisor              PROF. DR. HASAN SAHIN</span></span>
+<span id="cb10-9"><a href="#cb10-9" tabindex="-1"></a><span class="co">#&gt;  6 co_advisor           &lt;NA&gt;</span></span>
+<span id="cb10-10"><a href="#cb10-10" tabindex="-1"></a><span class="co">#&gt;  7 university           Ankara Universitesi</span></span>
+<span id="cb10-11"><a href="#cb10-11" tabindex="-1"></a><span class="co">#&gt;  8 institute            Sosyal Bilimler Enstitusu</span></span>
+<span id="cb10-12"><a href="#cb10-12" tabindex="-1"></a><span class="co">#&gt;  9 division             Iktisat Ana Bilim Dali</span></span>
+<span id="cb10-13"><a href="#cb10-13" tabindex="-1"></a><span class="co">#&gt; 10 year                 2020</span></span>
+<span id="cb10-14"><a href="#cb10-14" tabindex="-1"></a><span class="co">#&gt; 11 pages                153</span></span>
+<span id="cb10-15"><a href="#cb10-15" tabindex="-1"></a><span class="co">#&gt; 12 thesis_type_tr       Doktora</span></span>
+<span id="cb10-16"><a href="#cb10-16" tabindex="-1"></a><span class="co">#&gt; 13 thesis_type_en       Doctorate</span></span>
+<span id="cb10-17"><a href="#cb10-17" tabindex="-1"></a><span class="co">#&gt; 14 language_tr          Turkce</span></span>
+<span id="cb10-18"><a href="#cb10-18" tabindex="-1"></a><span class="co">#&gt; 15 language_en          Turkish</span></span>
+<span id="cb10-19"><a href="#cb10-19" tabindex="-1"></a><span class="co">#&gt; 16 subject_tr           Ekonomi; Enerji</span></span>
+<span id="cb10-20"><a href="#cb10-20" tabindex="-1"></a><span class="co">#&gt; 17 subject_en           Economics; Energy</span></span>
+<span id="cb10-21"><a href="#cb10-21" tabindex="-1"></a><span class="co">#&gt; 18 abstract_original    Enerji piyasasi duzenlemelerinin ana ekseninde enerji a…</span></span>
+<span id="cb10-22"><a href="#cb10-22" tabindex="-1"></a><span class="co">#&gt; 19 abstract_translation This thesis consists of three essays on energy market r…</span></span>
+<span id="cb10-23"><a href="#cb10-23" tabindex="-1"></a><span class="co">#&gt; 20 keywords_tr          Enerji piyasalari; Duzenleme; Elektrik</span></span>
+<span id="cb10-24"><a href="#cb10-24" tabindex="-1"></a><span class="co">#&gt; 21 keywords_en          Energy markets; Regulation; Electricity</span></span>
+<span id="cb10-25"><a href="#cb10-25" tabindex="-1"></a><span class="co">#&gt; 22 access_status        open</span></span>
+<span id="cb10-26"><a href="#cb10-26" tabindex="-1"></a><span class="co">#&gt; 23 pdf_url              https://tez.yok.gov.tr/UlusalTezMerkezi/tezIndir.jsp?id…</span></span>
+<span id="cb10-27"><a href="#cb10-27" tabindex="-1"></a><span class="co">#&gt; 24 detail_url           https://tez.yok.gov.tr/UlusalTezMerkezi/tezDetay.jsp?id…</span></span></code></pre></div>
 <p>Save returned objects after large queries so later analysis does not repeat the same portal requests.</p>
-<div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb11"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/readRDS.html" class="external-link">saveRDS</a></span><span class="op">(</span><span class="va">climate_change</span>, <span class="st">"climate_change_theses.rds"</span><span class="op">)</span></span>
 <span><span class="fu">readr</span><span class="fu">::</span><span class="fu"><a href="https://readr.tidyverse.org/reference/read_rds.html" class="external-link">write_rds</a></span><span class="op">(</span><span class="va">climate_change</span>, <span class="st">"climate_change_theses.readr.rds"</span><span class="op">)</span></span></code></pre></div>
 </div>
@@ -130,7 +202,7 @@
 <h2 id="request-behavior">Request Behavior<a class="anchor" aria-label="anchor" href="#request-behavior"></a>
 </h2>
 <p><code>tezr</code> sends a package-identifying user agent by default. Override it with <code>request_config(user_agent = "...")</code> or <code>TEZR_USER_AGENT</code> if your institution or the portal requires a different header.</p>
-<div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb12"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="reference/request_config.html">request_config</a></span><span class="op">(</span>user_agent <span class="op">=</span> <span class="st">"my-lab-contact@example.edu"</span><span class="op">)</span></span>
 <span><span class="fu"><a href="reference/request_config.html">request_config</a></span><span class="op">(</span>reset <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></code></pre></div>
 <p>Set <code>request_config(verbose = FALSE)</code> or <code>TEZR_VERBOSE=false</code> to silence informational progress messages. Warnings and errors are still shown.</p>

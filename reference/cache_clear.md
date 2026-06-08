@@ -42,4 +42,17 @@ cache_clear("searches")
 # Clear only thesis details
 cache_clear("details")
 #> ✔ Detail cache cleared
+info <- cache_info()
+info[c("search_count", "detail_count")]
+#> $search_count
+#> [1] 0
+#> 
+#> $detail_count
+#> [1] 0
+#> 
+#> $search_count
+#> [1] 0
+#>
+#> $detail_count
+#> [1] 0
 ```

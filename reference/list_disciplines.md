@@ -30,5 +30,11 @@ Other lookup functions:
 ``` r
 if (FALSE) { # interactive()
 disciplines <- list_disciplines()
+head(disciplines)
+#> # A tibble: 6 x 2
+#>   name                         id
+#>   <chr>                        <chr>
+#> 1 ACIK DENIZ YAPILARI          1
+#> 2 ADLI BILIMLER                2
 }
 ```

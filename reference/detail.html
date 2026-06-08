@@ -114,6 +114,15 @@ available</p></li>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># Get details for a single thesis</span></span></span>
 <span class="r-in"><span><span class="va">thesis_details</span> <span class="op">&lt;-</span> <span class="fu">detail</span><span class="op">(</span><span class="va">results</span><span class="op">$</span><span class="va">detail_id</span><span class="op">[</span><span class="fl">1</span><span class="op">]</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="fu">dplyr</span><span class="fu">::</span><span class="fu"><a href="https://pillar.r-lib.org/reference/glimpse.html" class="external-link">glimpse</a></span><span class="op">(</span><span class="va">thesis_details</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="co">#&gt; Rows: 1</span></span></span>
+<span class="r-in"><span><span class="co">#&gt; Columns: 24</span></span></span>
+<span class="r-in"><span><span class="co">#&gt; $ thesis_no            &lt;chr&gt; "393353"</span></span></span>
+<span class="r-in"><span><span class="co">#&gt; $ title_original       &lt;chr&gt; "Enerji piyasasi duzenlemeleri..."</span></span></span>
+<span class="r-in"><span><span class="co">#&gt; $ author               &lt;chr&gt; "ISIL SIRIN SELCUK CAKMAK"</span></span></span>
+<span class="r-in"><span><span class="co">#&gt; $ university           &lt;chr&gt; "Ankara Universitesi"</span></span></span>
+<span class="r-in"><span><span class="co">#&gt; $ thesis_type_en       &lt;chr&gt; "Doctorate"</span></span></span>
+<span class="r-in"><span><span class="co">#&gt; $ abstract_translation &lt;chr&gt; "This thesis consists of..."</span></span></span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># Get details for multiple theses (batch)</span></span></span>
 <span class="r-in"><span><span class="va">all_details</span> <span class="op">&lt;-</span> <span class="fu">detail</span><span class="op">(</span>detail_id <span class="op">=</span> <span class="va">results</span><span class="op">$</span><span class="va">detail_id</span><span class="op">)</span></span></span>

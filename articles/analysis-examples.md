@@ -6,8 +6,9 @@ and ends with a table or plot. The workflows cover research trends,
 institutional comparisons, and keyword mining.
 
 The vignette does not run live NTC queries during ordinary package
-builds. Set `TEZR_LIVE_EXAMPLES=true` before rendering if you want to
-execute the portal requests.
+builds. It uses representative output so readers can see each workflow
+without depending on the live portal. Set `TEZR_LIVE_EXAMPLES=true`
+before rendering if you want to execute the portal requests.
 
 **Prerequisites:** Familiarity with dplyr and ggplot2. See the [Getting
 Started](https://eremrah.com/tezr/articles/getting-started.md) vignette
@@ -47,10 +48,29 @@ matching records with year, author, university, and other metadata.
 ``` r
 
 # Search for "iklim değişikliği" (climate change) in thesis titles
-climate <- search_advanced(keyword = "iklim değişikliği",
-                           search_field = "all",
-                           max_search_results = Inf)
+if (live_examples) {
+  climate <- search_advanced(keyword = "iklim değişikliği",
+                             search_field = "all",
+                             max_search_results = Inf)
+} else {
+  climate <- tezr_example_climate_results()
+}
 glimpse(climate)
+#> Rows: 24
+#> Columns: 13
+#> $ thesis_no         <chr> "9677551", "9759882", "9557793", "9749764",…
+#> $ title_original    <chr> "Iklim degisikligi 1", "Iklim degisikligi 2…
+#> $ title_translation <chr> "Climate change 1", "Climate change 2", "Cl…
+#> $ author            <chr> "PERIHAN EZGI BALLI", "CENAP ALAYBEYI", "SE…
+#> $ university        <chr> "Ankara Universitesi", "Istanbul Universite…
+#> $ year              <int> 2015, 2016, 2017, 2018, 2019, 2020, 2021, 2…
+#> $ thesis_type_tr    <chr> "Doktora", "Yuksek Lisans", "Yuksek Lisans"…
+#> $ thesis_type_en    <chr> "Master", "Doctorate", "Master", "Doctorate…
+#> $ language_tr       <chr> "Turkce", "Turkce", "Turkce", "Turkce", "Tu…
+#> $ language_en       <chr> "Turkish", "Turkish", "Turkish", "Turkish",…
+#> $ subject_tr        <chr> "Cevre Bilimleri; Ekonomi", "Cevre Bilimler…
+#> $ subject_en        <chr> "Environmental Sciences; Economics", "Envir…
+#> $ detail_id         <chr> "TCKf4ksTOVsOBqUcPYMKWQ", "LypZzbdoWcG0f3c6…
 ```
 
 ### Yearly Counts with Rolling Average
@@ -87,6 +107,8 @@ yearly_counts |>
   theme_minimal(base_size = 11)
 ```
 
+![](analysis-examples_files/figure-html/unnamed-chunk-3-1.png)
+
 ### Master’s vs PhD Trends
 
 We can split by degree type to see what drives growth. Filter to the two
@@ -112,6 +134,8 @@ type_trends |>
   theme_minimal(base_size = 11)
 ```
 
+![](analysis-examples_files/figure-html/unnamed-chunk-4-1.png)
+
 ## Example 2: Comparing Universities
 
 Suppose we want to identify which universities produce the most research
@@ -123,14 +147,25 @@ in a given field. You can replace `"Ekonometri"` with any subject from
 ``` r
 
 # All econometrics theses, counted by university
-econ_theses <- search_detailed(subject = "Ekonometri",
-                               max_search_results = Inf)
+if (live_examples) {
+  econ_theses <- search_detailed(subject = "Ekonometri",
+                                 max_search_results = Inf)
+} else {
+  econ_theses <- tezr_example_econ_theses()
+}
 
 uni_counts <- econ_theses |>
   count(university, sort = TRUE)
 
 uni_counts |>
   head(10)
+#> # A tibble: 4 × 2
+#>   university                n
+#>   <chr>                 <int>
+#> 1 Ankara Universitesi       4
+#> 2 Ege Universitesi          4
+#> 3 Istanbul Universitesi     4
+#> 4 Marmara Universitesi      4
 ```
 
 ### Top Universities Bar Chart
@@ -152,6 +187,8 @@ uni_counts |>
   ) +
   theme_minimal(base_size = 11)
 ```
+
+![](analysis-examples_files/figure-html/unnamed-chunk-6-1.png)
 
 ### University Trends Over Time
 
@@ -183,6 +220,8 @@ uni_trends |>
   theme(legend.position = "none")
 ```
 
+![](analysis-examples_files/figure-html/unnamed-chunk-7-1.png)
+
 ### PhD-to-Total Ratio
 
 Let’s assume a higher PhD ratio suggests a more research-intensive
@@ -202,6 +241,13 @@ degree_comparison <- econ_theses |>
   arrange(desc(phd_ratio))
 
 degree_comparison
+#> # A tibble: 4 × 4
+#>   university            Master Doctorate phd_ratio
+#>   <chr>                  <int>     <int>     <dbl>
+#> 1 Ege Universitesi           0         4         1
+#> 2 Istanbul Universitesi      0         4         1
+#> 3 Ankara Universitesi        4         0         0
+#> 4 Marmara Universitesi       4         0         0
 ```
 
 ## Example 3: Keyword and Abstract Analysis
@@ -216,14 +262,28 @@ details for all matching theses, so it is slow.
 ``` r
 
 # Search for machine learning theses
-ml_search <- search_basic("makine öğrenmesi",
-                          max_search_results = Inf)
+if (live_examples) {
+  ml_search <- search_basic("makine öğrenmesi",
+                            max_search_results = Inf)
 
-# Fetch full details (abstracts, keywords, advisor, PDF URLs)
-ml_search_sample <- ml_search |>
-  slice_sample(n = 20)
+  # Fetch full details (abstracts, keywords, advisor, PDF URLs)
+  ml_search_sample <- ml_search |>
+    slice_sample(n = 20)
 
-ml_details <- detail(ml_search_sample$detail_id)
+  ml_details <- detail(ml_search_sample$detail_id)
+} else {
+  ml_details <- tezr_example_ml_details()
+}
+
+ml_details
+#> # A tibble: 5 × 2
+#>   thesis_no keywords_tr                                          
+#>   <chr>     <chr>                                                
+#> 1 910001    Makine ogrenmesi; Derin ogrenme; Siniflandirma       
+#> 2 910002    Makine ogrenmesi; Yapay zeka; Tahmin                 
+#> 3 910003    Derin ogrenme; Goruntu isleme; Sinir aglari          
+#> 4 910004    Makine ogrenmesi; Veri madenciligi; Siniflandirma    
+#> 5 910005    Dogal dil isleme; Makine ogrenmesi; Metin madenciligi
 ```
 
 ### Keyword Frequency
@@ -257,6 +317,8 @@ keyword_freq |>
   ) +
   theme_minimal(base_size = 11)
 ```
+
+![](analysis-examples_files/figure-html/unnamed-chunk-10-1.png)
 
 ## Tips for Large-Scale Analysis
 
