@@ -29,23 +29,23 @@ jobs:
       - uses: actions/checkout@v6
 
       - uses: r-lib/actions/setup-pandoc@v2
-        id: setup-pandoc
+        id: setup_pandoc
         continue-on-error: true
         with:
           pandoc-version: '3.8.2.1'
 
       - name: Install pandoc fallback on Linux
-        if: steps.setup-pandoc.outcome != 'success' && runner.os == 'Linux'
+        if: steps.setup_pandoc.outcome != 'success' && runner.os == 'Linux'
         run: |
           sudo apt-get update
           sudo apt-get install -y pandoc
 
       - name: Install pandoc fallback on macOS
-        if: steps.setup-pandoc.outcome != 'success' && runner.os == 'macOS'
+        if: steps.setup_pandoc.outcome != 'success' && runner.os == 'macOS'
         run: brew install pandoc
 
       - name: Install pandoc fallback on Windows
-        if: steps.setup-pandoc.outcome != 'success' && runner.os == 'Windows'
+        if: steps.setup_pandoc.outcome != 'success' && runner.os == 'Windows'
         shell: pwsh
         run: |
           choco install pandoc -y --no-progress
