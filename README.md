@@ -47,11 +47,6 @@ pak::pak("emraher/tezr")
 
 ## Quick Start
 
-The code below shows live portal queries. Ordinary documentation builds
-use representative output so the README and website do not depend on the
-current availability of the NTC portal. Set `TEZR_LIVE_EXAMPLES=true`
-before rendering the README or pkgdown site to run the portal queries.
-
 ``` r
 library(tezr)
 ```
