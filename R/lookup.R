@@ -153,6 +153,12 @@ list_lookup_values <- function(fetch_fn) {
 #'
 #' @examplesIf interactive()
 #' unis <- list_universities()
+#' head(unis)
+#' #> # A tibble: 6 x 2
+#' #>   name                              id
+#' #>   <chr>                             <chr>
+#' #> 1 ABDULLAH GUL UNIVERSITESI         384
+#' #> 2 ACIBADEM MEHMET ALI AYDINLAR ...  361
 list_universities <- function() {
   list_lookup_values(fetch_university_list)
 }
@@ -172,6 +178,12 @@ list_universities <- function() {
 #'
 #' @examplesIf interactive()
 #' insts <- list_institutes()
+#' head(insts)
+#' #> # A tibble: 6 x 2
+#' #>   name                       id
+#' #>   <chr>                      <chr>
+#' #> 1 ADLI TIP ENSTITUSU         1
+#' #> 2 AFET YONETIMI ENSTITUSU    2
 list_institutes <- function() {
   list_lookup_values(fetch_institute_list)
 }
@@ -192,6 +204,12 @@ list_institutes <- function() {
 #'
 #' @examplesIf interactive()
 #' divisions <- list_divisions()
+#' head(divisions)
+#' #> # A tibble: 6 x 2
+#' #>   name                         id
+#' #>   <chr>                        <chr>
+#' #> 1 ACIL TIP ANABILIM DALI       1
+#' #> 2 ADLI BILISIM ANABILIM DALI   2
 list_divisions <- function() {
   list_lookup_values(fetch_division_list)
 }
@@ -212,6 +230,12 @@ list_divisions <- function() {
 #'
 #' @examplesIf interactive()
 #' disciplines <- list_disciplines()
+#' head(disciplines)
+#' #> # A tibble: 6 x 2
+#' #>   name                         id
+#' #>   <chr>                        <chr>
+#' #> 1 ACIK DENIZ YAPILARI          1
+#' #> 2 ADLI BILIMLER                2
 list_disciplines <- function() {
   list_lookup_values(fetch_discipline_list)
 }
@@ -232,6 +256,12 @@ list_disciplines <- function() {
 #'
 #' @examplesIf interactive()
 #' subjects <- list_subjects()
+#' head(subjects)
+#' #> # A tibble: 6 x 3
+#' #>   name_tr    name_en      id
+#' #>   <chr>      <chr>        <chr>
+#' #> 1 Ekonomi    Economics    115
+#' #> 2 Ekonometri Econometrics 116
 list_subjects <- function() {
   subjects <- fetch_subject_list() |>
     tidyr::separate_wider_delim(

@@ -9,11 +9,16 @@ vignette: >
 
 ```{r, include = FALSE}
 live_examples <- identical(tolower(Sys.getenv("TEZR_LIVE_EXAMPLES")), "true")
+example_output <- c("example-output.R", "vignettes/example-output.R")
+example_output <- example_output[file.exists(example_output)]
+if (length(example_output) > 0) {
+  source(example_output[[1]])
+}
 
 knitr::opts_chunk$set(
   collapse = TRUE,
   comment = "#>",
-  eval = live_examples,
+  eval = TRUE,
   cache = TRUE,
   warning = FALSE,
   message = FALSE
@@ -22,7 +27,7 @@ knitr::opts_chunk$set(
 
 This vignette demonstrates three very simple analysis workflows using thesis metadata from the NTC. Each example starts with data collection and ends with a table or plot. The workflows cover research trends, institutional comparisons, and keyword mining.
 
-The vignette does not run live NTC queries during ordinary package builds. Set `TEZR_LIVE_EXAMPLES=true` before rendering if you want to execute the portal requests.
+The vignette does not run live NTC queries during ordinary package builds. It uses representative output so readers can see each workflow without depending on the live portal. Set `TEZR_LIVE_EXAMPLES=true` before rendering if you want to execute the portal requests.
 
 **Prerequisites:** Familiarity with dplyr and ggplot2. See the [Getting Started](getting-started.html) vignette for search function details.
 
@@ -53,9 +58,13 @@ Let's use `search_advanced()` with the `search_field` parameter set to all. The 
 
 ```{r}
 # Search for "iklim değişikliği" (climate change) in thesis titles
-climate <- search_advanced(keyword = "iklim değişikliği",
-                           search_field = "all",
-                           max_search_results = Inf)
+if (live_examples) {
+  climate <- search_advanced(keyword = "iklim değişikliği",
+                             search_field = "all",
+                             max_search_results = Inf)
+} else {
+  climate <- tezr_example_climate_results()
+}
 glimpse(climate)
 ```
 
@@ -121,8 +130,12 @@ Suppose we want to identify which universities produce the most research in a gi
 
 ```{r}
 # All econometrics theses, counted by university
-econ_theses <- search_detailed(subject = "Ekonometri",
-                               max_search_results = Inf)
+if (live_examples) {
+  econ_theses <- search_detailed(subject = "Ekonometri",
+                                 max_search_results = Inf)
+} else {
+  econ_theses <- tezr_example_econ_theses()
+}
 
 uni_counts <- econ_theses |>
   count(university, sort = TRUE)
@@ -207,14 +220,20 @@ You can extract research themes from thesis abstracts and keywords. Detail recor
 
 ```{r}
 # Search for machine learning theses
-ml_search <- search_basic("makine öğrenmesi",
-                          max_search_results = Inf)
+if (live_examples) {
+  ml_search <- search_basic("makine öğrenmesi",
+                            max_search_results = Inf)
 
-# Fetch full details (abstracts, keywords, advisor, PDF URLs)
-ml_search_sample <- ml_search |>
-  slice_sample(n = 20)
+  # Fetch full details (abstracts, keywords, advisor, PDF URLs)
+  ml_search_sample <- ml_search |>
+    slice_sample(n = 20)
 
-ml_details <- detail(ml_search_sample$detail_id)
+  ml_details <- detail(ml_search_sample$detail_id)
+} else {
+  ml_details <- tezr_example_ml_details()
+}
+
+ml_details
 ```
 
 ### Keyword Frequency

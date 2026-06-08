@@ -28,6 +28,13 @@ cache_config(enable = FALSE)
 
 # Enable with 30-minute TTL for searches
 cache_config(enable = TRUE, search_ttl = 1800)
+info <- cache_info()
+info[c("enabled", "search_ttl")]
+#> $enabled
+#> [1] TRUE
+#>
+#> $search_ttl
+#> [1] 1800
 
 # Cache details forever (until session ends)
 cache_config(detail_ttl = NULL)

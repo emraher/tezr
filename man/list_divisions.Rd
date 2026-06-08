@@ -21,6 +21,12 @@ Turkish: Anabilim Dalı (ABD)
 \examples{
 \dontshow{if (interactive()) withAutoprint(\{ # examplesIf}
 divisions <- list_divisions()
+head(divisions)
+#> # A tibble: 6 x 2
+#>   name                         id
+#>   <chr>                        <chr>
+#> 1 ACIL TIP ANABILIM DALI       1
+#> 2 ADLI BILISIM ANABILIM DALI   2
 \dontshow{\}) # examplesIf}
 }
 \seealso{

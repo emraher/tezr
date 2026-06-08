@@ -150,6 +150,15 @@ finalize_basic_search_results <- function(
 #' @examplesIf interactive()
 #' # Search for theses (returns up to 2000 results)
 #' search_results <- search_basic("hanehalkı")
+#' dplyr::glimpse(search_results)
+#' #> Rows: 2,000
+#' #> Columns: 13
+#' #> $ thesis_no         <chr> "967755", "975988", "955779", ...
+#' #> $ title_original    <chr> "Parasal aktarim mekanizmasi...", ...
+#' #> $ author            <chr> "PERIHAN EZGI BALLI", ...
+#' #> $ university        <chr> "Bandirma Onyedi Eylul Universitesi", ...
+#' #> $ year              <int> 2025, 2025, 2025, ...
+#' #> $ detail_id         <chr> "TCKf4ksTOVsOBqUcPYMKWQ", ...
 #'
 #' # Search for PhD theses by a specific author
 #' search_results <- search_basic(
@@ -500,6 +509,14 @@ resolve_range_cache_key_params <- function(cache_key_params) {
   }
 
   cache_key_params
+}
+
+#' Pick a named subset of an argument list for cache-key construction
+#' @noRd
+search_args <- function(args, names) {
+  selected <- lapply(names, \(name) args[[name]])
+  names(selected) <- names
+  selected
 }
 
 #' Fetch missing rows through year-range pagination
@@ -853,6 +870,14 @@ unpaginated_search_pipeline_result <- function(search_results, auto_range) {
 #'   keyword = "iklim değişikliği",
 #'   year_start = 2015
 #' )
+#' dplyr::glimpse(climate)
+#' #> Rows: 184
+#' #> Columns: 13
+#' #> $ thesis_no      <chr> "942101", "931450", "918276", ...
+#' #> $ title_original <chr> "Iklim degisikligi...", ...
+#' #> $ university     <chr> "Ankara Universitesi", ...
+#' #> $ year           <int> 2025, 2024, 2024, ...
+#' #> $ thesis_type_en <chr> "Master", "Doctorate", "Master", ...
 #'
 #' # Search science theses only
 #' ml <- search_advanced(
@@ -1051,22 +1076,28 @@ status_values <- function() {
 advanced_search_cache_key <- function(args) {
   build_search_cache_key(
     type = "advanced",
-    params = list(
-      keyword = args$keyword,
-      search_field = args$search_field,
-      thesis_type = args$thesis_type,
-      access_type = args$access_type,
-      year_start = args$year_start,
-      year_end = args$year_end,
-      language = args$language,
-      group = args$group,
-      university = args$university,
-      university_id = args$university_id,
-      institute = args$institute,
-      institute_id = args$institute_id,
-      status = args$status,
-      match_type = args$match_type
-    )
+    params = search_args(args, advanced_cache_key_args())
+  )
+}
+
+#' Return advanced-search argument names included in search cache keys
+#' @noRd
+advanced_cache_key_args <- function() {
+  c(
+    "keyword",
+    "search_field",
+    "thesis_type",
+    "access_type",
+    "year_start",
+    "year_end",
+    "language",
+    "group",
+    "university",
+    "university_id",
+    "institute",
+    "institute_id",
+    "status",
+    "match_type"
   )
 }
 
@@ -1243,6 +1274,12 @@ advanced_cache_key_params <- function(args, resolved_ids) {
 #'   year_start = 2015,
 #'   year_end = 2024
 #' )
+#' head(climate)
+#' #> # A tibble: 6 x 13
+#' #>   thesis_no title_original author university year thesis_type_en detail_id
+#' #>   <chr>     <chr>          <chr>  <chr>      <int> <chr>          <chr>
+#' #> 1 967755    Iklim degis... AYSE   Ankara...  2024 Master         TCKf...
+#' #> 2 955779    Iklim polit... MEHMET Istanbul...2023 Doctorate      xSXE...
 #'
 #' # Title search with university filter
 #' ml_theses <- search_detailed(
@@ -1700,30 +1737,36 @@ expand_detailed_search <- function(args) {
 detailed_search_cache_key <- function(args) {
   build_search_cache_key(
     type = "detailed",
-    params = list(
-      thesis_no = args$thesis_no,
-      title = args$title,
-      author = args$author,
-      supervisor = args$supervisor,
-      abstract = args$abstract,
-      keyword = args$keyword,
-      university = args$university,
-      university_id = args$university_id,
-      institute = args$institute,
-      institute_id = args$institute_id,
-      division = args$division,
-      division_id = args$division_id,
-      subject = args$subject,
-      discipline = args$discipline,
-      discipline_id = args$discipline_id,
-      thesis_type = args$thesis_type,
-      year_start = args$year_start,
-      year_end = args$year_end,
-      language = args$language,
-      access_type = args$access_type,
-      group = args$group,
-      status = args$status
-    )
+    params = search_args(args, detailed_cache_key_args())
+  )
+}
+
+#' Return detailed-search argument names included in search cache keys
+#' @noRd
+detailed_cache_key_args <- function() {
+  c(
+    "thesis_no",
+    "title",
+    "author",
+    "supervisor",
+    "abstract",
+    "keyword",
+    "university",
+    "university_id",
+    "institute",
+    "institute_id",
+    "division",
+    "division_id",
+    "subject",
+    "discipline",
+    "discipline_id",
+    "thesis_type",
+    "year_start",
+    "year_end",
+    "language",
+    "access_type",
+    "group",
+    "status"
   )
 }
 

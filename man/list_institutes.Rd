@@ -20,6 +20,12 @@ Turkish: Enstitü
 \examples{
 \dontshow{if (interactive()) withAutoprint(\{ # examplesIf}
 insts <- list_institutes()
+head(insts)
+#> # A tibble: 6 x 2
+#>   name                       id
+#>   <chr>                      <chr>
+#> 1 ADLI TIP ENSTITUSU         1
+#> 2 AFET YONETIMI ENSTITUSU    2
 \dontshow{\}) # examplesIf}
 }
 \seealso{

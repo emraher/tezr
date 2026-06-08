@@ -158,8 +158,9 @@ parse_horizontal_metadata_fields <- function(html, metadata_text, stats_text) {
     extract_labeled_value(metadata_text, "Dizin|Index")
   )
   language <- extract_stat_language(stats_text)
-  abstract_fields <- derive_abstract_fields_from_html(html, language$en)
-  keyword_fields <- derive_keyword_fields_from_html(html)
+  td_text <- extract_td_text(html)
+  abstract_fields <- derive_abstract_fields_from_td_text(td_text, language$en)
+  keyword_fields <- derive_keyword_fields_from_td_text(td_text)
   thesis_type <- extract_stat_thesis_type(stats_text)
   location <- parse_location_info(metadata_text)
   advisors <- split_advisors(extract_labeled_value(
@@ -194,7 +195,12 @@ parse_horizontal_metadata_fields <- function(html, metadata_text, stats_text) {
 #' Derive abstract fields from detail-page abstract blocks
 #' @noRd
 derive_abstract_fields_from_html <- function(html, language_en) {
-  td_text <- extract_td_text(html)
+  derive_abstract_fields_from_td_text(extract_td_text(html), language_en)
+}
+
+#' Derive abstract fields from extracted detail-page abstract blocks
+#' @noRd
+derive_abstract_fields_from_td_text <- function(td_text, language_en) {
   derive_abstract_fields(
     td0_text = td_text$tr,
     td1_text = td_text$en,
@@ -205,7 +211,12 @@ derive_abstract_fields_from_html <- function(html, language_en) {
 #' Derive keyword fields from detail-page abstract blocks
 #' @noRd
 derive_keyword_fields_from_html <- function(html) {
-  td_text <- extract_td_text(html)
+  derive_keyword_fields_from_td_text(extract_td_text(html))
+}
+
+#' Derive keyword fields from extracted detail-page abstract blocks
+#' @noRd
+derive_keyword_fields_from_td_text <- function(td_text) {
   derive_keyword_fields(
     td0_text = td_text$tr,
     td1_text = td_text$en
@@ -222,7 +233,8 @@ parse_vertical_detail_page <- function(html) {
     extract_first_detail_field(html, "Dizin", "Index")
   )
   language <- extract_vertical_detail_language(html)
-  abstract_fields <- derive_abstract_fields_from_html(html, language$en)
+  td_text <- extract_td_text(html)
+  abstract_fields <- derive_abstract_fields_from_td_text(td_text, language$en)
   thesis_type <- extract_vertical_detail_thesis_type(html)
   advisors <- split_advisors(extract_first_detail_field(
     html,
@@ -238,7 +250,8 @@ parse_vertical_detail_page <- function(html) {
     language,
     abstract_fields,
     thesis_type,
-    advisors
+    advisors,
+    td_text
   )
 }
 
@@ -270,10 +283,17 @@ build_vertical_detail_fields <- function(
   language,
   abstract_fields,
   thesis_type,
-  advisors
+  advisors,
+  td_text
 ) {
-  keywords_tr <- merge_keywords(extract_keywords(html, "tr"), index_keywords$tr)
-  keywords_en <- merge_keywords(extract_keywords(html, "en"), index_keywords$en)
+  keywords_tr <- merge_keywords(
+    extract_keywords(html, "tr", td_text),
+    index_keywords$tr
+  )
+  keywords_en <- merge_keywords(
+    extract_keywords(html, "en", td_text),
+    index_keywords$en
+  )
 
   c(
     vertical_identity_fields(html),

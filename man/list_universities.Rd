@@ -20,6 +20,12 @@ Turkish: Üniversite
 \examples{
 \dontshow{if (interactive()) withAutoprint(\{ # examplesIf}
 unis <- list_universities()
+head(unis)
+#> # A tibble: 6 x 2
+#>   name                              id
+#>   <chr>                             <chr>
+#> 1 ABDULLAH GUL UNIVERSITESI         384
+#> 2 ACIBADEM MEHMET ALI AYDINLAR ...  361
 \dontshow{\}) # examplesIf}
 }
 \seealso{

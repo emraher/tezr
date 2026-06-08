@@ -19,6 +19,13 @@
 #'
 #' # Enable with 30-minute TTL for searches
 #' cache_config(enable = TRUE, search_ttl = 1800)
+#' info <- cache_info()
+#' info[c("enabled", "search_ttl")]
+#' #> $enabled
+#' #> [1] TRUE
+#' #>
+#' #> $search_ttl
+#' #> [1] 1800
 #'
 #' # Cache details forever (until session ends)
 #' cache_config(detail_ttl = NULL)
@@ -67,6 +74,13 @@ cache_config <- function(
 #'
 #' # Clear only thesis details
 #' cache_clear("details")
+#' info <- cache_info()
+#' info[c("search_count", "detail_count")]
+#' #> $search_count
+#' #> [1] 0
+#' #>
+#' #> $detail_count
+#' #> [1] 0
 cache_clear <- function(what = c("all", "searches", "details", "lookups")) {
   what <- rlang::arg_match(what)
 

@@ -21,6 +21,12 @@ Turkish: Bilim Dalı
 \examples{
 \dontshow{if (interactive()) withAutoprint(\{ # examplesIf}
 disciplines <- list_disciplines()
+head(disciplines)
+#> # A tibble: 6 x 2
+#>   name                         id
+#>   <chr>                        <chr>
+#> 1 ACIK DENIZ YAPILARI          1
+#> 2 ADLI BILIMLER                2
 \dontshow{\}) # examplesIf}
 }
 \seealso{

@@ -47,9 +47,10 @@ pak::pak("emraher/tezr")
 
 ## Quick Start
 
-Live examples are not run when this README is built. Set
-`TEZR_LIVE_EXAMPLES=true` before rendering the README or pkgdown site if
-you want to run the portal queries.
+The code below shows live portal queries. Ordinary documentation builds
+use representative output so the README and website do not depend on the
+current availability of the NTC portal. Set `TEZR_LIVE_EXAMPLES=true`
+before rendering the README or pkgdown site to run the portal queries.
 
 ``` r
 library(tezr)
@@ -63,13 +64,48 @@ household <- search_basic(keyword = "hanehalkı")
 dplyr::glimpse(household)
 ```
 
+A representative search result has this shape.
+
+    #> Rows: 8
+    #> Columns: 13
+    #> $ thesis_no         <chr> "967755", "975988", "955779", "974976", "960162", "9…
+    #> $ title_original    <chr> "Hanehalki gelir ve tuketim analizi 1", "Hanehalki g…
+    #> $ title_translation <chr> "Household income and consumption analysis 1", "Hous…
+    #> $ author            <chr> "PERIHAN EZGI BALLI", "CENAP ALAYBEYI", "SECIL ALMIS…
+    #> $ university        <chr> "Bandirma Onyedi Eylul Universitesi", "Harran Univer…
+    #> $ year              <int> 2025, 2025, 2025, 2024, 2023, 2022, 2021, 2020
+    #> $ thesis_type_tr    <chr> "Doktora", "Yuksek Lisans", "Yuksek Lisans", "Yuksek…
+    #> $ thesis_type_en    <chr> "Doctorate", "Master", "Master", "Master", "Doctorat…
+    #> $ language_tr       <chr> "Turkce", "Turkce", "Turkce", "Turkce", "Turkce", "I…
+    #> $ language_en       <chr> "Turkish", "Turkish", "Turkish", "Turkish", "Turkish…
+    #> $ subject_tr        <chr> "Ekonomi", "Ekonomi", "Ekonomi", "Ekonomi", "Ekonomi…
+    #> $ subject_en        <chr> "Economics", "Economics", "Economics", "Economics", …
+    #> $ detail_id         <chr> "TCKf4ksTOVsOBqUcPYMKWQ", "LypZzbdoWcG0f3c62wverw", …
+
 ``` r
 climate_change <- search_advanced(
   keyword = "iklim değişikliği",
   year_start = 2015,
   group = "science"
 )
+dplyr::glimpse(climate_change)
 ```
+
+    #> Rows: 24
+    #> Columns: 13
+    #> $ thesis_no         <chr> "9677551", "9759882", "9557793", "9749764", "9601625…
+    #> $ title_original    <chr> "Iklim degisikligi 1", "Iklim degisikligi 2", "Iklim…
+    #> $ title_translation <chr> "Climate change 1", "Climate change 2", "Climate cha…
+    #> $ author            <chr> "PERIHAN EZGI BALLI", "CENAP ALAYBEYI", "SECIL ALMIS…
+    #> $ university        <chr> "Ankara Universitesi", "Istanbul Universitesi", "Ege…
+    #> $ year              <int> 2015, 2016, 2017, 2018, 2019, 2020, 2021, 2022, 2023…
+    #> $ thesis_type_tr    <chr> "Doktora", "Yuksek Lisans", "Yuksek Lisans", "Yuksek…
+    #> $ thesis_type_en    <chr> "Master", "Doctorate", "Master", "Doctorate", "Maste…
+    #> $ language_tr       <chr> "Turkce", "Turkce", "Turkce", "Turkce", "Turkce", "I…
+    #> $ language_en       <chr> "Turkish", "Turkish", "Turkish", "Turkish", "Turkish…
+    #> $ subject_tr        <chr> "Cevre Bilimleri; Ekonomi", "Cevre Bilimleri; Ekonom…
+    #> $ subject_en        <chr> "Environmental Sciences; Economics", "Environmental …
+    #> $ detail_id         <chr> "TCKf4ksTOVsOBqUcPYMKWQ", "LypZzbdoWcG0f3c62wverw", …
 
 ``` r
 phd_theses <- search_detailed(
@@ -78,7 +114,21 @@ phd_theses <- search_detailed(
   thesis_type = "phd",
   year_start = 2020
 )
+head(phd_theses)
 ```
+
+    #> # A tibble: 6 × 13
+    #>   thesis_no title_original             title_translation author university  year
+    #>   <chr>     <chr>                      <chr>             <chr>  <chr>      <int>
+    #> 1 9677551   Parasal aktarım mekanizma… Domestic credit … PERIH… Ankara Un…  2020
+    #> 2 9759882   1980 sonrası Türkiye'de a… Changes in sunfl… CENAP… Ankara Un…  2021
+    #> 3 9557793   Doğrudan yabancı yatırıml… Foreign direct i… SECIL… Ankara Un…  2022
+    #> 4 9749764   Enerji kullanımı ile G-20… Panel data analy… RUMEY… Ankara Un…  2023
+    #> 5 9601625   Finansal liberalleşme sür… Fragility during… SAMI … Ankara Un…  2024
+    #> 6 9465806   Azerbaycan'ın ekolojik ay… An analysis of A… ADIL … Ankara Un…  2025
+    #> # ℹ 7 more variables: thesis_type_tr <chr>, thesis_type_en <chr>,
+    #> #   language_tr <chr>, language_en <chr>, subject_tr <chr>, subject_en <chr>,
+    #> #   detail_id <chr>
 
 ``` r
 details <- detail(phd_theses$detail_id[1])
@@ -89,8 +139,36 @@ details |>
     names_to = "colname",
     values_to = "colvalue"
   ) |>
-  print(n = 23)
+  print(n = 24)
 ```
+
+    #> # A tibble: 24 × 2
+    #>    colname              colvalue
+    #>    <chr>                <chr>
+    #>  1 thesis_no            9677551
+    #>  2 title_original       Parasal aktarim mekanizmasi cercevesinde ozel sektore k…
+    #>  3 title_translation    Domestic credit to private sector and monetary transmis…
+    #>  4 author               PERIHAN EZGI BALLI
+    #>  5 advisor              PROF. DR. HASAN SAHIN
+    #>  6 co_advisor           <NA>
+    #>  7 university           Ankara Universitesi
+    #>  8 institute            Sosyal Bilimler Enstitusu
+    #>  9 division             Iktisat Ana Bilim Dali
+    #> 10 year                 2020
+    #> 11 pages                153
+    #> 12 thesis_type_tr       Doktora
+    #> 13 thesis_type_en       Doctorate
+    #> 14 language_tr          Turkce
+    #> 15 language_en          Turkish
+    #> 16 subject_tr           Ekonomi; Enerji
+    #> 17 subject_en           Economics; Energy
+    #> 18 abstract_original    Enerji piyasasi duzenlemelerinin ana ekseninde enerji a…
+    #> 19 abstract_translation This thesis consists of three essays on energy market r…
+    #> 20 keywords_tr          Enerji piyasalari; Duzenleme; Elektrik
+    #> 21 keywords_en          Energy markets; Regulation; Electricity
+    #> 22 access_status        open
+    #> 23 pdf_url              https://tez.yok.gov.tr/UlusalTezMerkezi/tezIndir.jsp?id…
+    #> 24 detail_url           https://tez.yok.gov.tr/UlusalTezMerkezi/tezDetay.jsp?id…
 
 Save returned objects after large queries so later analysis does not
 repeat the same portal requests.

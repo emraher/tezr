@@ -150,6 +150,12 @@ climate <- search_detailed(
   year_start = 2015,
   year_end = 2024
 )
+head(climate)
+#> # A tibble: 6 x 13
+#>   thesis_no title_original author university year thesis_type_en detail_id
+#>   <chr>     <chr>          <chr>  <chr>      <int> <chr>          <chr>
+#> 1 967755    Iklim degis... AYSE   Ankara...  2024 Master         TCKf...
+#> 2 955779    Iklim polit... MEHMET Istanbul...2023 Doctorate      xSXE...
 
 # Title search with university filter
 ml_theses <- search_detailed(

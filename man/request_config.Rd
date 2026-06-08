@@ -31,10 +31,14 @@ Explicit R options take precedence over environment variables.
 }
 \examples{
 # Silence progress messages for the current R session
-request_config(verbose = FALSE)
+cfg <- request_config(verbose = FALSE)
+cfg$verbose
+#> [1] FALSE
 
 # Set a custom user agent for an institutional network policy
-request_config(user_agent = "my-lab-contact@example.edu")
+cfg <- request_config(user_agent = "my-lab-contact@example.edu")
+cfg$user_agent
+#> [1] "my-lab-contact@example.edu"
 
 # Return to package defaults
 request_config(reset = TRUE)

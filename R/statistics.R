@@ -131,6 +131,11 @@ coerce_stats_rows <- function(stats_rows, islem) {
 #'
 #' @examplesIf interactive()
 #' stats <- stats_universities()
+#' head(stats)
+#' #> # A tibble: 6 x 10
+#' #>   university yuksek_lisans doktora toplam
+#' #>   <chr>              <int>   <int>  <int>
+#' #> 1 Ankara Univ...     32542   12310  44852
 stats_universities <- function() {
   stats <- fetch_and_parse_stats(1) |>
     dplyr::rename(university = "universite")
@@ -146,6 +151,11 @@ stats_universities <- function() {
 #'
 #' @examplesIf interactive()
 #' stats <- stats_years()
+#' tail(stats)
+#' #> # A tibble: 6 x 4
+#' #>    year yuksek_lisans doktora toplam
+#' #>   <int>         <int>   <int>  <int>
+#' #> 1  2025         22615    4416  27031
 stats_years <- function() {
   stats <- fetch_and_parse_stats(2) |>
     dplyr::rename(year = "yil")
@@ -161,6 +171,11 @@ stats_years <- function() {
 #'
 #' @examplesIf interactive()
 #' stats <- stats_subjects()
+#' head(stats)
+#' #> # A tibble: 6 x 8
+#' #>   subject   yuksek_lisans doktora toplam
+#' #>   <chr>             <int>   <int>  <int>
+#' #> 1 Ekonomi           21142    5842  26984
 stats_subjects <- function() {
   stats <- fetch_and_parse_stats(3) |>
     dplyr::select(-2, -3) |>
@@ -177,6 +192,11 @@ stats_subjects <- function() {
 #'
 #' @examplesIf interactive()
 #' stats <- stats_types()
+#' stats
+#' #> # A tibble: 1 x 4
+#' #>   yuksek_lisans doktora tipta_uzmanlik sanatta_yeterlik
+#' #>           <dbl>   <dbl>           <dbl>            <dbl>
+#' #> 1        721384  178264           90030             2395
 stats_types <- function() {
   return(fetch_and_parse_stats(4))
 }

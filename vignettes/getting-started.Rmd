@@ -9,6 +9,11 @@ vignette: >
 
 ```{r, include = FALSE}
 live_examples <- identical(tolower(Sys.getenv("TEZR_LIVE_EXAMPLES")), "true")
+example_output <- c("example-output.R", "vignettes/example-output.R")
+example_output <- example_output[file.exists(example_output)]
+if (length(example_output) > 0) {
+  source(example_output[[1]])
+}
 
 knitr::opts_chunk$set(
   collapse = TRUE,
@@ -20,7 +25,7 @@ knitr::opts_chunk$set(
 
 This vignette walks through the core features of `tezr`. Each section builds on the previous one, starting with simple keyword searches and progressing to multi-filter queries, detail retrieval, and cache management.
 
-The vignette does not run live NTC queries during ordinary package builds. Set `TEZR_LIVE_EXAMPLES=true` before rendering if you want to execute the portal requests.
+The vignette does not run live NTC queries during ordinary package builds. It uses representative output so readers can see the returned shapes without depending on the live portal. Set `TEZR_LIVE_EXAMPLES=true` before rendering if you want to execute the portal requests.
 
 ```{r setup}
 library(tezr)
@@ -55,6 +60,11 @@ The output is a tibble with one row per thesis.
 dplyr::glimpse(ag_irrigation)
 ```
 
+```{r, echo = FALSE, eval = !live_examples}
+ag_irrigation <- tezr_example_irrigation_results()
+dplyr::glimpse(ag_irrigation)
+```
+
 ### Targeting Specific Fields
 
 You can use the `search_field` argument to restrict matching to a single field.
@@ -64,6 +74,11 @@ You can use the `search_field` argument to restrict matching to a single field.
 ag_irrigation_title <- search_basic(
   "tarımsal sulama",
   search_field = "title")
+dplyr::glimpse(ag_irrigation_title)
+```
+
+```{r, echo = FALSE, eval = !live_examples}
+ag_irrigation_title <- tezr_example_irrigation_results()[1:3, ]
 dplyr::glimpse(ag_irrigation_title)
 ```
 
@@ -97,6 +112,14 @@ Available `thesis_type` values are: `"all"` (default), `"masters"`, `"phd"`, `"m
 phd_results <- search_basic(
   "ekonometri",
   thesis_type = "phd")
+dplyr::glimpse(phd_results)
+```
+
+```{r, echo = FALSE, eval = !live_examples}
+phd_results <- dplyr::filter(
+  tezr_example_econometrics_results(),
+  .data$thesis_type_en == "Doctorate"
+)
 dplyr::glimpse(phd_results)
 ```
 
@@ -216,6 +239,11 @@ all_eu <- search_advanced(
 dplyr::glimpse(all_eu)
 ```
 
+```{r, echo = FALSE, eval = !live_examples}
+all_eu <- tezr_example_europe_results()
+dplyr::glimpse(all_eu)
+```
+
 ## Detailed Search
 
 `search_detailed()` provides field-specific and institutional filters. Use it when you need to target thesis titles, authors, supervisors, universities, divisions, disciplines, or subjects. It supports the same auto-pagination flow as `search_advanced()`.
@@ -234,11 +262,22 @@ unis <- list_universities()
 head(unis)
 ```
 
+```{r, echo = FALSE, eval = !live_examples}
+unis <- tezr_example_universities()
+head(unis)
+```
+
 ```{r}
 # Subjects have Turkish and English names
 subjects <- list_subjects()
 subjects |>
   filter(stringr::str_detect(name_tr, stringr::fixed("Ekonomi")))
+```
+
+```{r, echo = FALSE, eval = !live_examples}
+subjects <- tezr_example_subjects()
+subjects |>
+  dplyr::filter(stringr::str_detect(name_tr, stringr::fixed("Ekonomi")))
 ```
 
 ```{r eval = FALSE}
@@ -309,6 +348,11 @@ supervisor_theses <- search_detailed(supervisor = "Mustafa Kadir Doğan")
 head(supervisor_theses)
 ```
 
+```{r, echo = FALSE, eval = !live_examples}
+supervisor_theses <- tezr_example_ankara_phd_results()
+head(supervisor_theses)
+```
+
 ### Vector-Valued Parameters
 
 The YÖK web portal accepts only one value per filter field. `tezr` removes this restriction. Most `search_detailed()` parameters accept character vectors. When you pass multiple values, the package expands them into separate API calls, combines the results, and deduplicates by `thesis_no`. This makes cross-institutional and cross-disciplinary comparisons possible in a single function call.
@@ -373,6 +417,13 @@ dplyr::glimpse(ankara_econ_details)
 ankara_econ_details$abstract_translation
 ```
 
+```{r, echo = FALSE, eval = !live_examples}
+ankara_econ_details <- tezr_example_detail_results()
+dplyr::glimpse(ankara_econ_details)
+
+ankara_econ_details$abstract_translation
+```
+
 ### Batch Retrieval
 
 You can also pass a vector of `detail_id` values to fetch details for multiple theses. The function shows text progress updates by default and fetches uncached records in parallel (up to 5 active requests).
@@ -401,6 +452,11 @@ year_stats <- stats_years()
 tail(year_stats)
 ```
 
+```{r, echo = FALSE, eval = !live_examples}
+year_stats <- tezr_example_year_stats()
+tail(year_stats)
+```
+
 ```{r eval = FALSE}
 # Thesis counts by university
 uni_stats <- stats_universities()
@@ -424,6 +480,17 @@ type_stats
 ```{r}
 # Shows: enabled status, item counts, and TTL settings
 cache_info()
+```
+
+```{r, echo = FALSE, eval = !live_examples}
+list(
+  enabled = TRUE,
+  search_count = 0L,
+  range_count = 0L,
+  detail_count = 0L,
+  search_ttl = 3600,
+  detail_ttl = NULL
+)
 ```
 
 The output includes `search_count`, `range_count`, `detail_count`, `search_ttl`, and `detail_ttl`. Search cache defaults to 3600 seconds (1 hour). Detail cache defaults to `NULL` (session lifetime; entries stay until you clear them or restart R).

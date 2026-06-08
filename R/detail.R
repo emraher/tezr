@@ -57,6 +57,15 @@
 #'
 #' # Get details for a single thesis
 #' thesis_details <- detail(results$detail_id[1])
+#' dplyr::glimpse(thesis_details)
+#' #> Rows: 1
+#' #> Columns: 24
+#' #> $ thesis_no            <chr> "393353"
+#' #> $ title_original       <chr> "Enerji piyasasi duzenlemeleri..."
+#' #> $ author               <chr> "ISIL SIRIN SELCUK CAKMAK"
+#' #> $ university           <chr> "Ankara Universitesi"
+#' #> $ thesis_type_en       <chr> "Doctorate"
+#' #> $ abstract_translation <chr> "This thesis consists of..."
 #'
 #' # Get details for multiple theses (batch)
 #' all_details <- detail(detail_id = results$detail_id)

@@ -15,6 +15,11 @@ readme_cache_inputs <- c(
 
 live_examples <- identical(tolower(Sys.getenv("TEZR_LIVE_EXAMPLES")), "true")
 
+example_output <- "vignettes/example-output.R"
+if (file.exists(example_output)) {
+  source(example_output)
+}
+
 knitr::opts_chunk$set(
   collapse = TRUE,
   comment = "#>",
@@ -53,7 +58,7 @@ pak::pak("emraher/tezr")
 
 ## Quick Start
 
-Live examples are not run when this README is built. Set `TEZR_LIVE_EXAMPLES=true` before rendering the README or pkgdown site if you want to run the portal queries.
+The code below shows live portal queries. Ordinary documentation builds use representative output so the README and website do not depend on the current availability of the NTC portal. Set `TEZR_LIVE_EXAMPLES=true` before rendering the README or pkgdown site to run the portal queries.
 
 ```{r}
 library(tezr)
@@ -66,12 +71,25 @@ household <- search_basic(keyword = "hanehalkı")
 dplyr::glimpse(household)
 ```
 
+A representative search result has this shape.
+
+```{r, echo = FALSE, eval = !live_examples}
+household <- tezr_example_household_results()
+dplyr::glimpse(household)
+```
+
 ```{r}
 climate_change <- search_advanced(
   keyword = "iklim değişikliği",
   year_start = 2015,
   group = "science"
 )
+dplyr::glimpse(climate_change)
+```
+
+```{r, echo = FALSE, eval = !live_examples}
+climate_change <- tezr_example_climate_results()
+dplyr::glimpse(climate_change)
 ```
 
 ```{r}
@@ -81,6 +99,12 @@ phd_theses <- search_detailed(
   thesis_type = "phd",
   year_start = 2020
 )
+head(phd_theses)
+```
+
+```{r, echo = FALSE, eval = !live_examples}
+phd_theses <- tezr_example_ankara_phd_results()
+head(phd_theses)
 ```
 
 ```{r}
@@ -92,7 +116,19 @@ details |>
     names_to = "colname",
     values_to = "colvalue"
   ) |>
-  print(n = 23)
+  print(n = 24)
+```
+
+```{r, echo = FALSE, eval = !live_examples}
+details <- tezr_example_detail_results()
+
+details |>
+  tidyr::pivot_longer(
+    cols = dplyr::everything(),
+    names_to = "colname",
+    values_to = "colvalue"
+  ) |>
+  print(n = 24)
 ```
 
 Save returned objects after large queries so later analysis does not repeat the same portal requests.

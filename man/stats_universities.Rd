@@ -15,6 +15,11 @@ Get thesis statistics by university
 \examples{
 \dontshow{if (interactive()) withAutoprint(\{ # examplesIf}
 stats <- stats_universities()
+head(stats)
+#> # A tibble: 6 x 10
+#>   university yuksek_lisans doktora toplam
+#>   <chr>              <int>   <int>  <int>
+#> 1 Ankara Univ...     32542   12310  44852
 \dontshow{\}) # examplesIf}
 }
 \seealso{

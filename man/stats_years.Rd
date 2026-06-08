@@ -15,6 +15,11 @@ Get thesis statistics by year
 \examples{
 \dontshow{if (interactive()) withAutoprint(\{ # examplesIf}
 stats <- stats_years()
+tail(stats)
+#> # A tibble: 6 x 4
+#>    year yuksek_lisans doktora toplam
+#>   <int>         <int>   <int>  <int>
+#> 1  2025         22615    4416  27031
 \dontshow{\}) # examplesIf}
 }
 \seealso{

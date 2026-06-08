@@ -1,45 +1,53 @@
-# Precompile vignettes with web scraping
-# Run this script to update vignettes with fresh data from tez.yok.gov.tr
+# Refresh documentation output without requiring CI to query tez.yok.gov.tr.
 #
-# Based on: https://ropensci.org/blog/2019/12/08/precompute-vignettes/
-#
-# Usage: source("vignettes/precompile.R")
+# Ordinary renders use representative data from vignettes/example-output.R.
+# Set TEZR_LIVE_EXAMPLES=true before running this script only when you
+# intentionally want to refresh output from the live portal.
 
-precompile_vignette <- function(vignette_name) {
-  cli::cli_alert_info("Precompiling {vignette_name}")
+required_files <- c(
+  "README.Rmd",
+  "vignettes/getting-started.Rmd",
+  "vignettes/analysis-examples.Rmd",
+  "vignettes/example-output.R"
+)
 
-  orig_path <- file.path("vignettes", paste0(vignette_name, ".Rmd.orig"))
-  output_path <- file.path("vignettes", paste0(vignette_name, ".Rmd"))
-
-  knitr::knit(orig_path, output = output_path)
-
-  # Fix figure paths (knitr creates vignettes/figure/ but needs vignettes/)
-  figure_dir <- "vignettes/figure"
-  if (dir.exists(figure_dir)) {
-    figure_files <- list.files(figure_dir, full.names = TRUE)
-    file.copy(figure_files, "vignettes/", overwrite = TRUE)
-    unlink(figure_dir, recursive = TRUE)
-
-    vignette_content <- readr::read_file(output_path)
-    fixed_content <- stringr::str_replace_all(
-      vignette_content,
-      stringr::fixed("(figure/"),
-      "("
-    )
-    readr::write_file(fixed_content, output_path)
-  }
-
-  cli::cli_alert_success("{vignette_name}.Rmd pre-compiled")
-  return(invisible(TRUE))
+missing_files <- required_files[!file.exists(required_files)]
+if (length(missing_files) > 0) {
+  cli::cli_abort(c(
+    "Documentation refresh cannot start.",
+    "x" = "Missing required file{?s}: {missing_files}"
+  ))
 }
 
-vignette_names <- c("getting-started", "analysis-examples")
-purrr::walk(vignette_names, precompile_vignette)
+live_examples <- identical(tolower(Sys.getenv("TEZR_LIVE_EXAMPLES")), "true")
+if (live_examples) {
+  cli::cli_alert_warning(
+    "Live documentation examples are enabled and will query tez.yok.gov.tr."
+  )
+} else {
+  cli::cli_alert_info(
+    "Using representative example output from vignettes/example-output.R."
+  )
+}
 
-cli::cli_rule("All vignettes pre-compiled")
-cli::cli_alert("Next steps:")
-cli::cli_ul(c(
-  "Review vignettes/*.Rmd files",
-  "Run pkgdown::build_site() to test",
-  "Commit both .Rmd.orig and .Rmd files"
-))
+cli::cli_alert_info("Rendering README.md")
+rmarkdown::render(
+  "README.Rmd",
+  output_format = "github_document",
+  quiet = TRUE
+)
+
+cli::cli_alert_info("Rendering vignettes")
+for (vignette in required_files[grepl(
+  "^vignettes/.+[.]Rmd$",
+  required_files
+)]) {
+  rmarkdown::render(
+    vignette,
+    output_format = "rmarkdown::html_vignette",
+    quiet = TRUE
+  )
+}
+
+cli::cli_alert_success("Documentation output refreshed")
+cli::cli_alert_info("Run pkgdown::build_site() to inspect the website locally.")
