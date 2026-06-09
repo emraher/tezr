@@ -10,6 +10,7 @@
 ^cran-comments\.md$
 ^CONTRIBUTING\.md$
 ^CODE_OF_CONDUCT\.md$
+^DESIGN\.md$
 ^LICENSE\.md$
 ^CITATION\.cff$
 
@@ -28,6 +29,7 @@
 ^README_files$
 ^cache$
 ^figure$
+^man/figures/architecture\.png$
 ^vignettes/.*_cache$
 ^vignettes/.*\.html$
 
